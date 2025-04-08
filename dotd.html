@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dog of the Day EV Calc</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: black;
+        color: lightgray;
+      }
+      input, button, select {
+        margin: 5px;
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 25px;
+        border: 2px solid #ccc;
+        transition: border-color 0.3s;
+      }
+      input, select {
+        background-color: #333;
+        color: lightgray;
+        border: 2px solid #555;
+      }
+      input:focus, button:focus, select:focus {
+        border-color: #007BFF;
+        outline: none;
+      }
+      button {
+        cursor: pointer;
+        background-color: #6f42c1;
+        color: white;
+        border: none;
+      }
+      button:hover {
+        background-color: #5a32a3;
+      }
+      #clearButton {
+        background-color: red;
+        margin-left: 10px;
+      }
+      a {
+        color: #858bf0;
+      }
+      .calculator-section {
+        border: 1px solid #444;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 20px;
+        background-color: #1a1a1a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Dog of the Day EV Calc</h1>
+
+    <label for="calcCountSelect">How many bets do you want to compare?</label><br>
+    <select id="calcCountSelect" onchange="generateCalculators()">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+  <option value="8">8</option>
+  <option value="9">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
+  <option value="13">13</option>
+  <option value="14">14</option>
+  <option value="15">15</option>
+</select>
+
+
+    <br>
+    <button onclick="window.location.href='index.html'">Go Home</button> 
+    <a href="help-dotd.html" target="_blank">Help</a> <br>
+    <label>
+      <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()">
+      Using No-Vig Odds for ALL?
+    </label>
+    <br><br>
+
+    <div id="calculatorContainer"></div>
+    <p>designed by @tomfc on Real</p>
+
+    <script>
+      function generateCalculators() {
+        const count = Number(document.getElementById("calcCountSelect").value);
+        const container = document.getElementById("calculatorContainer");
+        container.innerHTML = "";
+
+        for (let i = 0; i < count; i++) {
+          const section = document.createElement("div");
+          section.className = "calculator-section";
+          section.innerHTML = `
+            <h3>Bet ${i + 1}</h3>
+            <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
+            <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
+            <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+            <div id="divFavoriteOddsInput${i}">
+              <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+            </div>
+            <button onclick="calculateEV(${i})">Calculate</button>
+            <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
+            <p id="resultsOutput${i}"></p>
+            <p id="winningsOutput${i}"></p>
+            <p id="hitProbOutput${i}"></p>
+          `;
+          container.appendChild(section);
+        }
+
+        toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
+      }
+
+      function toggleFavoriteInputs() {
+        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+        const count = Number(document.getElementById("calcCountSelect").value);
+
+        for (let i = 0; i < count; i++) {
+          const favDiv = document.getElementById(`divFavoriteOddsInput${i}`);
+          favDiv.style.display = useNoVig ? "none" : "block";
+        }
+      }
+
+      function calculateEV(index) {
+        const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
+        const placement = Number(document.getElementById(`placementInput${index}`).value);
+        const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
+        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+
+        let favoriteOdds = useNoVig
+          ? -1 * underdogOdds
+          : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+
+        const underdogIP = underdogOdds > 0
+          ? 100 / (underdogOdds + 100)
+          : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+
+        const favoriteIP = favoriteOdds > 0
+          ? 100 / (favoriteOdds + 100)
+          : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+
+        const ipTotal = favoriteIP + underdogIP;
+        const novigUnderdogIP = underdogIP / ipTotal;
+
+        const winnings = placement * 20 + realOdds;
+        const expectedValue = winnings * novigUnderdogIP;
+        const hitProbPercent = novigUnderdogIP * 100;
+
+        document.getElementById(`resultsOutput${index}`).innerText =
+          "Expected Value of Underdog: " + expectedValue.toFixed(2);
+        document.getElementById(`winningsOutput${index}`).innerText =
+          "Karma Payout: " + winnings.toFixed(2);
+        document.getElementById(`hitProbOutput${index}`).innerText =
+          "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+      }
+
+      function clearInputs(index) {
+        document.getElementById(`underdogOddsInput${index}`).value = "";
+        document.getElementById(`favoriteOddsInput${index}`).value = "";
+        document.getElementById(`placementInput${index}`).value = "";
+        document.getElementById(`realOddsInput${index}`).value = "";
+        document.getElementById(`resultsOutput${index}`).innerText = "";
+        document.getElementById(`hitProbOutput${index}`).innerText = "";
+        document.getElementById(`winningsOutput${index}`).innerText = "";
+      }
+
+      // Initialize with 1 calculator on load
+      window.onload = generateCalculators;
+    </script>
+  </body>
+</html>
