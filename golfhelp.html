@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Golf Help</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: lightgray;
+        }
+      h1 {
+                text-align:center;
+      }
+        input,
+        button,
+        select {
+            margin: 5px;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 25px;
+            border: 2px solid #ccc;
+            transition: border-color 0.3s;
+        }
+
+        input,
+        select {
+            background-color: #333;
+            color: lightgray;
+            border: 2px solid #555;
+        }
+
+        input:focus,
+        button:focus,
+        select:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #5a32a3;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>
+      Golf Help
+    </h1>
+    <ul>
+      <li>
+      Estimated Placement - for estimated placement, go to a sportsbook and look at what place they are in for odds. For example, Jon Rahm has the third lowest odds, therefore his placement is 3.
+      </li>
+      <li>
+      Since the placements are estimated, the ev/payouts are as well
+      </li>
+      <li>
+      Payout formula - "10 ⋅ placement"
+      </li>
+      <li>
+      EV Formula - "Payout * prob of winning"
+      </li>
+    </ul> <br><br>
+    <button onclick="window.location.href='golfevcalc.html'">Go Back</button>
+    <button onclick="window.location.href='index.html'">Go Home</button> 
+  </body>
+</html>
