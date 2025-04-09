@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Golf EV Calc</title>
+     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: lightgray;
+          text-align:center;
+        }
+      a {
+        color: #858bf0;
+      }
+        input,
+        button,
+        select {
+            margin: 5px;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 25px;
+            border: 2px solid #ccc;
+            transition: border-color 0.3s;
+        }
+
+        input,
+        select {
+            background-color: #333;
+            color: lightgray;
+            border: 2px solid #555;
+        }
+
+        input:focus,
+        button:focus,
+        select:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #5a32a3;
+        }
+
+        #clearButton {
+            background-color: red;
+            margin-left: 10px;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>
+      Golf EV Calc
+    </h1>
+    <p>
+      designed by @tomfc on Real
+    </p>
+    <a href="golfhelp.html">Help</a><br>
+    <input id="estimatedPlacement" type="number" placeholder="Enter Estimated Placement"> <br>
+    <input id="winningOddsInput" type="number" placeholder="Enter odds of player winning"> <br>
+    <button id="calculateButton" type="button" onclick="calculateEV()">
+      Calculate
+    </button> 
+    <button id="clearButton" type="button" onclick="clearAll()">
+      Clear
+    </button>
+    <br><br>
+    <p id="evOutput">
+      
+    </p>
+    <p id="payoutOutput">
+      
+    </p>
+    <p id="probOutput">
+      
+    </p>
+    <script>
+    function calculateEV(){
+      var estPlacement = Number(document.getElementById("estimatedPlacement").value);
+      var winningOdds = Number(document.getElementById("winningOddsInput").value);
+      
+      // calculate implied probability correctly
+      var impliedProb = 100 / (winningOdds + 100);
+      impliedProb = impliedProb.toFixed(4);
+      
+      var payout = estPlacement * 10;
+      
+      var ev = payout * impliedProb;
+      
+      var percProb = impliedProb * 100;
+      
+      // output results
+      document.getElementById('evOutput').innerHTML = 'Expected Value: ' + ev;
+      document.getElementById('payoutOutput').innerHTML = 'Payout: ' + payout + " karma";
+      document.getElementById('probOutput').innerHTML = 'Probability of hitting: ' + percProb + "%";
+    }
+    
+      function clearAll(){
+        document.getElementById('evOutput').innerHTML = '';
+        document.getElementById('payoutOutput').innerHTML = ''
+        document.getElementById('probOutput').innerHTML = ''
+        document.getElementById('estimatedPlacement').value=''
+        document.getElementById('winningOddsInput').value=''
+        
+      }
+    </script>
+  </body>
+</html>
