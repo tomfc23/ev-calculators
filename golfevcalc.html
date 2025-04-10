@@ -112,9 +112,9 @@
       var percProb = impliedProb * 100;
       
       // output results
-      document.getElementById('evOutput').innerHTML = 'Expected Value: ' + ev;
-      document.getElementById('payoutOutput').innerHTML = 'Payout: ' + payout + " karma";
-      document.getElementById('probOutput').innerHTML = 'Probability of hitting: ' + percProb + "%";
+      document.getElementById('evOutput').innerHTML = 'Expected Value: ' + ev.toFixed(2);
+      document.getElementById('payoutOutput').innerHTML = 'Payout: ' + payout.toFixed(2) + " karma";
+      document.getElementById('probOutput').innerHTML = 'Probability of hitting: ' + percProb.toFixed(2) + "%";
     }
     
       function clearAll(){
@@ -128,3 +128,4 @@
     </script>
   </body>
 </html>
+
