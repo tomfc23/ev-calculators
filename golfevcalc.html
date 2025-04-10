@@ -96,7 +96,13 @@
       }
       
       // calculate implied probability correctly
-      var impliedProb = 100 / (winningOdds + 100);
+      var impliedProb;
+      
+      if (winningOdds > 0){
+        impliedProb = 100 / (winningOdds + 100);
+      }else {
+        impliedProb = winningOdds / (winningOdds + 100)
+      }
       impliedProb = impliedProb.toFixed(4);
       
       var payout = estPlacement * 10;
