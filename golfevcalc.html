@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Golf EV Calc</title>
+    <title>PSP Calc</title>
      <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -59,7 +59,7 @@
   </head>
   <body>
     <h1>
-      Golf EV Calc
+      PSP Calc
     </h1>
     <p>
       designed by @tomfc on Real
@@ -88,6 +88,12 @@
     function calculateEV(){
       var estPlacement = Number(document.getElementById("estimatedPlacement").value);
       var winningOdds = Number(document.getElementById("winningOddsInput").value);
+      
+      if (estPlacement >= 30){
+        estPlacement = 30
+      }else {
+        estPlacement = estPlacement
+      }
       
       // calculate implied probability correctly
       var impliedProb = 100 / (winningOdds + 100);
