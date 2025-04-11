@@ -101,7 +101,7 @@
       if (winningOdds > 0){
         impliedProb = 100 / (winningOdds + 100);
       }else {
-        impliedProb = winningOdds / (winningOdds + 100)
+        impliedProb = Math.abs(winningOdds) / (Math.abs(winningOdds) + 100)
       }
       impliedProb = impliedProb.toFixed(4);
       
