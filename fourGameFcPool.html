@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Sided Pool EV Calculator</title>
+<style>
+  :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #bb86fc;
+            --primary-variant: #3700b3;
+            --secondary: #03dac6;
+            --text: #e0e0e0;
+            --text-secondary: #9e9e9e;
+            --error: #cf6679;
+            --success: #4caf50;
+            --border-radius: 12px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .game-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .team-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .team-row {
+            display: grid;
+            grid-template-columns: 3fr 2fr 2fr;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-label {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        input, button, select {
+            background-color: #2c2c2c;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            color: var(--text);
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+        
+        input:focus, button:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border: none;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        button:hover {
+            background-color: var(--primary-variant);
+            color: white;
+        }
+        
+        .results-section {
+            margin-top: 2rem;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #3d3d3d;
+        }
+        
+        th {
+            background-color: #2c2c2c;
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        th:hover {
+            background-color: #383838;
+        }
+        
+        tbody tr:hover {
+            background-color: #252525;
+        }
+        
+        .pool-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .no-vig-odds {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #3d3d3d;
+        }
+        
+        .no-vig-item {
+            text-align: center;
+        }
+        
+        .no-vig-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .no-vig-value {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            background-color: #2c2c2c;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .combo-info {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .positive-ev {
+            color: var(--success);
+        }
+        
+        .negative-ev {
+            color: var(--error);
+        }
+        
+        @media (max-width: 768px) {
+            .team-row {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+                margin-bottom: 1rem;
+            }
+            
+            .no-vig-odds {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .no-vig-item {
+                text-align: left;
+            }
+        }
+  </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Three-Sided Pool EV Calculator</h1>
+            <p>Calculate expected values for all combinations in a 4-game pool where each game has 3 possible outcomes.</p>
+        </div>
+        
+        <div class="card">
+            <h2>Pool Settings</h2>
+            <div class="pool-info">
+                <div class="info-item">
+                    <span class="info-label">Total Entrants</span>
+                    <span class="info-value">4,600</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Entry Cost</span>
+                    <span class="info-value">100 karma</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">4/4 Payout Cap</span>
+                    <span class="info-value">800 karma</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">3/4 Payout Cap</span>
+                    <span class="info-value">600 karma</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Game Inputs</h2>
+            <div class="game-inputs" id="gameInputs">
+                <!-- Game input cards will be generated here -->
+            </div>
+            <button id="calculateButton">Calculate Expected Values</button>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Calculating all 81 combinations...</p>
+        </div>
+        
+        <div class="card results-section" id="resultsSection" style="display: none;">
+            <h2>Results</h2>
+            <div class="summary-stats" id="summaryStats">
+                <!-- Summary stats will be shown here -->
+            </div>
+            <div class="combo-info" id="comboInfo">
+                <!-- Number of combinations info -->
+            </div>
+            <div class="table-container">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="combo">Combination</th>
+                            <th data-sort="winProb">Win Probability</th>
+                            <th data-sort="numSelectionsCount">Total Selections</th>
+                            <th data-sort="payout4">4/4 Payout</th>
+                            <th data-sort="payout3">3/4 Payout</th>
+                            <th data-sort="ev" class="active">Expected Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+   // Constants
+const TOTAL_ENTRANTS = 4600;
+const ENTRY_COST = 100;
+const PAYOUT_CAP_4_OF_4 = 800;
+const PAYOUT_CAP_3_OF_4 = 600;
+const NUM_GAMES = 4;
+const OPTIONS_PER_GAME = 3;
+
+// Game data structure
+const games = [
+    {
+        name: "Game 1",
+        teams: [
+            { name: "L1", odds: -110, selectionPct: 33.33 },
+            { name: "M1", odds: -110, selectionPct: 33.33 },
+            { name: "R1", odds: -110, selectionPct: 33.34 }
+        ]
+    },
+    {
+        name: "Game 2",
+        teams: [
+            { name: "L2", odds: -110, selectionPct: 33.33 },
+            { name: "M2", odds: -110, selectionPct: 33.33 },
+            { name: "R2", odds: -110, selectionPct: 33.34 }
+        ]
+    },
+    {
+        name: "Game 3",
+        teams: [
+            { name: "L3", odds: -110, selectionPct: 33.33 },
+            { name: "M3", odds: -110, selectionPct: 33.33 },
+            { name: "R3", odds: -110, selectionPct: 33.34 }
+        ]
+    },
+    {
+        name: "Game 4",
+        teams: [
+            { name: "L4", odds: -110, selectionPct: 33.33 },
+            { name: "M4", odds: -110, selectionPct: 33.33 },
+            { name: "R4", odds: -110, selectionPct: 33.34 }
+        ]
+    }
+];
+
+// Element references
+const gameInputsContainer = document.getElementById('gameInputs');
+const calculateButton = document.getElementById('calculateButton');
+const resultsSection = document.getElementById('resultsSection');
+const resultsBody = document.getElementById('resultsBody');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const summaryStats = document.getElementById('summaryStats');
+const comboInfo = document.getElementById('comboInfo');
+
+// Initialize the application
+function initApp() {
+    renderGameInputs();
+    bindEvents();
+}
+
+// Render game input cards
+function renderGameInputs() {
+    gameInputsContainer.innerHTML = '';
+    
+    games.forEach((game, gameIndex) => {
+        const gameCard = document.createElement('div');
+        gameCard.className = 'game-card card';
+        
+        const gameHeader = document.createElement('div');
+        gameHeader.className = 'game-header';
+        
+        const gameTitle = document.createElement('h3');
+        gameTitle.textContent = game.name;
+        
+        gameHeader.appendChild(gameTitle);
+        gameCard.appendChild(gameHeader);
+        
+        // Team inputs
+        game.teams.forEach((team, teamIndex) => {
+            const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+            
+            const teamRow = document.createElement('div');
+            teamRow.className = 'team-row';
+            
+            // Team name input
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = team.name;
+            nameInput.placeholder = `${position} Side`;
+            nameInput.id = `name-${gameIndex}-${teamIndex}`;
+            nameInput.dataset.game = gameIndex;
+            nameInput.dataset.team = teamIndex;
+            nameInput.dataset.field = 'name';
+            
+            // Odds input
+            const oddsInput = document.createElement('input');
+            oddsInput.type = 'number';
+            oddsInput.value = team.odds;
+            oddsInput.placeholder = 'Odds';
+            oddsInput.id = `odds-${gameIndex}-${teamIndex}`;
+            oddsInput.dataset.game = gameIndex;
+            oddsInput.dataset.team = teamIndex;
+            oddsInput.dataset.field = 'odds';
+            
+            // Selection percentage input
+            const pctInput = document.createElement('input');
+            pctInput.type = 'number';
+            pctInput.step = '0.01';
+            pctInput.value = team.selectionPct;
+            pctInput.placeholder = '%';
+            pctInput.id = `pct-${gameIndex}-${teamIndex}`;
+            pctInput.dataset.game = gameIndex;
+            pctInput.dataset.team = teamIndex;
+            pctInput.dataset.field = 'selectionPct';
+            
+            const nameLabel = document.createElement('label');
+            nameLabel.textContent = `${position} Side:`;
+            nameLabel.htmlFor = `name-${gameIndex}-${teamIndex}`;
+            nameLabel.className = 'team-label';
+            
+            const oddsLabel = document.createElement('label');
+            oddsLabel.textContent = 'Odds:';
+            oddsLabel.htmlFor = `odds-${gameIndex}-${teamIndex}`;
+            oddsLabel.className = 'team-label';
+            
+            const pctLabel = document.createElement('label');
+            pctLabel.textContent = 'Selection %:';
+            pctLabel.htmlFor = `pct-${gameIndex}-${teamIndex}`;
+            pctLabel.className = 'team-label';
+            
+            teamRow.appendChild(nameLabel);
+            teamRow.appendChild(nameInput);
+            
+            const oddsRow = document.createElement('div');
+            oddsRow.className = 'team-row';
+            oddsRow.appendChild(oddsLabel);
+            oddsRow.appendChild(oddsInput);
+            
+            const pctRow = document.createElement('div');
+            pctRow.className = 'team-row';
+            pctRow.appendChild(pctLabel);
+            pctRow.appendChild(pctInput);
+            
+            gameCard.appendChild(teamRow);
+            gameCard.appendChild(oddsRow);
+            gameCard.appendChild(pctRow);
+            
+            if (teamIndex < game.teams.length - 1) {
+                const divider = document.createElement('hr');
+                gameCard.appendChild(divider);
+            }
+        });
+        
+        // No-vig odds section
+        const noVigSection = document.createElement('div');
+        noVigSection.className = 'no-vig-odds';
+        noVigSection.id = `no-vig-${gameIndex}`;
+        
+        game.teams.forEach((team, teamIndex) => {
+            const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+            
+            const noVigItem = document.createElement('div');
+            noVigItem.className = 'no-vig-item';
+            
+            const noVigLabel = document.createElement('div');
+            noVigLabel.className = 'no-vig-label';
+            noVigLabel.textContent = `${position} No-Vig Odds`;
+            
+            const noVigValue = document.createElement('div');
+            noVigValue.className = 'no-vig-value';
+            noVigValue.id = `no-vig-value-${gameIndex}-${teamIndex}`;
+            noVigValue.textContent = '-110';
+            
+            noVigItem.appendChild(noVigLabel);
+            noVigItem.appendChild(noVigValue);
+            noVigSection.appendChild(noVigItem);
+        });
+        
+        gameCard.appendChild(noVigSection);
+        gameInputsContainer.appendChild(gameCard);
+    });
+    
+    // Update initial no-vig odds
+    updateAllNoVigOdds();
+}
+
+// Bind event listeners
+function bindEvents() {
+    // Input change events
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', handleInputChange);
+        input.addEventListener('blur', handleInputChange);
+    });
+    
+    // Calculate button
+    calculateButton.addEventListener('click', calculateEV);
+    
+    // Table sorting
+    document.querySelectorAll('th[data-sort]').forEach(header => {
+        header.addEventListener('click', handleTableSort);
+    });
+}
+
+// Handle input changes
+function handleInputChange(event) {
+    const { game, team, field } = event.target.dataset;
+    const value = event.target.value;
+    
+    // Update the game data
+    if (field === 'name') {
+        games[game].teams[team].name = value;
+    } else if (field === 'odds') {
+        games[game].teams[team].odds = parseFloat(value);
+        updateNoVigOdds(parseInt(game));
+    } else if (field === 'selectionPct') {
+        games[game].teams[team].selectionPct = parseFloat(value);
+        
+        // Validate that percentages sum to 100
+        validateSelectionPercentages(parseInt(game));
+    }
+}
+
+// Validate that selection percentages sum to 100
+function validateSelectionPercentages(gameIndex) {
+    const teams = games[gameIndex].teams;
+    const sum = teams.reduce((acc, team) => acc + parseFloat(team.selectionPct || 0), 0);
+    
+    // Adjust if necessary to ensure sum is 100
+    if (Math.abs(sum - 100) > 0.1) {
+        // Distribute the difference
+        const diff = (100 - sum) / teams.length;
+        teams.forEach((team, i) => {
+            team.selectionPct = parseFloat((parseFloat(team.selectionPct) + diff).toFixed(2));
+            document.getElementById(`pct-${gameIndex}-${i}`).value = team.selectionPct;
+        });
+    }
+}
+
+// Update no-vig odds for a specific game
+function updateNoVigOdds(gameIndex) {
+    const teams = games[gameIndex].teams;
+    
+    // Convert American odds to probabilities
+    const probabilities = teams.map(team => oddsToImpliedProbability(team.odds));
+    
+    // Calculate overround (vig)
+    const sumProb = probabilities.reduce((acc, prob) => acc + prob, 0);
+    
+    // Remove vig by normalizing probabilities
+    const noVigProbs = probabilities.map(prob => prob / sumProb);
+    
+    // Convert back to American odds
+    const noVigOdds = noVigProbs.map(prob => impliedProbabilityToOdds(prob));
+    
+    // Update UI
+    teams.forEach((team, i) => {
+        const noVigElement = document.getElementById(`no-vig-value-${gameIndex}-${i}`);
+        noVigElement.textContent = formatOdds(noVigOdds[i]);
+        
+        // Store no-vig probability in team data for later use
+        team.noVigProb = noVigProbs[i];
+    });
+}
+
+// Update no-vig odds for all games
+function updateAllNoVigOdds() {
+    for (let i = 0; i < games.length; i++) {
+        updateNoVigOdds(i);
+    }
+}
+
+// Convert American odds to implied probability
+function oddsToImpliedProbability(odds) {
+    if (odds > 0) {
+        return 100 / (odds + 100);
+    } else {
+        return Math.abs(odds) / (Math.abs(odds) + 100);
+    }
+}
+
+// Convert implied probability to American odds
+function impliedProbabilityToOdds(probability) {
+    if (probability <= 0 || probability >= 1) {
+        return probability <= 0 ? 10000 : -10000;
+    }
+    
+    if (probability < 0.5) {
+        return (100 / probability) - 100;
+    } else {
+        return -1 * (probability * 100 / (1 - probability));
+    }
+}
+
+// Format American odds with + sign for positive values
+function formatOdds(odds) {
+    const roundedOdds = Math.round(odds);
+    return roundedOdds > 0 ? `+${roundedOdds}` : roundedOdds.toString();
+}
+
+// Calculate expected values
+function calculateEV() {
+    // Show loading indicator
+    loadingIndicator.style.display = 'block';
+    resultsSection.style.display = 'none';
+    
+    // Update all no-vig odds
+    updateAllNoVigOdds();
+    
+    // Use setTimeout to allow UI to update before calculations
+    setTimeout(() => {
+        // Generate all possible combinations
+        const combinations = generateAllCombinations();
+        
+        // Calculate stats for each combination
+        const combinationsWithStats = calculateCombinationStats(combinations);
+        
+        // Display results
+        displayResults(combinationsWithStats);
+        
+        // Hide loading and show results
+        loadingIndicator.style.display = 'none';
+        resultsSection.style.display = 'block';
+    }, 100);
+}
+
+// Generate all possible combinations
+function generateAllCombinations() {
+    const combinations = [];
+    
+    // Helper function to recursively generate combinations
+    function generateCombosRecursive(gameIndex, currentCombo) {
+        // Base case: we've selected a team for each game
+        if (gameIndex === NUM_GAMES) {
+            combinations.push([...currentCombo]);
+            return;
+        }
+        
+        // Recursive case: try each team for the current game
+        for (let i = 0; i < OPTIONS_PER_GAME; i++) {
+            currentCombo[gameIndex] = i;
+            generateCombosRecursive(gameIndex + 1, currentCombo);
+        }
+    }
+    
+    // Start recursion with empty combo array
+    generateCombosRecursive(0, Array(NUM_GAMES).fill(0));
+    
+    return combinations;
+}
+
+// Calculate stats for each combination
+function calculateCombinationStats(combinations) {
+    // Calculate probability of each combination winning
+    const combinationsWithStats = combinations.map(combo => {
+        // Calculate win probability (product of no-vig probabilities)
+        const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
+            return prob * games[gameIndex].teams[teamIndex].noVigProb;
+        }, 1);
+        
+        // Calculate how many people selected this combo
+        const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
+            const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
+            return count * selectionPct;
+        }, TOTAL_ENTRANTS);
+        
+        return {
+            combo,
+            winProbability,
+            numSelections
+        };
+    });
+    
+    // Calculate total winners for 3/4 and 4/4
+    let total4of4Winners = 0;
+    let total3of4Winners = 0;
+    
+    // Calculate binomial probabilities for getting exactly 3 or 4 correct
+    combinationsWithStats.forEach(comboStat => {
+        // Calculate probability of getting exactly 3 correct for this combo
+        // (We need to calculate this for each possible incorrect game)
+        let prob3of4 = 0;
+        
+        for (let incorrectGame = 0; incorrectGame < NUM_GAMES; incorrectGame++) {
+            // Probability that this game is wrong
+            const wrongGameProb = 1 - games[incorrectGame].teams[comboStat.combo[incorrectGame]].noVigProb;
+            
+            // Probability that all other games are correct
+            let otherGamesCorrectProb = 1;
+            for (let g = 0; g < NUM_GAMES; g++) {
+                if (g !== incorrectGame) {
+                    otherGamesCorrectProb *= games[g].teams[comboStat.combo[g]].noVigProb;
+                }
+            }
+            
+            // Add to total 3/4 probability
+            prob3of4 += wrongGameProb * otherGamesCorrectProb;
+        }
+        
+        // Store probabilities for later use
+        comboStat.prob4of4 = comboStat.winProbability;
+        comboStat.prob3of4 = prob3of4;
+        
+        // Calculate expected number of people with 3/4 and 4/4 correct
+        comboStat.count4of4 = comboStat.numSelections * comboStat.prob4of4;
+        comboStat.count3of4 = comboStat.numSelections * comboStat.prob3of4;
+        
+        // Add to total winners
+        total4of4Winners += comboStat.count4of4;
+        total3of4Winners += comboStat.count3of4;
+    });
+    
+    // Calculate payouts based on the new formula
+    const payouts = calculatePayouts(total4of4Winners, total3of4Winners);
+    
+    // Now calculate EV for each combination
+    combinationsWithStats.forEach(comboStat => {
+        // Apply payout caps
+        const payout4 = Math.min(PAYOUT_CAP_4_OF_4, payouts.payout4of4);
+        const payout3 = Math.min(PAYOUT_CAP_3_OF_4, payouts.payout3of4);
+        
+        // Calculate expected value
+        const ev = (comboStat.prob4of4 * payout4) + (comboStat.prob3of4 * payout3) - ENTRY_COST;
+        
+        // Add to combo stat object
+        comboStat.payout4 = payout4;
+        comboStat.payout3 = payout3;
+        comboStat.ev = ev;
+    });
+    
+    return combinationsWithStats;
+}
+
+// Calculate payouts based on the new formula
+function calculatePayouts(total4of4Winners, total3of4Winners) {
+    // Round to whole numbers for display purposes
+    total4of4Winners = Math.round(total4of4Winners);
+    total3of4Winners = Math.round(total3of4Winners);
+    
+    // Total number of losers (those who got 0/4, 1/4, or 2/4 correct)
+    const totalLosers = TOTAL_ENTRANTS - total4of4Winners - total3of4Winners;
+    
+    // Total karma collected from losers
+    const totalKarmaCollected = totalLosers * ENTRY_COST;
+    
+    // Calculate total units
+    // Tier 1 (4/4 correct): Winners × 2 units
+    // Tier 2 (3/4 correct): Winners × 1 unit
+    const totalUnits = (total4of4Winners * 2) + (total3of4Winners * 1);
+    
+    // Calculate base payout per unit
+    const basePayoutPerUnit = totalKarmaCollected / totalUnits;
+    
+    // Calculate payouts for each tier
+    const payout4of4 = basePayoutPerUnit * 2; // 4/4 winners get 2x base payout
+    const payout3of4 = basePayoutPerUnit;     // 3/4 winners get 1x base payout
+    
+    return {
+        payout4of4,
+        payout3of4,
+        totalUnits,
+        total4of4Winners,
+        total3of4Winners,
+        totalLosers,
+        basePayoutPerUnit
+    };
+}
+
+// Display results in the table
+function displayResults(combinationsWithStats) {
+    // Clear previous results
+    resultsBody.innerHTML = '';
+    
+    // Sort by EV (highest to lowest)
+    combinationsWithStats.sort((a, b) => b.ev - a.ev);
+    
+    // Populate table
+    combinationsWithStats.forEach(comboStat => {
+        const row = document.createElement('tr');
+        
+        // Format combination as team names
+        const comboDisplay = comboStat.combo.map((teamIndex, gameIndex) => {
+            return games[gameIndex].teams[teamIndex].name;
+        }).join(', ');
+        
+        // Create cells
+        const comboCell = document.createElement('td');
+        comboCell.textContent = comboDisplay;
+        
+        const winProbCell = document.createElement('td');
+        winProbCell.textContent = (comboStat.winProbability * 100).toFixed(2) + '%';
+        
+        const selectionsCell = document.createElement('td');
+        selectionsCell.textContent = Math.round(comboStat.numSelections);
+        
+        const payout4Cell = document.createElement('td');
+        payout4Cell.textContent = comboStat.payout4.toFixed(2);
+        
+        const payout3Cell = document.createElement('td');
+        payout3Cell.textContent = comboStat.payout3.toFixed(2);
+        
+        const evCell = document.createElement('td');
+        evCell.textContent = comboStat.ev.toFixed(2);
+        evCell.className = comboStat.ev >= 0 ? 'positive-ev' : 'negative-ev';
+        
+        // Add cells to row
+        row.appendChild(comboCell);
+        row.appendChild(winProbCell);
+        row.appendChild(selectionsCell);
+        row.appendChild(payout4Cell);
+        row.appendChild(payout3Cell);
+        row.appendChild(evCell);
+        
+        // Add row to table
+        resultsBody.appendChild(row);
+    });
+    
+    // Display summary stats
+    displaySummaryStats(combinationsWithStats);
+}
+
+// Display summary statistics
+function displaySummaryStats(combinationsWithStats) {
+    // Calculate summary stats
+    const positiveEVCount = combinationsWithStats.filter(combo => combo.ev >= 0).length;
+    const maxEV = Math.max(...combinationsWithStats.map(combo => combo.ev));
+    const avgEV = combinationsWithStats.reduce((sum, combo) => sum + combo.ev, 0) / combinationsWithStats.length;
+    
+    // Get payout info for display
+    const total4of4Winners = Math.round(combinationsWithStats.reduce((sum, combo) => sum + combo.count4of4, 0));
+    const total3of4Winners = Math.round(combinationsWithStats.reduce((sum, combo) => sum + combo.count3of4, 0));
+    const payoutInfo = calculatePayouts(total4of4Winners, total3of4Winners);
+    
+    // Update summary section with additional payout info
+    summaryStats.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-value">${positiveEVCount}</div>
+            <div class="stat-label">Positive EV Combinations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${maxEV.toFixed(2)}</div>
+            <div class="stat-label">Highest EV</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${avgEV.toFixed(2)}</div>
+            <div class="stat-label">Average EV</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${payoutInfo.basePayoutPerUnit.toFixed(2)}</div>
+            <div class="stat-label">Base Payout Per Unit</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${payoutInfo.total4of4Winners}</div>
+            <div class="stat-label">Estimated 4/4 Winners</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${payoutInfo.total3of4Winners}</div>
+            <div class="stat-label">Estimated 3/4 Winners</div>
+        </div>
+    `;
+    
+    // Update combo info
+    comboInfo.textContent = `Showing all ${combinationsWithStats.length} possible combinations`;
+}
+
+// Handle table sorting
+function handleTableSort(event) {
+    const sortField = event.target.dataset.sort;
+    
+    // Get current sort direction
+    const currentDirection = event.target.classList.contains('asc') ? 'asc' : 'desc';
+    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+    
+    // Remove sort indicators from all headers
+    document.querySelectorAll('th').forEach(th => {
+        th.classList.remove('asc', 'desc', 'active');
+    });
+    
+    // Add sort indicator to current header
+    event.target.classList.add(newDirection, 'active');
+    
+    // Get all rows
+    const rows = Array.from(resultsBody.querySelectorAll('tr'));
+    
+    // Sort rows based on the selected field
+    rows.sort((rowA, rowB) => {
+        let valA, valB;
+        
+        // Get values based on column
+        if (sortField === 'combo') {
+            valA = rowA.cells[0].textContent;
+            valB = rowB.cells[0].textContent;
+            return newDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            // Numeric columns
+            const colIndex = {
+                'winProb': 1,
+                'numSelectionsCount': 2,
+                'payout4': 3,
+                'payout3': 4,
+                'ev': 5
+            }[sortField];
+            
+            valA = parseFloat(rowA.cells[colIndex].textContent);
+            valB = parseFloat(rowB.cells[colIndex].textContent);
+            
+            return newDirection === 'asc' ? valA - valB : valB - valA;
+        }
+    });
+    
+    // Remove all existing rows
+    while (resultsBody.firstChild) {
+        resultsBody.removeChild(resultsBody.firstChild);
+    }
+    
+    // Add sorted rows back to table
+    rows.forEach(row => {
+        resultsBody.appendChild(row);
+    });
+}
+
+// Initialize the application when the page loads
+window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
