@@ -9,13 +9,10 @@
         body {
             font-family: sans-serif; 
             margin: 20px;
-
-          background-color: black;
+            background-color: black;
             color: lightgray; 
             text-align:center;
         }
-
-        
 
         input,
         button,
@@ -29,7 +26,7 @@
         }
 
         input,
-         select {
+        select {
             background-color: #333; /* Dark background for input and select in dark mode */
             color: lightgray; /* Light gray text color for input and select in dark mode */
             border: 2px solid #555; /* Darker border in dark mode */
@@ -65,9 +62,26 @@
         .custom-names {
             display: none; /* Hide custom names input by default */
         }
-      a {
-        color: #858bf0;
-      }
+        
+        a {
+            color: #858bf0;
+        }
+        
+        .green-check {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .ev-result {
+            padding: 5px;
+            margin: 2px 0;
+            border-radius: 5px;
+        }
+        
+        .highest-ev {
+            background-color: rgba(76, 175, 80, 0.2);
+        }
     </style>
 </head>
 
@@ -77,8 +91,8 @@
         <input type="checkbox" id="customNamesCheckbox" onchange="toggleCustomNames()">
         Use Custom Side Names
     </label>
-  <br>
-  <label>
+    <br>
+    <label>
         <input type="checkbox" id="toggleOutput">
         Show All Outputs
     </label>
@@ -109,7 +123,7 @@
         <option value="100" selected>100</option> <!-- Default selection changed to 100 -->
         <option value="200">200</option>
     </select>
-  <label for="maxBetInput">Max Bet Amount:</label>
+    <label for="maxBetInput">Max Bet Amount:</label>
     <br>
   
     <br>
@@ -255,6 +269,19 @@
             const ev3Wager0 = calculateExpectedValue(roundedWinnings3Wager0, noVigDecimalProb3, 0, noVigDecimalProb1 + noVigDecimalProb2);
             const ev3WagerMax = calculateExpectedValue(roundedWinnings3WagerMax, noVigDecimalProb3, maxBet, noVigDecimalProb1 + noVigDecimalProb2);
 
+            // Create array of all EVs to find the highest
+            const evValues = [
+                { name: `${name1} (Wager 0)`, value: ev1Wager0 },
+                { name: `${name1} (Max Bet)`, value: ev1WagerMax },
+                { name: `${name2} (Wager 0)`, value: ev2Wager0 },
+                { name: `${name2} (Max Bet)`, value: ev2WagerMax },
+                { name: `${name3} (Wager 0)`, value: ev3Wager0 },
+                { name: `${name3} (Max Bet)`, value: ev3WagerMax }
+            ];
+
+            // Find the highest EV
+            const highestEV = Math.max(...evValues.map(ev => ev.value));
+
             const showAllOutputs = document.getElementById('toggleOutput').checked;
             const useCustomNames = document.getElementById('customNamesCheckbox').checked;
 
@@ -279,13 +306,40 @@
                     `${useCustomNames ? name3 : "Side 3"} Fractional No-Vig Implied Probability: ${fractionalProb3}<br>`;
             }
 
-            resultHTML += 
-                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Wager 0): ${ev1Wager0}</strong><br>` +
-                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Max Bet): ${ev1WagerMax}</strong><br>` +
-                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Wager 0): ${ev2Wager0}</strong><br>` +
-                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Max Bet): ${ev2WagerMax}</strong><br>` +
-                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Wager 0): ${ev3Wager0}</strong><br>` +
-                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Max Bet): ${ev3WagerMax}</strong><br>`;
+            // Add EVs with check mark for highest one
+            resultHTML += `<div id="ev-results">`;
+            
+            // Side 1 Wager 0
+            resultHTML += `<div class="ev-result ${ev1Wager0 === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Wager 0): ${ev1Wager0}` +
+                `${ev1Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            // Side 1 Max Bet
+            resultHTML += `<div class="ev-result ${ev1WagerMax === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Max Bet): ${ev1WagerMax}` +
+                `${ev1WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            // Side 2 Wager 0
+            resultHTML += `<div class="ev-result ${ev2Wager0 === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Wager 0): ${ev2Wager0}` +
+                `${ev2Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            // Side 2 Max Bet
+            resultHTML += `<div class="ev-result ${ev2WagerMax === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Max Bet): ${ev2WagerMax}` +
+                `${ev2WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            // Side 3 Wager 0
+            resultHTML += `<div class="ev-result ${ev3Wager0 === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Wager 0): ${ev3Wager0}` +
+                `${ev3Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            // Side 3 Max Bet
+            resultHTML += `<div class="ev-result ${ev3WagerMax === highestEV ? 'highest-ev' : ''}">` +
+                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Max Bet): ${ev3WagerMax}` +
+                `${ev3WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            
+            resultHTML += `</div>`;
 
             document.getElementById('result').innerHTML = resultHTML;
         }
@@ -310,12 +364,14 @@
 
         // Light/Dark Mode Toggle
         const modeToggle = document.getElementById('modeToggle');
-        modeToggle.addEventListener('click', () => {
-            const body = document.body;
-            body.classList.toggle('dark-mode');
-            body.classList.toggle('light-mode');
-            modeToggle.textContent = body.classList.contains('dark-mode') ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-        });
+        if (modeToggle) {
+            modeToggle.addEventListener('click', () => {
+                const body = document.body;
+                body.classList.toggle('dark-mode');
+                body.classList.toggle('light-mode');
+                modeToggle.textContent = body.classList.contains('dark-mode') ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+            });
+        }
     </script>
 </body>
 
