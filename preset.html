@@ -291,6 +291,17 @@ a {
                 const calcId = `calc_${sport}_${index}`;
                 const calculatorHTML = createCalculatorHTML(calcId, config);
                 container.innerHTML += calculatorHTML;
+                
+                // Auto-check real odds checkbox if it exists
+                if (config.hasRealOdds) {
+                    setTimeout(() => {
+                        const realOddsCheckbox = document.getElementById(`${calcId}_realOdds`);
+                        if (realOddsCheckbox) {
+                            realOddsCheckbox.checked = true;
+                            toggleRealOdds(calcId);
+                        }
+                    }, 0);
+                }
             });
         }
 
