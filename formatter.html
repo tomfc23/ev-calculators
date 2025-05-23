@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formatter</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: lightgray;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #1a1a1a;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+        }
+        h1 {
+            color: lightgray;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-group, .output-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 95%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #555;
+            border-radius: 25px;
+            font-family: monospace;
+            resize: vertical;
+            background-color: #333;
+            color: lightgray;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        button {
+            cursor: pointer;
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 25px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #5a32a3;
+        }
+        button:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        .copy-button {
+            background-color: #6f42c1;
+        }
+        .copy-button:hover {
+            background-color: #5a32a3;
+        }
+        .success-message {
+            color: #4CAF50;
+            margin-left: 10px;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Formatter</h1>
+        
+        <div class="input-group">
+            <label for="inputText">Input:</label>
+            <textarea id="inputText" placeholder="Paste here..."></textarea>
+        </div>
+        
+        <div class="button-group">
+            <button id="formatButton">Format Lines</button>
+        </div>
+        
+        <div class="output-group">
+            <label for="outputText">Formatted Output:</label>
+            <textarea id="outputText" readonly></textarea>
+            <div class="button-group">
+                <button id="copyButton" class="copy-button">Copy to Clipboard</button>
+                <span id="copySuccess" class="success-message">Copied!</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('formatButton').addEventListener('click', formatText);
+        document.getElementById('copyButton').addEventListener('click', copyToClipboard);
+        
+        function formatText() {
+            const inputText = document.getElementById('inputText').value;
+            let formattedText = formatBettingLines(inputText);
+            document.getElementById('outputText').value = formattedText;
+        }
+        
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText');
+            outputText.select();
+            document.execCommand('copy');
+            
+            // Show success message
+            const successMessage = document.getElementById('copySuccess');
+            successMessage.style.opacity = '1';
+            
+            // Hide success message after 2 seconds
+            setTimeout(() => {
+                successMessage.style.opacity = '0';
+            }, 2000);
+        }
+        
+        function formatBettingLines(text) {
+            // First split by any newlines
+            let lines = text.split('\n');
+            
+            // Initialize array to store valid data chunks
+            let processedLines = [];
+            let currentLineData = '';
+            
+            // Process each line
+            for (let i = 0; i < lines.length; i++) {
+                // Trim excessive whitespace but keep essential spaces
+                let line = lines[i].trim();
+                
+                if (line === '') {
+                    // Handle empty lines - add current data if any
+                    if (currentLineData) {
+                        processedLines.push(currentLineData);
+                        currentLineData = '';
+                    }
+                    continue;
+                }
+                
+                // If this line has team and odds (like "TOR +112")
+                if (/[A-Z]{2,3}\s+[+-]\d+/.test(line)) {
+                    // If we have previous data, push it first
+                    if (currentLineData) {
+                        processedLines.push(currentLineData);
+                    }
+                    
+                    // Get the team and odds separated by exactly one space
+                    const match = line.match(/([A-Z]{2,3})\s+([+-]\d+)/);
+                    if (match) {
+                        currentLineData = `${match[1]} ${match[2]}`;
+                    } else {
+                        currentLineData = line;
+                    }
+                    
+                    // Check if this line also contains percentage data
+                    const percentMatch = line.match(/(\d+%\s*\(\d+\))/);
+                    if (percentMatch) {
+                        // If so, push the team/odds line first, then add percentage as new line
+                        processedLines.push(currentLineData);
+                        currentLineData = percentMatch[1];
+                    }
+                }
+                // If this line is just a percentage (like "4% (51)")
+                else if (/^\d+%\s*\(\d+\)/.test(line)) {
+                    if (currentLineData) {
+                        processedLines.push(currentLineData);
+                    }
+                    currentLineData = line.match(/(\d+%\s*\(\d+\))/)[1];
+                }
+                // If this is a line with mixed content that needs to be split
+                else {
+                    // Check for percentage pattern in the line
+                    const percentMatch = line.match(/(\d+%\s*\(\d+\))/);
+                    if (percentMatch) {
+                        currentLineData += (currentLineData ? ' ' : '') + percentMatch[1];
+                    } else {
+                        // Just add this content to current line data
+                        currentLineData += (currentLineData ? ' ' : '') + line;
+                    }
+                }
+            }
+            
+            // Add any remaining data
+            if (currentLineData) {
+                processedLines.push(currentLineData);
+            }
+            
+            // Clean up the data
+            let cleanedLines = [];
+            for (let line of processedLines) {
+                // Clean up percentage entries
+                if (/\d+%\s*\(\d+\)/.test(line)) {
+                    const match = line.match(/(\d+)%\s*\((\d+)\)/);
+                    if (match) {
+                        cleanedLines.push(`${match[1]}% (${match[2]})`);
+                    } else {
+                        cleanedLines.push(line);
+                    }
+                }
+                // Clean up team odds entries
+                else if (/[A-Z]{2,3}\s+[+-]\d+/.test(line)) {
+                    const match = line.match(/([A-Z]{2,3})\s+([+-]\d+)/);
+                    if (match) {
+                        cleanedLines.push(`${match[1]} ${match[2]}`);
+                    } else {
+                        cleanedLines.push(line);
+                    }
+                }
+                else {
+                    cleanedLines.push(line);
+                }
+            }
+            
+            return cleanedLines.join('\n');
+        }
+    </script>
+</body>
+</html>
