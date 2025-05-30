@@ -727,7 +727,7 @@ BAL +113
               const oddsValue = parseInt(odds.replace('+', ''));
               
               // Set placement as position (from 1 to max 10)
-              document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
+document.getElementById(`placementInput${i}`).value = i + 1;
               
               // Set Real's underdog odds only
               document.getElementById(`realOddsInput${i}`).value = oddsValue;
@@ -786,8 +786,6 @@ BAL +113
       function calculateEV(index) {
         const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
         let placement = Number(document.getElementById(`placementInput${index}`).value);
-        placement = placement > 10 ? 10 : placement;
-        
         const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
         const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
@@ -887,7 +885,6 @@ function calculateAllEVs() {
 function calculateEVWithReturn(index) {
   const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
   let placement = Number(document.getElementById(`placementInput${index}`).value);
-  placement = placement > 10 ? 10 : placement;
   
   const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
   const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
@@ -1022,7 +1019,7 @@ function hideRankings() {
 function calculateEVWithReturn(index) {
   const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
   let placement = Number(document.getElementById(`placementInput${index}`).value);
-  placement = placement > 10 ? 10 : placement;
+
   
   const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
   const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
