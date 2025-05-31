@@ -255,23 +255,23 @@ a {
     <script>
         const sportConfigs = {
             NBA: [
-                { hasRealOdds: false, maxBet: '200', title: 'NBA O/U' },
-                { hasRealOdds: false, maxBet: '200', title: 'NBA Moneyline' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'NBA 1st Quarter ML' }
+                { hasRealOdds: false, maxBet: '200', title: 'NBA O/U', side1: 'Over', side2: 'Under' },
+                { hasRealOdds: false, maxBet: '200', title: 'NBA Moneyline', side1: 'Team 1', side2: 'Team 2' },
+                { hasRealOdds: false, maxBet: '100-10', title: 'NBA 1st Quarter ML', side1: 'Team 1', side2: 'Team 2' }
             ],
             NHL: [
-                { hasRealOdds: false, maxBet: '200', title: 'NHL O/U' },
-                { hasRealOdds: false, maxBet: '200', title: 'NHL Moneyline' }
+                { hasRealOdds: false, maxBet: '200', title: 'NHL O/U', side1: 'Over', side2: 'Under' },
+                { hasRealOdds: false, maxBet: '200', title: 'NHL Moneyline', side1: 'Team 1', side2: 'Team 2' }
             ],
             MLB: [
-                { hasRealOdds: true, maxBet: '50-5', title: 'MLB hit streak' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'MLB O/U' },
-                { hasRealOdds: true, maxBet: '100-10', title: 'MLB Moneyline' },
-                { hasRealOdds: false, maxBet: '50-10', title: 'MLB RFI?' }
+                { hasRealOdds: true, maxBet: '50-5', title: 'MLB hit streak', side1: 'Yes', side2: 'No' },
+                { hasRealOdds: false, maxBet: '100-10', title: 'MLB O/U', side1: 'Over', side2: 'Under' },
+                { hasRealOdds: true, maxBet: '100-10', title: 'MLB Moneyline', side1: 'Team 1', side2: 'Team 2' },
+                { hasRealOdds: false, maxBet: '50-10', title: 'MLB RFI?', side1: 'Yes', side2: 'No' }
             ],
             WNBA: [
-                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA O/U' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA Spread' }
+                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA O/U', side1: 'Over', side2: 'Under' },
+                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA Spread', side1: 'Team 1', side2: 'Team 2' }
             ]
         };
 
@@ -341,17 +341,17 @@ a {
                     </div>
 
                     <div class="custom-names" id="${calcId}_customNamesInputs" style="display: none;">
-                        <input type="text" id="${calcId}_name1" placeholder="Enter Team 1 Name">
-                        <input type="text" id="${calcId}_name2" placeholder="Enter Team 2 Name">
+                        <input type="text" id="${calcId}_name1" placeholder="Enter ${config.side1} Name">
+                        <input type="text" id="${calcId}_name2" placeholder="Enter ${config.side2} Name">
                     </div>
 
-                    <input type="text" id="${calcId}_odds1" placeholder="Enter Team 1 Sportsbook Odds">
-                    <input type="text" id="${calcId}_odds2" placeholder="Enter Team 2 Sportsbook Odds">
+                    <input type="text" id="${calcId}_odds1" placeholder="Enter ${config.side1} Sportsbook Odds">
+                    <input type="text" id="${calcId}_odds2" placeholder="Enter ${config.side2} Sportsbook Odds">
 
                     ${config.hasRealOdds ? `
                     <div class="real-odds" id="${calcId}_realOddsInputs" style="display: none;">
-                        <input type="text" id="${calcId}_realOdds1" placeholder="Enter Team 1 Real App Odds" disabled>
-                        <input type="text" id="${calcId}_realOdds2" placeholder="Enter Team 2 Real App Odds" disabled>
+                        <input type="text" id="${calcId}_realOdds1" placeholder="Enter ${config.side1} Real App Odds" disabled>
+                        <input type="text" id="${calcId}_realOdds2" placeholder="Enter ${config.side2} Real App Odds" disabled>
                     </div>
                     ` : ''}
 
@@ -435,20 +435,16 @@ a {
             return roundToTwoDecimals((winnings * noVigProbWin) - (wager * noVigProbLose));
         }
 
-        function calculateEV(calcId) {
-        let defaultName1 = "Side 1";
-            let defaultName2 = "Side 2";
-            const title = document.querySelector(`#${calcId} ~ h3`)?.innerText || "";
+        function getCalculatorConfig(calcId) {
+            const sport = document.getElementById('sportSelect').value;
+            const index = parseInt(calcId.split('_')[2]);
+            return sportConfigs[sport][index];
+        }
 
-            if (title.includes("O/U")) {
-                defaultName1 = "Over";
-                defaultName2 = "Under";
-            } else if (title.includes("RFI")) {
-                defaultName1 = "Yes";
-                defaultName2 = "No";
-            }            
-        const name1 = document.getElementById(`${calcId}_name1`)?.value || "Side 1";
-            const name2 = document.getElementById(`${calcId}_name2`)?.value || "Side 2";
+        function calculateEV(calcId) {
+            const config = getCalculatorConfig(calcId);
+            const name1 = document.getElementById(`${calcId}_name1`)?.value || config.side1;
+            const name2 = document.getElementById(`${calcId}_name2`)?.value || config.side2;
             const odds1 = parseInt(document.getElementById(`${calcId}_odds1`).value);
             const odds2 = parseInt(document.getElementById(`${calcId}_odds2`).value);
             
@@ -507,23 +503,23 @@ a {
             let resultHTML = '';
             if (showAllOutputs) {
                 resultHTML += `
-                    ${useCustomNames ? name1 : "Side 1"} No-Vig American Odds: ${noVigOdds1}<br>
-                    ${useCustomNames ? name2 : "Side 2"} No-Vig American Odds: ${noVigOdds2}<br>
-                    ${useCustomNames ? name1 : "Side 1"} Winnings (Wager 0): ${winnings1Wager0}<br>
-                    ${useCustomNames ? name1 : "Side 1"} Winnings (Max Bet): ${winnings1WagerMax}<br>
-                    ${useCustomNames ? name2 : "Side 2"} Winnings (Wager 0): ${winnings2Wager0}<br>
-                    ${useCustomNames ? name2 : "Side 2"} Winnings (Max Bet): ${winnings2WagerMax}<br>
-                    ${useCustomNames ? name1 : "Side 1"} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
-                    ${useCustomNames ? name2 : "Side 2"} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
-                    ${useCustomNames ? name1 : "Side 1"} Fractional Probability: ${fractionalProb1}<br>
-                    ${useCustomNames ? name2 : "Side 2"} Fractional Probability: ${fractionalProb2}<br>`;
+                    ${name1} No-Vig American Odds: ${noVigOdds1}<br>
+                    ${name2} No-Vig American Odds: ${noVigOdds2}<br>
+                    ${name1} Winnings (Wager 0): ${winnings1Wager0}<br>
+                    ${name1} Winnings (Max Bet): ${winnings1WagerMax}<br>
+                    ${name2} Winnings (Wager 0): ${winnings2Wager0}<br>
+                    ${name2} Winnings (Max Bet): ${winnings2WagerMax}<br>
+                    ${name1} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
+                    ${name2} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
+                    ${name1} Fractional Probability: ${fractionalProb1}<br>
+                    ${name2} Fractional Probability: ${fractionalProb2}<br>`;
             }
 
             resultHTML += `
-                <strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
+                <strong>${name1} Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name1} Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name2} Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name2} Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
 
             document.getElementById(`${calcId}_result`).innerHTML = resultHTML;
         }
