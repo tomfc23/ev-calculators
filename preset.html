@@ -436,7 +436,18 @@ a {
         }
 
         function calculateEV(calcId) {
-            const name1 = document.getElementById(`${calcId}_name1`)?.value || "Side 1";
+        let defaultName1 = "Side 1";
+            let defaultName2 = "Side 2";
+            const title = document.querySelector(`#${calcId} ~ h3`)?.innerText || "";
+
+            if (title.includes("O/U")) {
+                defaultName1 = "Over";
+                defaultName2 = "Under";
+            } else if (title.includes("RFI")) {
+                defaultName1 = "Yes";
+                defaultName2 = "No";
+            }            
+        const name1 = document.getElementById(`${calcId}_name1`)?.value || "Side 1";
             const name2 = document.getElementById(`${calcId}_name2`)?.value || "Side 2";
             const odds1 = parseInt(document.getElementById(`${calcId}_odds1`).value);
             const odds2 = parseInt(document.getElementById(`${calcId}_odds2`).value);
