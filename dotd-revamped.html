@@ -786,6 +786,7 @@ document.getElementById(`placementInput${i}`).value = i + 1;
       function calculateEV(index) {
         const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
         let placement = Number(document.getElementById(`placementInput${index}`).value);
+          if (placement > 10) placement = 10;
         const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
         const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
