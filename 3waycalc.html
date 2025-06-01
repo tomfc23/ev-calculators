@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Calc</title>
+    <title>3-way EV Calc</title>
     <style>
         body {
             font-family: sans-serif; 
@@ -59,8 +59,19 @@
             margin-top: 20px; /* Add some space above the button */
         }
 
-        .custom-names {
-            display: none; /* Hide custom names input by default */
+        .odds-toggle {
+            margin: 10px 0;
+        }
+        
+        .odds-toggle button {
+            background-color: #444;
+            margin: 0 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .odds-toggle button.active {
+            background-color: #007BFF;
         }
         
         a {
@@ -87,24 +98,18 @@
 
 <body class="light-mode">
     <h1>3-way EV Calc</h1>
-    <label>
-        <input type="checkbox" id="customNamesCheckbox" onchange="toggleCustomNames()">
-        Use Custom Side Names
-    </label>
-    <br>
+    
+    <div class="odds-toggle">
+        <button id="americanOddsBtn" class="active" onclick="setOddsFormat('american')">American Odds</button>
+        <button id="decimalOddsBtn" onclick="setOddsFormat('decimal')">Decimal Odds</button>
+    </div>
+    
     <label>
         <input type="checkbox" id="toggleOutput">
         Show All Outputs
     </label>
     <br>
-    <div class="custom-names" id="customNamesInputs">
-        <input type="text" id="nameInput1" placeholder="Enter Team 1 Name">
-        <br>
-        <input type="text" id="nameInput2" placeholder="Enter Team 2 Name">
-        <br>
-        <input type="text" id="nameInput3" placeholder="Enter Team 3 Name">
-        <br>
-    </div>
+    
     <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 Sportsbook Odds">
     <br>
     <input type="text" id="realOddsInput1" placeholder="Enter Team 1 Real App Odds">
@@ -140,10 +145,59 @@
 
 
     <script>
-        function toggleCustomNames() {
-            const customNamesInputs = document.getElementById('customNamesInputs');
-            const customNamesCheckbox = document.getElementById('customNamesCheckbox');
-            customNamesInputs.style.display = customNamesCheckbox.checked ? 'block' : 'none';
+        let currentOddsFormat = 'american'; // Default to American odds
+
+        function setOddsFormat(format) {
+            currentOddsFormat = format;
+            
+            // Update button states
+            document.getElementById('americanOddsBtn').classList.toggle('active', format === 'american');
+            document.getElementById('decimalOddsBtn').classList.toggle('active', format === 'decimal');
+            
+            // Update placeholder text
+            const inputs = [
+                'sportsbookOddsInput1', 'realOddsInput1',
+                'sportsbookOddsInput2', 'realOddsInput2', 
+                'sportsbookOddsInput3', 'realOddsInput3'
+            ];
+            
+            inputs.forEach((inputId, index) => {
+                const teamNum = Math.floor(index / 2) + 1;
+                const bookType = index % 2 === 0 ? 'Sportsbook' : 'Real App';
+                const placeholder = format === 'american' 
+                    ? `Enter Team ${teamNum} ${bookType} Odds`
+                    : `Enter Team ${teamNum} ${bookType} Odds (Decimal)`;
+                document.getElementById(inputId).placeholder = placeholder;
+            });
+        }
+
+        function convertDecimalToAmerican(decimalOdds) {
+            if (decimalOdds >= 2.0) {
+                return Math.round((decimalOdds - 1) * 100);
+            } else {
+                return Math.round(-100 / (decimalOdds - 1));
+            }
+        }
+
+        function convertAmericanToDecimal(americanOdds) {
+            if (americanOdds > 0) {
+                return (americanOdds / 100) + 1;
+            } else {
+                return (100 / Math.abs(americanOdds)) + 1;
+            }
+        }
+
+        function parseOddsInput(input) {
+            const value = parseFloat(input);
+            if (isNaN(value)) return null;
+            
+            if (currentOddsFormat === 'decimal') {
+                // Convert decimal to American for internal calculations
+                return convertDecimalToAmerican(value);
+            } else {
+                // Already American odds
+                return Math.round(value);
+            }
         }
 
         function calculateImpliedProbability(odds) {
@@ -191,17 +245,27 @@
             return roundToTwoDecimals((winnings * noVigProbWin) - (wager * noVigProbLose));
         }
 
-        function calculateNoVigOdds() {
-            const name1 = document.getElementById('nameInput1').value || "Side 1";
-            const name2 = document.getElementById('nameInput2').value || "Side 2";
-            const name3 = document.getElementById('nameInput3').value || "Side 3";
+        function formatOddsForDisplay(americanOdds) {
+            if (currentOddsFormat === 'decimal') {
+                return convertAmericanToDecimal(americanOdds).toFixed(2);
+            } else {
+                return americanOdds;
+            }
+        }
 
-            const sportsbookOdds1 = parseInt(document.getElementById('sportsbookOddsInput1').value);
-            const realOdds1 = parseInt(document.getElementById('realOddsInput1').value);
-            const sportsbookOdds2 = parseInt(document.getElementById('sportsbookOddsInput2').value);
-            const realOdds2 = parseInt(document.getElementById('realOddsInput2').value);
-            const sportsbookOdds3 = parseInt(document.getElementById('sportsbookOddsInput3').value);
-            const realOdds3 = parseInt(document.getElementById('realOddsInput3').value);
+        function calculateNoVigOdds() {
+            const sportsbookOdds1 = parseOddsInput(document.getElementById('sportsbookOddsInput1').value);
+            const realOdds1 = parseOddsInput(document.getElementById('realOddsInput1').value);
+            const sportsbookOdds2 = parseOddsInput(document.getElementById('sportsbookOddsInput2').value);
+            const realOdds2 = parseOddsInput(document.getElementById('realOddsInput2').value);
+            const sportsbookOdds3 = parseOddsInput(document.getElementById('sportsbookOddsInput3').value);
+            const realOdds3 = parseOddsInput(document.getElementById('realOddsInput3').value);
+
+            // Check if any odds are null (invalid input)
+            if ([sportsbookOdds1, realOdds1, sportsbookOdds2, realOdds2, sportsbookOdds3, realOdds3].some(odds => odds === null)) {
+                document.getElementById('result').innerHTML = 'Please enter valid odds for all teams.';
+                return;
+            }
 
             const maxBet = parseFloat(document.getElementById('maxBetInput').value);
 
@@ -271,39 +335,39 @@
 
             // Create array of all EVs to find the highest
             const evValues = [
-                { name: `${name1} (Wager 0)`, value: ev1Wager0 },
-                { name: `${name1} (Max Bet)`, value: ev1WagerMax },
-                { name: `${name2} (Wager 0)`, value: ev2Wager0 },
-                { name: `${name2} (Max Bet)`, value: ev2WagerMax },
-                { name: `${name3} (Wager 0)`, value: ev3Wager0 },
-                { name: `${name3} (Max Bet)`, value: ev3WagerMax }
+                { name: `Side 1 (Wager 0)`, value: ev1Wager0 },
+                { name: `Side 1 (Max Bet)`, value: ev1WagerMax },
+                { name: `Side 2 (Wager 0)`, value: ev2Wager0 },
+                { name: `Side 2 (Max Bet)`, value: ev2WagerMax },
+                { name: `Side 3 (Wager 0)`, value: ev3Wager0 },
+                { name: `Side 3 (Max Bet)`, value: ev3WagerMax }
             ];
 
             // Find the highest EV
             const highestEV = Math.max(...evValues.map(ev => ev.value));
 
             const showAllOutputs = document.getElementById('toggleOutput').checked;
-            const useCustomNames = document.getElementById('customNamesCheckbox').checked;
+            const oddsFormatLabel = currentOddsFormat === 'american' ? 'American' : 'Decimal';
 
             let resultHTML = '';
 
             if (showAllOutputs) {
                 resultHTML += 
-                    `${useCustomNames ? name1 : "Side 1"} No-Vig American Odds: ${noVigOdds1}<br>` +
-                    `${useCustomNames ? name2 : "Side 2"} No-Vig American Odds: ${noVigOdds2}<br>` +
-                    `${useCustomNames ? name3 : "Side 3"} No-Vig American Odds: ${noVigOdds3}<br>` +
-                    `${useCustomNames ? name1 : "Side 1"} Winnings (Wager 0): ${roundedWinnings1Wager0}<br>` +
-                    `${useCustomNames ? name1 : "Side 1"} Winnings (Max Bet): ${roundedWinnings1WagerMax}<br>` +
-                    `${useCustomNames ? name2 : "Side 2"} Winnings (Wager 0): ${roundedWinnings2Wager0}<br>` +
-                    `${useCustomNames ? name2 : "Side 2"} Winnings (Max Bet): ${roundedWinnings2WagerMax}<br>` +
-                    `${useCustomNames ? name3 : "Side 3"} Winnings (Wager 0): ${roundedWinnings3Wager0}<br>` +
-                    `${useCustomNames ? name3 : "Side 3"} Winnings (Max Bet): ${roundedWinnings3WagerMax}<br>` +
-                    `${useCustomNames ? name1 : "Side 1"} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>` +
-                    `${useCustomNames ? name2 : "Side 2"} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>` +
-                    `${useCustomNames ? name3 : "Side 3"} No-Vig Probability: ${noVigProb3.toFixed(4)}<br>` +
-                    `${useCustomNames ? name1 : "Side 1"} Fractional No-Vig Implied Probability: ${fractionalProb1}<br>` +
-                    `${useCustomNames ? name2 : "Side 2"} Fractional No-Vig Implied Probability: ${fractionalProb2}<br>` +
-                    `${useCustomNames ? name3 : "Side 3"} Fractional No-Vig Implied Probability: ${fractionalProb3}<br>`;
+                    `Side 1 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds1)}<br>` +
+                    `Side 2 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds2)}<br>` +
+                    `Side 3 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds3)}<br>` +
+                    `Side 1 Winnings (Wager 0): ${roundedWinnings1Wager0}<br>` +
+                    `Side 1 Winnings (Max Bet): ${roundedWinnings1WagerMax}<br>` +
+                    `Side 2 Winnings (Wager 0): ${roundedWinnings2Wager0}<br>` +
+                    `Side 2 Winnings (Max Bet): ${roundedWinnings2WagerMax}<br>` +
+                    `Side 3 Winnings (Wager 0): ${roundedWinnings3Wager0}<br>` +
+                    `Side 3 Winnings (Max Bet): ${roundedWinnings3WagerMax}<br>` +
+                    `Side 1 No-Vig Probability: ${noVigProb1.toFixed(4)}<br>` +
+                    `Side 2 No-Vig Probability: ${noVigProb2.toFixed(4)}<br>` +
+                    `Side 3 No-Vig Probability: ${noVigProb3.toFixed(4)}<br>` +
+                    `Side 1 Fractional No-Vig Implied Probability: ${fractionalProb1}<br>` +
+                    `Side 2 Fractional No-Vig Implied Probability: ${fractionalProb2}<br>` +
+                    `Side 3 Fractional No-Vig Implied Probability: ${fractionalProb3}<br>`;
             }
 
             // Add EVs with check mark for highest one
@@ -311,32 +375,32 @@
             
             // Side 1 Wager 0
             resultHTML += `<div class="ev-result ${ev1Wager0 === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Wager 0): ${ev1Wager0}` +
+                `<strong>Side 1 Expected Value (Wager 0): ${ev1Wager0}` +
                 `${ev1Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             // Side 1 Max Bet
             resultHTML += `<div class="ev-result ${ev1WagerMax === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Max Bet): ${ev1WagerMax}` +
+                `<strong>Side 1 Expected Value (Max Bet): ${ev1WagerMax}` +
                 `${ev1WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             // Side 2 Wager 0
             resultHTML += `<div class="ev-result ${ev2Wager0 === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Wager 0): ${ev2Wager0}` +
+                `<strong>Side 2 Expected Value (Wager 0): ${ev2Wager0}` +
                 `${ev2Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             // Side 2 Max Bet
             resultHTML += `<div class="ev-result ${ev2WagerMax === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Max Bet): ${ev2WagerMax}` +
+                `<strong>Side 2 Expected Value (Max Bet): ${ev2WagerMax}` +
                 `${ev2WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             // Side 3 Wager 0
             resultHTML += `<div class="ev-result ${ev3Wager0 === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Wager 0): ${ev3Wager0}` +
+                `<strong>Side 3 Expected Value (Wager 0): ${ev3Wager0}` +
                 `${ev3Wager0 === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             // Side 3 Max Bet
             resultHTML += `<div class="ev-result ${ev3WagerMax === highestEV ? 'highest-ev' : ''}">` +
-                `<strong>${useCustomNames ? name3 : "Side 3"} Expected Value (Max Bet): ${ev3WagerMax}` +
+                `<strong>Side 3 Expected Value (Max Bet): ${ev3WagerMax}` +
                 `${ev3WagerMax === highestEV ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
             
             resultHTML += `</div>`;
@@ -346,9 +410,6 @@
 
         function clearInputs() {
             // Clear all input fields
-            document.getElementById('nameInput1').value = '';
-            document.getElementById('nameInput2').value = '';
-            document.getElementById('nameInput3').value = '';
             document.getElementById('sportsbookOddsInput1').value = '';
             document.getElementById('realOddsInput1').value = '';
             document.getElementById('sportsbookOddsInput2').value = '';
@@ -357,9 +418,7 @@
             document.getElementById('realOddsInput3').value = '';
             document.getElementById('maxBetInput').value = '100'; // Reset to default 100
             document.getElementById('toggleOutput').checked = false; // Uncheck the checkbox
-            document.getElementById('customNamesCheckbox').checked = false; // Uncheck custom names checkbox
             document.getElementById('result').innerHTML = ''; // Clear the result display
-            toggleCustomNames(); // Reset custom names input visibility
         }
 
         // Light/Dark Mode Toggle
