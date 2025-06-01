@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>No-Vig American Odds Calculator</title>
+  <title>2-way Ev Calc</title>
   <style>
     body {
       font-family: sans-serif;
@@ -53,10 +53,6 @@
       margin-top: 20px;
     }
 
-    .custom-names {
-      display: none;
-    }
-
     .real-odds {
       display: none;
     }
@@ -74,10 +70,10 @@
 <body class="light-mode">
   <h1>EV Calc</h1>
 
-  <!-- Custom Names Toggle -->
+  <!-- Odds Format Toggle -->
   <label>
-    <input type="checkbox" id="customNamesCheckbox" onchange="toggleCustomNames()">
-    Use Custom Team Names
+    <input type="checkbox" id="oddsFormatCheckbox" onchange="toggleOddsFormat()">
+    Use Decimal Odds (default: American)
   </label>
   <br>
 
@@ -94,12 +90,6 @@
     Show All Outputs
   </label>
   <br>
-
-  <!-- Custom Names Inputs -->
-  <div class="custom-names" id="customNamesInputs">
-    <input type="text" id="nameInput1" placeholder="Enter Team 1 Name"><br>
-    <input type="text" id="nameInput2" placeholder="Enter Team 2 Name"><br>
-  </div>
 
   <!-- Odds Inputs -->
   <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 Sportsbook Odds"><br>
@@ -137,10 +127,26 @@
   <p>designed by @tomfc on Real</p>
 
   <script>
-    function toggleCustomNames() {
-      const customNamesInputs = document.getElementById('customNamesInputs');
-      const customNamesCheckbox = document.getElementById('customNamesCheckbox');
-      customNamesInputs.style.display = customNamesCheckbox.checked ? 'block' : 'none';
+    function toggleOddsFormat() {
+      const oddsFormatCheckbox = document.getElementById('oddsFormatCheckbox');
+      const isDecimal = oddsFormatCheckbox.checked;
+      
+      // Update placeholders based on odds format
+      const placeholders = isDecimal ? 
+        ['Enter Team 1 Decimal Odds (e.g., 2.50)', 'Enter Team 2 Decimal Odds (e.g., 1.80)'] :
+        ['Enter Team 1 American Odds (e.g., +150)', 'Enter Team 2 American Odds (e.g., -120)'];
+      
+      document.getElementById('sportsbookOddsInput1').placeholder = placeholders[0];
+      document.getElementById('sportsbookOddsInput2').placeholder = placeholders[1];
+      
+      if (document.getElementById('toggleRealOddsCheckbox').checked) {
+        const realPlaceholders = isDecimal ?
+          ['Enter Team 1 Real Decimal Odds', 'Enter Team 2 Real Decimal Odds'] :
+          ['Enter Team 1 Real American Odds', 'Enter Team 2 Real American Odds'];
+        
+        document.getElementById('realOddsInput1').placeholder = realPlaceholders[0];
+        document.getElementById('realOddsInput2').placeholder = realPlaceholders[1];
+      }
     }
 
     function toggleRealOddsInputs() {
@@ -153,6 +159,37 @@
       realOddsDiv.style.display = isChecked ? 'block' : 'none';
       realOddsInput1.disabled = !isChecked;
       realOddsInput2.disabled = !isChecked;
+      
+      // Update placeholders when toggling real odds
+      toggleOddsFormat();
+    }
+
+    function decimalToAmerican(decimal) {
+      if (decimal >= 2) {
+        return Math.round((decimal - 1) * 100);
+      } else {
+        return Math.round(-100 / (decimal - 1));
+      }
+    }
+
+    function americanToDecimal(american) {
+      if (american > 0) {
+        return (american / 100) + 1;
+      } else {
+        return (100 / Math.abs(american)) + 1;
+      }
+    }
+
+    function parseOddsInput(input, isDecimal) {
+      if (isDecimal) {
+        const decimal = parseFloat(input);
+        if (isNaN(decimal) || decimal <= 1) return null;
+        return decimalToAmerican(decimal);
+      } else {
+        const american = parseInt(input);
+        if (isNaN(american) || american === 0) return null;
+        return american;
+      }
     }
 
     function calculateImpliedProbability(odds) {
@@ -204,17 +241,21 @@
     }
 
     function calculateNoVigOdds() {
-      const name1 = document.getElementById('nameInput1').value || "Side 1";
-      const name2 = document.getElementById('nameInput2').value || "Side 2";
-      const sportsbookOdds1 = parseInt(document.getElementById('sportsbookOddsInput1').value);
-      const sportsbookOdds2 = parseInt(document.getElementById('sportsbookOddsInput2').value);
-      if (isNaN(sportsbookOdds1) || isNaN(sportsbookOdds2)) {
-        alert("Please enter valid sportsbook odds for both sides.");
+      const isDecimalFormat = document.getElementById('oddsFormatCheckbox').checked;
+      
+      const sportsbookOdds1 = parseOddsInput(document.getElementById('sportsbookOddsInput1').value, isDecimalFormat);
+      const sportsbookOdds2 = parseOddsInput(document.getElementById('sportsbookOddsInput2').value, isDecimalFormat);
+      
+      if (sportsbookOdds1 === null || sportsbookOdds2 === null) {
+        alert(`Please enter valid ${isDecimalFormat ? 'decimal' : 'American'} odds for both sides.`);
         return;
       }
 
-      const realOdds1 = parseInt(document.getElementById('realOddsInput1').value) || 100;
-      const realOdds2 = parseInt(document.getElementById('realOddsInput2').value) || 100;
+      const realOdds1Input = document.getElementById('realOddsInput1').value;
+      const realOdds2Input = document.getElementById('realOddsInput2').value;
+      const realOdds1 = realOdds1Input ? parseOddsInput(realOdds1Input, isDecimalFormat) || 100 : 100;
+      const realOdds2 = realOdds2Input ? parseOddsInput(realOdds2Input, isDecimalFormat) || 100 : 100;
+      
       const maxBet = parseFloat(document.getElementById('maxBetInput').value.split('-')[0]);
       const prob1 = calculateImpliedProbability(sportsbookOdds1);
       const prob2 = calculateImpliedProbability(sportsbookOdds2);
@@ -254,51 +295,52 @@
       const maxEV = Math.max(...evValues);
       
       const showAllOutputs = document.getElementById('toggleOutput').checked;
-      const useCustomNames = document.getElementById('customNamesCheckbox').checked;
 
       let resultHTML = '';
       if (showAllOutputs) {
+        // Display odds in both formats for output
+        const noVigDecimal1 = americanToDecimal(noVigOdds1).toFixed(2);
+        const noVigDecimal2 = americanToDecimal(noVigOdds2).toFixed(2);
+        
         resultHTML += `
-          ${useCustomNames ? name1 : "Side 1"} No-Vig American Odds: ${noVigOdds1}<br>
-          ${useCustomNames ? name2 : "Side 2"} No-Vig American Odds: ${noVigOdds2}<br>
-          ${useCustomNames ? name1 : "Side 1"} Winnings (Wager 0): ${winnings1Wager0}<br>
-          ${useCustomNames ? name1 : "Side 1"} Winnings (Max Bet): ${winnings1WagerMax}<br>
-          ${useCustomNames ? name2 : "Side 2"} Winnings (Wager 0): ${winnings2Wager0}<br>
-          ${useCustomNames ? name2 : "Side 2"} Winnings (Max Bet): ${winnings2WagerMax}<br>
-          ${useCustomNames ? name1 : "Side 1"} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
-          ${useCustomNames ? name2 : "Side 2"} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
-          ${useCustomNames ? name1 : "Side 1"} Fractional Probability: ${fractionalProb1}<br>
-          ${useCustomNames ? name2 : "Side 2"} Fractional Probability: ${fractionalProb2}<br>`;
+          Side 1 No-Vig American Odds: ${noVigOdds1} (Decimal: ${noVigDecimal1})<br>
+          Side 2 No-Vig American Odds: ${noVigOdds2} (Decimal: ${noVigDecimal2})<br>
+          Side 1 Winnings (Wager 0): ${winnings1Wager0}<br>
+          Side 1 Winnings (Max Bet): ${winnings1WagerMax}<br>
+          Side 2 Winnings (Wager 0): ${winnings2Wager0}<br>
+          Side 2 Winnings (Max Bet): ${winnings2WagerMax}<br>
+          Side 1 No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
+          Side 2 No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
+          Side 1 Fractional Probability: ${fractionalProb1}<br>
+          Side 2 Fractional Probability: ${fractionalProb2}<br>`;
       }
 
       resultHTML += `
-        <strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>${useCustomNames ? name1 : "Side 1"} Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>${useCustomNames ? name2 : "Side 2"} Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
+        <strong>Side 1 Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+        <strong>Side 1 Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
+        <strong>Side 2 Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+        <strong>Side 2 Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
 
       document.getElementById('result').innerHTML = resultHTML;
     }
 
     function clearInputs() {
-      document.getElementById('nameInput1').value = '';
-      document.getElementById('nameInput2').value = '';
       document.getElementById('sportsbookOddsInput1').value = '';
       document.getElementById('sportsbookOddsInput2').value = '';
       document.getElementById('realOddsInput1').value = '';
       document.getElementById('realOddsInput2').value = '';
       document.getElementById('maxBetInput').value = '100-10';
       document.getElementById('toggleOutput').checked = false;
-      document.getElementById('customNamesCheckbox').checked = false;
+      document.getElementById('oddsFormatCheckbox').checked = false;
       document.getElementById('toggleRealOddsCheckbox').checked = false;
       document.getElementById('result').innerHTML = '';
-      toggleCustomNames();
+      toggleOddsFormat();
       toggleRealOddsInputs();
     }
 
     // Initialize state on load
     document.addEventListener('DOMContentLoaded', () => {
-      toggleCustomNames();
+      toggleOddsFormat();
       toggleRealOddsInputs();
     });
   </script>
