@@ -25,32 +25,27 @@
             border: 2px solid #ccc;
             transition: border-color 0.3s;
         }
-
         input,
         select {
             background-color: #333;
             color: lightgray;
             border: 2px solid #555;
         }
-
         input:focus,
         button:focus,
         select:focus {
             border-color: #007BFF;
             outline: none;
         }
-
         button {
             cursor: pointer;
             background-color: #6f42c1;
             color: white;
             border: none;
         }
-
         button:hover {
             background-color: #5a32a3;
         }
-
         #clearButton {
             background-color: red;
             margin-left: 10px;
@@ -89,8 +84,8 @@
       var estPlacement = Number(document.getElementById("estimatedPlacement").value);
       var winningOdds = Number(document.getElementById("winningOddsInput").value);
       
-      if (estPlacement >= 30){
-        estPlacement = 30
+      if (estPlacement >= 10){
+        estPlacement = 10
       }else {
         estPlacement = estPlacement
       }
@@ -128,4 +123,3 @@
     </script>
   </body>
 </html>
-
