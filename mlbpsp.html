@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MLB PSP Calc</title>
+     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: lightgray;
+          text-align:center;
+        }
+      a {
+        color: #858bf0;
+      }
+        input,
+        button,
+        select,
+        textarea {
+            margin: 5px;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 25px;
+            border: 2px solid #ccc;
+            transition: border-color 0.3s;
+        }
+        input,
+        select,
+        textarea {
+            background-color: #333;
+            color: lightgray;
+            border: 2px solid #555;
+        }
+        input:focus,
+        button:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        button {
+            cursor: pointer;
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #5a32a3;
+        }
+        #clearButton {
+            background-color: red;
+            margin-left: 10px;
+        }
+        #playersInput {
+            width: 400px;
+            height: 200px;
+            resize: vertical;
+        }
+        .results-table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #222;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .results-table th,
+        .results-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        .results-table th {
+            background-color: #6f42c1;
+            color: white;
+        }
+        .results-table tr:hover {
+            background-color: #333;
+        }
+        .mode-toggle {
+            margin-bottom: 20px;
+        }
+        .mode-section {
+            display: none;
+        }
+        .mode-section.active {
+            display: block;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>
+      MLB PSP Calc
+    </h1>
+    <p>
+      designed by @tomfc on Real
+    </p>
+    <h4>
+      <a href="mlbpsphelp.html">How to use</a>
+    </h4>
+    
+    <div class="mode-toggle">
+      <button onclick="switchMode('multi')" id="multiModeBtn">Multiple Players</button>  
+      <button onclick="switchMode('single')" id="singleModeBtn">Single Player</button>
+    </div>
+
+    <!-- Single Player Mode -->
+    <div id="singleMode" class="mode-section active">
+        <input id="estimatedPlacement" type="number" placeholder="Enter Estimated Placement"> <br>
+        <input id="winningOddsInput" type="number" placeholder="Enter American Player Odds"> <br>
+        <button id="calculateButton" type="button" onclick="calculateEV()">
+          Calculate
+        </button> 
+        <button id="clearButton" type="button" onclick="clearAll()">
+          Clear
+        </button>
+        <br><br>
+        <p id="evOutput"></p>
+        <p id="payoutOutput"></p>
+        <p id="probOutput"></p>
+    </div>
+
+    <!-- Multiple Players Mode -->
+    <div id="multiMode" class="mode-section">
+        <p>Enter players and odds (one per line, alternating name and odds):</p>
+        <textarea id="playersInput" placeholder="Austin Riley
++115
+Matt Olson
++125
+Ronald Acuna Jr.
++135
+..."></textarea><br>
+        <button onclick="calculateMultipleEV()">Calculate All</button>
+        <button onclick="clearMultiple()">Clear</button>
+        <div id="multiResults"></div>
+    </div>
+
+    <br>
+    <button onclick="window.location.href='index.html'">Go Home</button>
+    
+    <script>
+    let currentMode = 'single';
+
+    function switchMode(mode) {
+        currentMode = mode;
+        
+        // Hide all mode sections
+        document.querySelectorAll('.mode-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Show selected mode
+        document.getElementById(mode + 'Mode').classList.add('active');
+        
+        // Update button styles
+        document.querySelectorAll('.mode-toggle button').forEach(btn => {
+            btn.style.backgroundColor = '#6f42c1';
+        });
+        document.getElementById(mode + 'ModeBtn').style.backgroundColor = '#5a32a3';
+    }
+
+    function calculateEV(){
+      var estPlacement = Number(document.getElementById("estimatedPlacement").value);
+      var winningOdds = Number(document.getElementById("winningOddsInput").value);
+      
+      if (estPlacement >= 10){
+        estPlacement = 10
+      }else {
+        estPlacement = estPlacement
+      }
+      
+      // calculate implied probability correctly
+      var impliedProb;
+      
+      if (winningOdds > 0){
+        impliedProb = 100 / (winningOdds + 100);
+      }else {
+        impliedProb = Math.abs(winningOdds) / (Math.abs(winningOdds) + 100)
+      }
+      impliedProb = impliedProb.toFixed(4);
+      
+      var payout = estPlacement * 10;
+      
+      var ev = payout * impliedProb;
+      
+      var percProb = impliedProb * 100;
+      
+      // output results
+      document.getElementById('evOutput').innerHTML = 'Expected Value: ' + ev.toFixed(2);
+      document.getElementById('payoutOutput').innerHTML = 'Payout: ' + payout.toFixed(2) + " karma";
+      document.getElementById('probOutput').innerHTML = 'Probability of hitting: ' + percProb.toFixed(2) + "%";
+    }
+    
+    function clearAll(){
+        document.getElementById('evOutput').innerHTML = '';
+        document.getElementById('payoutOutput').innerHTML = ''
+        document.getElementById('probOutput').innerHTML = ''
+        document.getElementById('estimatedPlacement').value=''
+        document.getElementById('winningOddsInput').value=''
+    }
+
+    function calculateMultipleEV() {
+        const input = document.getElementById('playersInput').value.trim();
+        if (!input) {
+            alert('Please enter player data');
+            return;
+        }
+
+        const lines = input.split('\n').map(line => line.trim()).filter(line => line);
+        const players = [];
+        
+        // Parse alternating name/odds format
+        for (let i = 0; i < lines.length; i += 2) {
+            if (i + 1 < lines.length) {
+                const name = lines[i];
+                const odds = lines[i + 1];
+                
+                // Check if odds line looks like odds (starts with + or -)
+                if (odds.match(/^[+-]\d+$/)) {
+                    players.push({
+                        name: name,
+                        odds: parseInt(odds)
+                    });
+                }
+            }
+        }
+
+        if (players.length === 0) {
+            alert('No valid player/odds pairs found. Make sure to alternate names and odds.');
+            return;
+        }
+
+        // Sort players by odds (lowest to highest for better odds)
+        players.sort((a, b) => a.odds - b.odds);
+
+        // Calculate EV for each player with placement based on ranking
+        const results = players.map((player, index) => {
+            let placement = index + 1;
+            if (placement >= 10) {
+                placement = 10;
+            }
+
+            // Calculate implied probability
+            let impliedProb;
+            if (player.odds > 0) {
+                impliedProb = 100 / (player.odds + 100);
+            } else {
+                impliedProb = Math.abs(player.odds) / (Math.abs(player.odds) + 100);
+            }
+
+            const payout = placement * 10;
+            const ev = payout * impliedProb;
+            const percProb = impliedProb * 100;
+
+            return {
+                name: player.name,
+                placement: placement,
+                odds: player.odds,
+                payout: payout,
+                probability: percProb,
+                ev: ev
+            };
+        });
+
+        // Sort by EV descending for display
+        results.sort((a, b) => b.ev - a.ev);
+
+        // Display results in a table
+        displayMultipleResults(results);
+    }
+
+    function displayMultipleResults(results) {
+        let html = '<table class="results-table">';
+        html += '<thead><tr>';
+        html += '<th>Player</th>';
+        html += '<th>Placement</th>';
+        html += '<th>Odds</th>';
+        html += '<th>Payout</th>';
+        html += '<th>Probability</th>';
+        html += '<th>Expected Value</th>';
+        html += '</tr></thead><tbody>';
+
+        results.forEach(result => {
+            html += '<tr>';
+            html += `<td>${result.name}</td>`;
+            html += `<td>${result.placement}</td>`;
+            html += `<td>${result.odds > 0 ? '+' : ''}${result.odds}</td>`;
+            html += `<td>${result.payout.toFixed(2)} karma</td>`;
+            html += `<td>${result.probability.toFixed(2)}%</td>`;
+            html += `<td>${result.ev.toFixed(2)}</td>`;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('multiResults').innerHTML = html;
+    }
+
+    function clearMultiple() {
+        document.getElementById('playersInput').value = '';
+        document.getElementById('multiResults').innerHTML = '';
+    }
+
+    // Initialize with multiple mode
+    switchMode('multi');
+    </script>
+  </body>
+</html>
