@@ -326,6 +326,15 @@
       <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
       <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
     </div>
+    <div id="shortenedModeToggle" style="display: none; margin: 15px 0;">
+  <label>
+    <input type="checkbox" id="shortenedModeCheckbox" onchange="toggleShortenedMode()">
+    Shortened Mode (Only teams with placement ≥ 7)
+  </label>
+  <div id="shortenedModeError" class="error" style="display: none;">
+    Shortened mode requires at least 8 teams in sorted data.
+  </div>
+</div>
     <h4>
       If you do not want to use the auto-ranker, click the EV Calculator tab above.
     </h4>
@@ -430,31 +439,37 @@ BAL +113
     <script>
       // Global variable to store the parsed data
       let teamsData = [];
+      let shortenedMode = false;
       function clearData(){
         document.getElementById('inputData').value = '';
       }
       function openTab(tabName) {
-        // Hide all tab contents
-        const tabContents = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < tabContents.length; i++) {
-          tabContents[i].classList.remove("active");
-        }
-        
-        // Deactivate all tab buttons
-        const tabButtons = document.getElementsByClassName("tab-button");
-        for (let i = 0; i < tabButtons.length; i++) {
-          tabButtons[i].classList.remove("active");
-        }
-        
-        // Show the selected tab content and activate its button
-        document.getElementById(tabName).classList.add("active");
-        const buttons = document.getElementsByClassName("tab-button");
-        for (let i = 0; i < buttons.length; i++) {
-          if (buttons[i].textContent.toLowerCase().includes(tabName.replace("Tab", "").toLowerCase())) {
-            buttons[i].classList.add("active");
-          }
-        }
-      }
+  // Hide all tab contents
+  const tabContents = document.getElementsByClassName("tab-content");
+  for (let i = 0; i < tabContents.length; i++) {
+    tabContents[i].classList.remove("active");
+  }
+  
+  // Deactivate all tab buttons
+  const tabButtons = document.getElementsByClassName("tab-button");
+  for (let i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].classList.remove("active");
+  }
+  
+  // Show the selected tab content and activate its button
+  document.getElementById(tabName).classList.add("active");
+  const buttons = document.getElementsByClassName("tab-button");
+  for (let i = 0; i < buttons.length; i++) {
+    if (buttons[i].textContent.toLowerCase().includes(tabName.replace("Tab", "").toLowerCase())) {
+      buttons[i].classList.add("active");
+    }
+  }
+  
+  // Hide shortened mode toggle if switching to sorter tab
+  if (tabName === 'sorterTab') {
+    document.getElementById("shortenedModeToggle").style.display = "none";
+  }
+}
       
       function processData() {
         const inputText = document.getElementById("inputData").value.trim();
@@ -702,11 +717,77 @@ BAL +113
         });
       }
       
-      function useForEVCalculator() {
-        if (teamsData.length === 0) {
-          alert("No valid data to use. Please process your data first.");
-          return;
+   // Modify the useForEVCalculator function
+function useForEVCalculator() {
+  if (teamsData.length === 0) {
+    alert("No valid data to use. Please process your data first.");
+    return;
+  }
+  
+  // Show shortened mode toggle
+  const shortenedToggle = document.getElementById("shortenedModeToggle");
+  const shortenedError = document.getElementById("shortenedModeError");
+  shortenedToggle.style.display = "block";
+  
+  // Check if we have enough teams for shortened mode
+  if (teamsData.length < 8) {
+    shortenedError.style.display = "block";
+    document.getElementById("shortenedModeCheckbox").disabled = true;
+    document.getElementById("shortenedModeCheckbox").checked = false;
+    shortenedMode = false;
+  } else {
+    shortenedError.style.display = "none";
+    document.getElementById("shortenedModeCheckbox").disabled = false;
+  }
+  
+  // Set the calculator count based on mode
+  const count = shortenedMode ? 
+    Math.min(teamsData.length - 6, 20) : // Teams from position 7 onwards
+    Math.min(teamsData.length, 20);
+  
+  document.getElementById("calcCountSelect").value = count;
+  
+  // Switch to calculator tab
+  openTab('calculatorTab');
+  
+  // Generate the calculators
+  generateCalculators();
+  
+  // Fill in the data
+  setTimeout(() => {
+    const startIndex = shortenedMode ? 6 : 0; // Start from 7th position (index 6) in shortened mode
+    
+    for (let i = 0; i < count; i++) {
+      const dataIndex = startIndex + i;
+      if (dataIndex < teamsData.length) {
+        // Get the underdog odds value (remove + if present)
+        const odds = teamsData[dataIndex].odds;
+        const oddsValue = parseInt(odds.replace('+', ''));
+        
+        // Set placement as actual position (7, 8, 9, etc. for shortened mode)
+        const placement = shortenedMode ? dataIndex + 1 : Math.min(i + 1, 10);
+        document.getElementById(`placementInput${i}`).value = placement;
+        
+        // Set Real's underdog odds only
+        document.getElementById(`realOddsInput${i}`).value = oddsValue;
+
+        // Set the team name in the header
+        const teamHeader = document.getElementById(`teamHeader${i}`);
+        if (teamHeader) {
+          teamHeader.textContent = teamsData[dataIndex].team;
         }
+      }
+    }
+  }, 100);
+}
+      function toggleShortenedMode() {
+  shortenedMode = document.getElementById("shortenedModeCheckbox").checked;
+  
+  // If we have data, regenerate the calculator with new mode
+  if (teamsData.length > 0) {
+    useForEVCalculator();
+  }
+}
         
         // Set the calculator count to match the number of teams
         const count = Math.min(teamsData.length, 20); // Max is 15
@@ -742,34 +823,40 @@ BAL +113
         }, 100);
       }
       
-      function generateCalculators() {
-        const count = Number(document.getElementById("calcCountSelect").value);
-        const container = document.getElementById("calculatorContainer");
-        container.innerHTML = "";
+     function generateCalculators() {
+  const count = Number(document.getElementById("calcCountSelect").value);
+  const container = document.getElementById("calculatorContainer");
+  container.innerHTML = "";
 
-        for (let i = 0; i < count; i++) {
-          const section = document.createElement("div");
-          section.className = "calculator-section";
-          section.innerHTML = `
-            <h3>Bet ${i + 1}</h3>
-            <div class="team-header" id="teamHeader${i}"></div>
-            <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
-            <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
-            <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
-            <div id="divFavoriteOddsInput${i}">
-              <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
-            </div>
-            <button onclick="calculateEV(${i})">Calculate</button>
-            <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
-            <p id="resultsOutput${i}"></p>
-            <p id="winningsOutput${i}"></p>
-            <p id="hitProbOutput${i}"></p>
-          `;
-          container.appendChild(section);
-        }
+  for (let i = 0; i < count; i++) {
+    const section = document.createElement("div");
+    section.className = "calculator-section";
+    
+    // Show different header text for shortened mode
+    const headerText = shortenedMode ? 
+      `Bet ${i + 1} (Placement ${i + 7})` : 
+      `Bet ${i + 1}`;
+    
+    section.innerHTML = `
+      <h3>${headerText}</h3>
+      <div class="team-header" id="teamHeader${i}"></div>
+      <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
+      <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
+      <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+      <div id="divFavoriteOddsInput${i}">
+        <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+      </div>
+      <button onclick="calculateEV(${i})">Calculate</button>
+      <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
+      <p id="resultsOutput${i}"></p>
+      <p id="winningsOutput${i}"></p>
+      <p id="hitProbOutput${i}"></p>
+    `;
+    container.appendChild(section);
+  }
 
-        toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
-      }
+  toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
+}
 
       function toggleFavoriteInputs() {
         const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
