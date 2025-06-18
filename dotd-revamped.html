@@ -1,843 +1,886 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>DOTD EV Calc Revamped</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 20px;
-        background-color: black;
-        color: lightgray;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOTD EV Calc Revamped</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background-color: black;
+      color: lightgray;
+      text-align: center;
+    }
+
+    input,
+    button,
+    select,
+    textarea {
+      margin: 5px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 25px;
+      border: 2px solid #ccc;
+      transition: border-color 0.3s;
+    }
+
+    input,
+    select,
+    textarea {
+      background-color: #333;
+      color: lightgray;
+      border: 2px solid #555;
+    }
+
+    textarea {
+      width: 80%;
+      height: 200px;
+      border-radius: 15px;
+      font-family: monospace;
+    }
+
+    input:focus,
+    button:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #6f42c1;
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #5a32a3;
+    }
+
+    #clearButton {
+      background-color: red;
+      margin-left: 10px;
+    }
+
+    a {
+      color: #858bf0;
+    }
+
+    .calculator-section {
+      border: 1px solid #444;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      background-color: #1a1a1a;
+      text-align: center;
+    }
+
+    .sorted-section {
+      border: 1px solid #444;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 20px;
+      background-color: #1a1a1a;
+      text-align: center;
+      max-width: 90%;
+    }
+
+    .sorted-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background-color: #222;
+      border-radius: 8px;
+      text-align: left;
+      position: relative;
+    }
+
+    .instructions {
+      background-color: #2a2a3a;
+      padding: 15px;
+      border-radius: 15px;
+      margin: 20px auto;
+      max-width: 90%;
+      text-align: left;
+    }
+
+    .error {
+      color: #ff6b6b;
+      background-color: #3a2222;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .warning {
+      color: #ffd166;
+      background-color: #3a2e22;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .auto-fix {
+      color: #67c3d0;
+      background-color: #22303a;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .tab-container {
+      margin: 20px 0;
+    }
+
+    .tab-button {
+      background-color: #333;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+    }
+
+    .tab-button.active {
+      background-color: #6f42c1;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    #warnings {
+      margin-top: 20px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 15px;
+      background-color: #2a2a2a;
+      display: none;
+    }
+
+    pre {
+      text-align: left;
+      background-color: #222;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .home-button {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #444;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .home-button:hover {
+      background-color: #6f42c1;
+    }
+
+    .home-icon {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .team-header {
+      font-weight: bold;
+      color: #a5a1ff;
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .header-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .home-button {
+        position: static;
+        transform: none;
+        margin-bottom: 10px;
+      }
+
+      /* Add this to the existing style section */
+      .calculator-actions {
+        margin: 20px auto;
         text-align: center;
       }
-      input, button, select, textarea {
-        margin: 5px;
-        padding: 15px;
-        font-size: 16px;
-        border-radius: 25px;
-        border: 2px solid #ccc;
-        transition: border-color 0.3s;
-      }
-      input, select, textarea {
-        background-color: #333;
-        color: lightgray;
-        border: 2px solid #555;
-      }
-      textarea {
-        width: 80%;
-        height: 200px;
-        border-radius: 15px;
-        font-family: monospace;
-      }
-      input:focus, button:focus, select:focus, textarea:focus {
-        border-color: #007BFF;
-        outline: none;
-      }
-      button {
-        cursor: pointer;
+
+      #calculateAllButton {
         background-color: #6f42c1;
         color: white;
+        padding: 15px 30px;
+        font-size: 18px;
+        border-radius: 25px;
         border: none;
+        cursor: pointer;
+        margin: 20px auto;
+        transition: background-color 0.3s;
       }
-      button:hover {
+
+      #calculateAllButton:hover {
         background-color: #5a32a3;
       }
+
+      .summary-group {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #222;
+        border-radius: 10px;
+      }
+
+      .summary-group h3 {
+        margin-top: 0;
+        color: #a5a1ff;
+      }
+
       #clearButton {
         background-color: red;
         margin-left: 10px;
       }
-      a {
-        color: #858bf0;
-      }
-      .calculator-section {
-        border: 1px solid #444;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-radius: 20px;
-        background-color: #1a1a1a;
-        text-align: center;
-      }
-      .sorted-section {
-        border: 1px solid #444;
-        padding: 20px;
-        margin: 20px auto;
-        border-radius: 20px;
-        background-color: #1a1a1a;
-        text-align: center;
-        max-width: 90%;
-      }
-      .sorted-item {
-        margin-bottom: 8px;
-        padding: 8px;
-        background-color: #222;
-        border-radius: 8px;
-        text-align: left;
-        position: relative;
-      }
-      .instructions {
-        background-color: #2a2a3a;
-        padding: 15px;
-        border-radius: 15px;
-        margin: 20px auto;
-        max-width: 90%;
-        text-align: left;
-      }
-      .error {
-        color: #ff6b6b;
-        background-color: #3a2222;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-      }
-      .warning {
-        color: #ffd166;
-        background-color: #3a2e22;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-      }
-      .auto-fix {
-        color: #67c3d0;
-        background-color: #22303a;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-      }
-      .tab-container {
-        margin: 20px 0;
-      }
-      .tab-button {
-        background-color: #333;
-        border: none;
-        padding: 10px 20px;
-        margin: 0 5px;
-        border-radius: 10px 10px 0 0;
-        cursor: pointer;
-      }
-      .tab-button.active {
-        background-color: #6f42c1;
-      }
-      .tab-content {
-        display: none;
-      }
-      .tab-content.active {
-        display: block;
-      }
-      #warnings {
-        margin-top: 20px;
-        border: 1px solid #444;
-        border-radius: 10px;
-        padding: 15px;
-        background-color: #2a2a2a;
-        display: none;
-      }
-      pre {
-        text-align: left;
-        background-color: #222;
-        padding: 10px;
-        border-radius: 5px;
-        overflow-x: auto;
-      }
-      .header-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        margin-bottom: 20px;
-      }
-      .home-button {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: #444;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        transition: all 0.3s ease;
-      }
-      .home-button:hover {
-        background-color: #6f42c1;
-      }
-      .home-icon {
-        width: 16px;
-        height: 16px;
-        fill: currentColor;
-      }
-      .team-header {
-        font-weight: bold;
-        color: #a5a1ff;
-        margin-bottom: 5px;
-      }
-      @media (max-width: 600px) {
-        .header-container {
-          flex-direction: column;
-          gap: 10px;
-        }
-        .home-button {
-          position: static;
-          transform: none;
-          margin-bottom: 10px;
-        }
-        /* Add this to the existing style section */
-.calculator-actions {
-  margin: 20px auto;
-  text-align: center;
-}
-        
-#calculateAllButton {
-  background-color: #6f42c1;
-  color: white;
-  padding: 15px 30px;
-  font-size: 18px;
-  border-radius: 25px;
-  border: none;
-  cursor: pointer;
-  margin: 20px auto;
-  transition: background-color 0.3s;
-}
+    }
 
-#calculateAllButton:hover {
-  background-color: #5a32a3;
-}
+    .rankings-section {
+      border: 1px solid #444;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 20px;
+      background-color: #1a1a1a;
+      text-align: center;
+      max-width: 90%;
+      display: none;
+    }
 
-.summary-group {
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #222;
-  border-radius: 10px;
-}
+    .ranking-item {
+      margin-bottom: 12px;
+      padding: 15px;
+      background-color: #222;
+      border-radius: 12px;
+      text-align: left;
+      position: relative;
+      border-left: 4px solid #6f42c1;
+    }
 
-.summary-group h3 {
-  margin-top: 0;
-  color: #a5a1ff;
-}
-        #clearButton {
-           background-color: red;
-            margin-left: 10px;
-        }
-      }
+    .ranking-item.rank-1 {
+      border-left: 4px solid #ffd700;
+      background-color: #2a2619;
+    }
 
-.rankings-section {
-  border: 1px solid #444;
-  padding: 20px;
-  margin: 20px auto;
-  border-radius: 20px;
-  background-color: #1a1a1a;
-  text-align: center;
-  max-width: 90%;
-  display: none;
-}
+    .ranking-item.rank-2 {
+      border-left: 4px solid #c0c0c0;
+      background-color: #252525;
+    }
 
-.ranking-item {
-  margin-bottom: 12px;
-  padding: 15px;
-  background-color: #222;
-  border-radius: 12px;
-  text-align: left;
-  position: relative;
-  border-left: 4px solid #6f42c1;
-}
+    .ranking-item.rank-3 {
+      border-left: 4px solid #cd7f32;
+      background-color: #2a2015;
+    }
 
-.ranking-item.rank-1 {
-  border-left: 4px solid #ffd700;
-  background-color: #2a2619;
-}
+    .ranking-number {
+      font-weight: bold;
+      color: #a5a1ff;
+      font-size: 18px;
+      display: inline-block;
+      width: 30px;
+    }
 
-.ranking-item.rank-2 {
-  border-left: 4px solid #c0c0c0;
-  background-color: #252525;
-}
+    .ranking-team {
+      font-weight: bold;
+      color: #ffffff;
+      font-size: 16px;
+    }
 
-.ranking-item.rank-3 {
-  border-left: 4px solid #cd7f32;
-  background-color: #2a2015;
-}
+    .ranking-details {
+      color: #cccccc;
+      font-size: 14px;
+      margin-top: 5px;
+    }
 
-.ranking-number {
-  font-weight: bold;
-  color: #a5a1ff;
-  font-size: 18px;
-  display: inline-block;
-  width: 30px;
-}
+    .ranking-ev {
+      color: #4ade80;
+      font-weight: bold;
+    }
 
-.ranking-team {
-  font-weight: bold;
-  color: #ffffff;
-  font-size: 16px;
-}
+    .ranking-payout {
+      color: #fbbf24;
+    }
 
-.ranking-details {
-  color: #cccccc;
-  font-size: 14px;
-  margin-top: 5px;
-}
+    .ranking-prob {
+      color: #60a5fa;
+    }
 
-.ranking-ev {
-  color: #4ade80;
-  font-weight: bold;
-}
+    #showRankingsButton {
+      background-color: #059669;
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      margin: 10px;
+      transition: background-color 0.3s;
+    }
 
-.ranking-payout {
-  color: #fbbf24;
-}
+    #showRankingsButton:hover {
+      background-color: #047857;
+    }
+  </style>
+</head>
 
-.ranking-prob {
-  color: #60a5fa;
-}
-
-#showRankingsButton {
-  background-color: #059669;
-  color: white;
-  padding: 15px 30px;
-  font-size: 18px;
-  border-radius: 25px;
-  border: none;
-  cursor: pointer;
-  margin: 10px;
-  transition: background-color 0.3s;
-}
-
-#showRankingsButton:hover {
-  background-color: #047857;
-}
-    </style>
-  </head>
-  <body>
-    <div class="header-container">
-      <a href="index.html" class="home-button">
-        <svg class="home-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-        </svg>
-        Home
-      </a>
-      <h1>DOTD EV calc</h1>
-    </div>
-    
-    <div class="tab-container">
-      <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
-      <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
-    </div>
-    <div id="shortenedModeToggle" style="display: none; margin: 15px 0;">
-  <label>
-    <input type="checkbox" id="shortenedModeCheckbox" onchange="toggleShortenedMode()">
-    Shortened Mode (Only teams with placement ≥ 7)
-  </label>
-  <div id="shortenedModeError" class="error" style="display: none;">
-    Shortened mode requires at least 8 teams in sorted data.
+<body>
+  <div class="header-container">
+    <a href="index.html" class="home-button">
+      <svg class="home-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+      </svg>
+      Home
+    </a>
+    <h1>DOTD EV calc</h1>
   </div>
-</div>
-    <h4>
-      If you do not want to use the auto-ranker, click the EV Calculator tab above.
-    </h4>
-    <a href="formatter.html" target="_blank">Formatter</a>
-    <a href="help-dotd.html">How to use</a><br>
-    <div id="sorterTab" class="tab-content active">
-      <textarea id="inputData" placeholder="Paste the data below. The format should be like:
+
+  <div class="tab-container">
+    <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
+    <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
+  </div>
+  <div id="shortenedModeToggle" style="display: none; margin: 15px 0;">
+    <label>
+      <input type="checkbox" id="shortenedModeCheckbox" onchange="toggleShortenedMode()">
+      Shortened Mode (Only teams with placement ≥ 7)
+    </label>
+    <div id="shortenedModeError" class="error" style="display: none;">
+      Shortened mode requires at least 8 teams in sorted data.
+    </div>
+  </div>
+  <h4>
+    If you do not want to use the auto-ranker, click the EV Calculator tab above.
+  </h4>
+  <a href="formatter.html" target="_blank">Formatter</a>
+  <a href="help-dotd.html">How to use</a><br>
+  <div id="sorterTab" class="tab-content active">
+    <textarea id="inputData" placeholder="Paste the data below. The format should be like:
                                             
 PHI +104
 8% (563)
 BAL +113
 3% (241)
 ..."></textarea><br>
-      <button onclick="processData()">Process and Sort Data</button>
-      <button onclick="clearData()" id="clearButton">Clear Data</button>
-      
-      <div id="warnings"></div>
-      <div id="sortedResults" class="sorted-section" style="display: none;">
-        <h2>Sorted Results:</h2>
-        <div id="sortedItems"></div>
-        <button id="useForCalculator" onclick="useForEVCalculator()">Use Data for EV Calculator →</button>
+    <button onclick="processData()">Process and Sort Data</button>
+    <button onclick="clearData()" id="clearButton">Clear Data</button>
+
+    <div id="warnings"></div>
+    <div id="sortedResults" class="sorted-section" style="display: none;">
+      <h2>Sorted Results:</h2>
+      <div id="sortedItems"></div>
+      <button id="useForCalculator" onclick="useForEVCalculator()">Use Data for EV Calculator →</button>
+    </div>
+  </div>
+
+  <div id="calculatorTab" class="tab-content">
+
+    <br><label for="calcCountSelect">Option Amount</label><br>
+    <select id="calcCountSelect" onchange="generateCalculators()">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+    </select>
+
+    <br>
+    <button onclick="window.location.reload()">Reset</button>
+    <br>
+    <label>
+      <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()">
+      Using No-Vig Odds for ALL?
+    </label>
+    <br><br>
+
+    <div id="calculatorContainer"></div>
+    <!-- Add this after the calculator container div -->
+    <div class="calculator-actions">
+      <button id="calculateAllButton" onclick="calculateAllEVs()">Calculate All</button>
+      <button id="showRankingsButton" onclick="showCompleteRankings()">Show Complete EV Rankings</button>
+    </div>
+
+
+    <div id="summarySection" class="sorted-section" style="display: none;">
+      <h2>Best Options Summary</h2>
+      <div class="summary-group">
+        <h3>🏆 Highest Expected Value</h3>
+        <div class="sorted-item">
+          <p><strong>Team:</strong> <span id="bestEVName">-</span></p>
+          <p><strong>Expected Value:</strong> <span id="bestEVValue">-</span></p>
+        </div>
+      </div>
+      <div class="summary-group">
+        <h3>💰 Highest Payout</h3>
+        <div class="sorted-item">
+          <p><strong>Team:</strong> <span id="bestPayoutName">-</span></p>
+          <p><strong>Karma Payout:</strong> <span id="bestPayoutValue">-</span></p>
+        </div>
+      </div>
+      <div class="summary-group">
+        <h3>🎯 Best Hit Probability</h3>
+        <div class="sorted-item">
+          <p><strong>Team:</strong> <span id="bestProbName">-</span></p>
+          <p><strong>Hit Probability:</strong> <span id="bestProbValue">-</span>%</p>
+        </div>
       </div>
     </div>
-    
-    <div id="calculatorTab" class="tab-content">
-
-      <br><label for="calcCountSelect">Option Amount</label><br>
-      <select id="calcCountSelect" onchange="generateCalculators()">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-        <option value="10">10</option>
-        <option value="11">11</option>
-        <option value="12">12</option>
-        <option value="13">13</option>
-        <option value="14">14</option>
-        <option value="15">15</option>
-        <option value="16">16</option>
-        <option value="17">17</option>
-        <option value="18">18</option>
-        <option value="19">19</option>
-        <option value="20">20</option>
-      </select>
-
-      <br>
-      <button onclick="window.location.reload()">Reset</button>
-      <br>
-      <label>
-        <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()">
-        Using No-Vig Odds for ALL?
-      </label>
-      <br><br>
-
-      <div id="calculatorContainer"></div>
-      <!-- Add this after the calculator container div -->
-<div class="calculator-actions">
-  <button id="calculateAllButton" onclick="calculateAllEVs()">Calculate All</button>
-  <button id="showRankingsButton" onclick="showCompleteRankings()">Show Complete EV Rankings</button>
-</div>
-  
-
-<div id="summarySection" class="sorted-section" style="display: none;">
-  <h2>Best Options Summary</h2>
-  <div class="summary-group">
-    <h3>🏆 Highest Expected Value</h3>
-    <div class="sorted-item">
-      <p><strong>Team:</strong> <span id="bestEVName">-</span></p>
-      <p><strong>Expected Value:</strong> <span id="bestEVValue">-</span></p>
+    <div id="rankingsSection" class="rankings-section">
+      <h2>📊 Complete EV Rankings</h2>
+      <p style="color: #888; margin-bottom: 20px;">All teams ranked by Expected Value (highest to lowest)</p>
+      <div id="rankingsContainer"></div>
+      <button onclick="hideRankings()"
+        style="background-color: #666; color: white; padding: 10px 20px; border: none; border-radius: 15px; margin-top: 15px; cursor: pointer;">Hide
+        Rankings</button>
     </div>
+
+    <p>designed by @tomfc on Real</p>
   </div>
-  <div class="summary-group">
-    <h3>💰 Highest Payout</h3>
-    <div class="sorted-item">
-      <p><strong>Team:</strong> <span id="bestPayoutName">-</span></p>
-      <p><strong>Karma Payout:</strong> <span id="bestPayoutValue">-</span></p>
-    </div>
-  </div>
-  <div class="summary-group">
-    <h3>🎯 Best Hit Probability</h3>
-    <div class="sorted-item">
-      <p><strong>Team:</strong> <span id="bestProbName">-</span></p>
-      <p><strong>Hit Probability:</strong> <span id="bestProbValue">-</span>%</p>
-    </div>
-  </div>
-</div>
-      <div id="rankingsSection" class="rankings-section">
-  <h2>📊 Complete EV Rankings</h2>
-  <p style="color: #888; margin-bottom: 20px;">All teams ranked by Expected Value (highest to lowest)</p>
-  <div id="rankingsContainer"></div>
-  <button onclick="hideRankings()" style="background-color: #666; color: white; padding: 10px 20px; border: none; border-radius: 15px; margin-top: 15px; cursor: pointer;">Hide Rankings</button>
-</div>
 
-      <p>designed by @tomfc on Real</p>
-    </div>
-
-    <script>
-      // Global variable to store the parsed data
-      let teamsData = [];
-      let shortenedMode = false;
-      function clearData(){
-        document.getElementById('inputData').value = '';
-      }
-      function openTab(tabName) {
-  // Hide all tab contents
-  const tabContents = document.getElementsByClassName("tab-content");
-  for (let i = 0; i < tabContents.length; i++) {
-    tabContents[i].classList.remove("active");
-  }
-  
-  // Deactivate all tab buttons
-  const tabButtons = document.getElementsByClassName("tab-button");
-  for (let i = 0; i < tabButtons.length; i++) {
-    tabButtons[i].classList.remove("active");
-  }
-  
-  // Show the selected tab content and activate its button
-  document.getElementById(tabName).classList.add("active");
-  const buttons = document.getElementsByClassName("tab-button");
-  for (let i = 0; i < buttons.length; i++) {
-    if (buttons[i].textContent.toLowerCase().includes(tabName.replace("Tab", "").toLowerCase())) {
-      buttons[i].classList.add("active");
+  <script>
+    // Global variable to store the parsed data
+    let teamsData = [];
+    let shortenedMode = false;
+    function clearData() {
+      document.getElementById('inputData').value = '';
     }
-  }
-  
-  // Hide shortened mode toggle if switching to sorter tab
-  if (tabName === 'sorterTab') {
-    document.getElementById("shortenedModeToggle").style.display = "none";
-  }
-}
-      
-      function processData() {
-        const inputText = document.getElementById("inputData").value.trim();
-        const sortedItemsDiv = document.getElementById("sortedItems");
-        const warningsDiv = document.getElementById("warnings");
-        const sortedResults = document.getElementById("sortedResults");
-        
-        // Reset warnings and results
-        warningsDiv.innerHTML = '';
-        warningsDiv.style.display = 'none';
-        sortedItemsDiv.innerHTML = '';
-        sortedResults.style.display = 'none';
-        teamsData = [];
-        
-        if (!inputText) {
-          warningsDiv.innerHTML = '<p class="error">Please enter some data to sort.</p>';
+    function openTab(tabName) {
+      // Hide all tab contents
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove("active");
+      }
+
+      // Deactivate all tab buttons
+      const tabButtons = document.getElementsByClassName("tab-button");
+      for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove("active");
+      }
+
+      // Show the selected tab content and activate its button
+      document.getElementById(tabName).classList.add("active");
+      const buttons = document.getElementsByClassName("tab-button");
+      for (let i = 0; i < buttons.length; i++) {
+        if (buttons[i].textContent.toLowerCase().includes(tabName.replace("Tab", "").toLowerCase())) {
+          buttons[i].classList.add("active");
+        }
+      }
+
+      // Hide shortened mode toggle if switching to sorter tab
+      if (tabName === 'sorterTab') {
+        document.getElementById("shortenedModeToggle").style.display = "none";
+      }
+    }
+
+    function processData() {
+      const inputText = document.getElementById("inputData").value.trim();
+      const sortedItemsDiv = document.getElementById("sortedItems");
+      const warningsDiv = document.getElementById("warnings");
+      const sortedResults = document.getElementById("sortedResults");
+
+      // Reset warnings and results
+      warningsDiv.innerHTML = '';
+      warningsDiv.style.display = 'none';
+      sortedItemsDiv.innerHTML = '';
+      sortedResults.style.display = 'none';
+      teamsData = [];
+
+      if (!inputText) {
+        warningsDiv.innerHTML = '<p class="error">Please enter some data to sort.</p>';
+        warningsDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        // Split the input into lines and filter out empty lines
+        const lines = inputText.split('\n').filter(line => line.trim() !== '');
+
+        // Arrays to store warnings and errors
+        const warnings = [];
+        const autoFixes = [];
+
+        // Process lines in pairs
+        for (let i = 0; i < lines.length; i += 2) {
+          if (i + 1 >= lines.length) {
+            warnings.push(`Incomplete data at line ${i + 1}. Missing odds line.`);
+            continue;
+          }
+
+          const teamLine = lines[i].trim();
+          const oddsLine = lines[i + 1].trim();
+
+          // Extract team and odds - more flexible regex
+          const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
+          if (!teamMatch) {
+            warnings.push(`Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`);
+            continue;
+          }
+
+          const team = teamMatch[1];
+          const odds = teamMatch[2];
+
+          // Check if odds seem reasonable (-999 to +999 is typical range)
+          const oddsValue = parseInt(odds);
+          if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
+            warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
+          }
+
+          // Extract percentage and number in parentheses with multiple regex patterns
+          let percentageMatch = oddsLine.match(/(\d+)%\s*\(([^)]+)\)/);
+
+          if (!percentageMatch) {
+            // Try alternative formats
+            percentageMatch = oddsLine.match(/(\d+)%.*?\((\d+[k]?)\)/);
+          }
+
+          if (!percentageMatch) {
+            // Check if we can extract just the number in parentheses
+            const parensMatch = oddsLine.match(/\(([^)]+)\)/);
+            if (parensMatch) {
+              // Missing percentage, we'll calculate it later
+              const numberInParentheses = parensMatch[1];
+              teamsData.push({
+                team,
+                odds,
+                percentage: null,
+                display: numberInParentheses,
+                sortValue: parseNumericValue(numberInParentheses),
+                needsPercentage: true
+              });
+              continue;
+            }
+
+            // Check if we can extract just the percentage
+            const percentMatch = oddsLine.match(/(\d+)%/);
+            if (percentMatch) {
+              const percent = percentMatch[1];
+              // Try to find any numeric value in the string for display
+              const numericMatch = oddsLine.match(/(\d+[k]?)/g);
+              if (numericMatch && numericMatch.length > 1) {
+                // Use the second number if available (assuming first is the percentage)
+                const numberInParentheses = numericMatch[1];
+                teamsData.push({
+                  team,
+                  odds,
+                  percentage: percent,
+                  display: numberInParentheses,
+                  sortValue: parseNumericValue(numberInParentheses)
+                });
+                autoFixes.push(`Fixed missing parentheses for ${team}: using ${numberInParentheses} as value.`);
+                continue;
+              } else {
+                warnings.push(`Missing number in parentheses for ${team}. Please add it manually.`);
+                continue;
+              }
+            }
+
+            // As a last resort, try to find any numeric values
+            const numericMatch = oddsLine.match(/(\d+[k]?)/g);
+            if (numericMatch && numericMatch.length > 0) {
+              const numberInParentheses = numericMatch[0];
+              teamsData.push({
+                team,
+                odds,
+                percentage: null,
+                display: numberInParentheses,
+                sortValue: parseNumericValue(numberInParentheses),
+                needsPercentage: true
+              });
+              autoFixes.push(`Extracted numeric value for ${team}: ${numberInParentheses} and will calculate percentage.`);
+              continue;
+            }
+
+            warnings.push(`Invalid odds line format at line ${i + 2}: "${oddsLine}". Expected format: "##% (###)"`);
+            continue;
+          }
+
+          const percentage = percentageMatch[1];
+          const numberInParentheses = percentageMatch[2];
+
+          // Check if percentage is reasonable (0-100%)
+          const percentValue = parseInt(percentage);
+          if (isNaN(percentValue) || percentValue < 0 || percentValue > 100) {
+            warnings.push(`Suspicious percentage value for ${team}: ${percentage}%. Please verify.`);
+          }
+
+          // Convert to numeric value for sorting and check reasonableness
+          const sortValue = parseNumericValue(numberInParentheses);
+          if (isNaN(sortValue)) {
+            warnings.push(`Could not parse number value for ${team}: ${numberInParentheses}. Please verify.`);
+            continue;
+          }
+
+          teamsData.push({
+            team,
+            odds,
+            percentage,
+            display: numberInParentheses,
+            sortValue
+          });
+        }
+
+        // Check for teams with missing percentages and calculate them
+        const teamsWithMissingPercentage = teamsData.filter(team => team.needsPercentage);
+        if (teamsWithMissingPercentage.length > 0) {
+          calculateMissingPercentages(teamsWithMissingPercentage);
+          teamsWithMissingPercentage.forEach(team => {
+            autoFixes.push(`Auto-calculated percentage for ${team.team}: ${team.percentage}% based on other entries.`);
+          });
+        }
+
+        // Display warnings if any
+        if (warnings.length > 0 || autoFixes.length > 0) {
+          let warningsHTML = '<h3>Attention Required:</h3>';
+
+          if (warnings.length > 0) {
+            warningsHTML += '<div class="warning"><strong>Warnings - Manual Fix Needed:</strong><ul>';
+            warnings.forEach(warning => {
+              warningsHTML += `<li>${warning}</li>`;
+            });
+            warningsHTML += '</ul></div>';
+          }
+
+          if (autoFixes.length > 0) {
+            warningsHTML += '<div class="auto-fix"><strong>Auto-Fixed Issues:</strong><ul>';
+            autoFixes.forEach(fix => {
+              warningsHTML += `<li>${fix}</li>`;
+            });
+            warningsHTML += '</ul></div>';
+          }
+
+          warningsDiv.innerHTML = warningsHTML;
+          warningsDiv.style.display = 'block';
+        }
+
+        // Sort teams by the numeric value (descending)
+        teamsData.sort((a, b) => b.sortValue - a.sortValue);
+
+        // Display the sorted results
+        if (teamsData.length === 0) {
+          warningsDiv.innerHTML = '<p class="error">No valid data was found. Please check your input format.</p>';
           warningsDiv.style.display = 'block';
           return;
         }
-        
-        try {
-          // Split the input into lines and filter out empty lines
-          const lines = inputText.split('\n').filter(line => line.trim() !== '');
-          
-          // Arrays to store warnings and errors
-          const warnings = [];
-          const autoFixes = [];
-          
-          // Process lines in pairs
-          for (let i = 0; i < lines.length; i += 2) {
-            if (i + 1 >= lines.length) {
-              warnings.push(`Incomplete data at line ${i+1}. Missing odds line.`);
-              continue;
-            }
-            
-            const teamLine = lines[i].trim();
-            const oddsLine = lines[i + 1].trim();
-            
-            // Extract team and odds - more flexible regex
-            const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
-            if (!teamMatch) {
-              warnings.push(`Invalid team/odds format at line ${i+1}: "${teamLine}". Expected format: "TEAM +/-###"`);
-              continue;
-            }
-            
-            const team = teamMatch[1];
-            const odds = teamMatch[2];
-            
-            // Check if odds seem reasonable (-999 to +999 is typical range)
-            const oddsValue = parseInt(odds);
-            if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
-              warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
-            }
-            
-            // Extract percentage and number in parentheses with multiple regex patterns
-            let percentageMatch = oddsLine.match(/(\d+)%\s*\(([^)]+)\)/);
-            
-            if (!percentageMatch) {
-              // Try alternative formats
-              percentageMatch = oddsLine.match(/(\d+)%.*?\((\d+[k]?)\)/);
-            }
-            
-            if (!percentageMatch) {
-              // Check if we can extract just the number in parentheses
-              const parensMatch = oddsLine.match(/\(([^)]+)\)/);
-              if (parensMatch) {
-                // Missing percentage, we'll calculate it later
-                const numberInParentheses = parensMatch[1];
-                teamsData.push({
-                  team,
-                  odds,
-                  percentage: null,
-                  display: numberInParentheses,
-                  sortValue: parseNumericValue(numberInParentheses),
-                  needsPercentage: true
-                });
-                continue;
-              }
-              
-              // Check if we can extract just the percentage
-              const percentMatch = oddsLine.match(/(\d+)%/);
-              if (percentMatch) {
-                const percent = percentMatch[1];
-                // Try to find any numeric value in the string for display
-                const numericMatch = oddsLine.match(/(\d+[k]?)/g);
-                if (numericMatch && numericMatch.length > 1) {
-                  // Use the second number if available (assuming first is the percentage)
-                  const numberInParentheses = numericMatch[1];
-                  teamsData.push({
-                    team,
-                    odds,
-                    percentage: percent,
-                    display: numberInParentheses,
-                    sortValue: parseNumericValue(numberInParentheses)
-                  });
-                  autoFixes.push(`Fixed missing parentheses for ${team}: using ${numberInParentheses} as value.`);
-                  continue;
-                } else {
-                  warnings.push(`Missing number in parentheses for ${team}. Please add it manually.`);
-                  continue;
-                }
-              }
-              
-              // As a last resort, try to find any numeric values
-              const numericMatch = oddsLine.match(/(\d+[k]?)/g);
-              if (numericMatch && numericMatch.length > 0) {
-                const numberInParentheses = numericMatch[0];
-                teamsData.push({
-                  team,
-                  odds,
-                  percentage: null,
-                  display: numberInParentheses,
-                  sortValue: parseNumericValue(numberInParentheses),
-                  needsPercentage: true
-                });
-                autoFixes.push(`Extracted numeric value for ${team}: ${numberInParentheses} and will calculate percentage.`);
-                continue;
-              }
-              
-              warnings.push(`Invalid odds line format at line ${i+2}: "${oddsLine}". Expected format: "##% (###)"`);
-              continue;
-            }
-            
-            const percentage = percentageMatch[1];
-            const numberInParentheses = percentageMatch[2];
-            
-            // Check if percentage is reasonable (0-100%)
-            const percentValue = parseInt(percentage);
-            if (isNaN(percentValue) || percentValue < 0 || percentValue > 100) {
-              warnings.push(`Suspicious percentage value for ${team}: ${percentage}%. Please verify.`);
-            }
-            
-            // Convert to numeric value for sorting and check reasonableness
-            const sortValue = parseNumericValue(numberInParentheses);
-            if (isNaN(sortValue)) {
-              warnings.push(`Could not parse number value for ${team}: ${numberInParentheses}. Please verify.`);
-              continue;
-            }
-            
-            teamsData.push({
-              team,
-              odds,
-              percentage,
-              display: numberInParentheses,
-              sortValue
-            });
-          }
-          
-          // Check for teams with missing percentages and calculate them
-          const teamsWithMissingPercentage = teamsData.filter(team => team.needsPercentage);
-          if (teamsWithMissingPercentage.length > 0) {
-            calculateMissingPercentages(teamsWithMissingPercentage);
-            teamsWithMissingPercentage.forEach(team => {
-              autoFixes.push(`Auto-calculated percentage for ${team.team}: ${team.percentage}% based on other entries.`);
-            });
-          }
-          
-          // Display warnings if any
-          if (warnings.length > 0 || autoFixes.length > 0) {
-            let warningsHTML = '<h3>Attention Required:</h3>';
-            
-            if (warnings.length > 0) {
-              warningsHTML += '<div class="warning"><strong>Warnings - Manual Fix Needed:</strong><ul>';
-              warnings.forEach(warning => {
-                warningsHTML += `<li>${warning}</li>`;
-              });
-              warningsHTML += '</ul></div>';
-            }
-            
-            if (autoFixes.length > 0) {
-              warningsHTML += '<div class="auto-fix"><strong>Auto-Fixed Issues:</strong><ul>';
-              autoFixes.forEach(fix => {
-                warningsHTML += `<li>${fix}</li>`;
-              });
-              warningsHTML += '</ul></div>';
-            }
-            
-            warningsDiv.innerHTML = warningsHTML;
-            warningsDiv.style.display = 'block';
-          }
-          
-          // Sort teams by the numeric value (descending)
-          teamsData.sort((a, b) => b.sortValue - a.sortValue);
-          
-          // Display the sorted results
-          if (teamsData.length === 0) {
-            warningsDiv.innerHTML = '<p class="error">No valid data was found. Please check your input format.</p>';
-            warningsDiv.style.display = 'block';
-            return;
-          }
-          
-          teamsData.forEach((item, index) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'sorted-item';
-            itemDiv.innerHTML = `
+
+        teamsData.forEach((item, index) => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'sorted-item';
+          itemDiv.innerHTML = `
               ${index + 1}. ${item.team} (${item.odds}) - ${item.percentage}% (${item.display})
             `;
-            sortedItemsDiv.appendChild(itemDiv);
-          });
-          
-          sortedResults.style.display = 'block';
-          
-        } catch (error) {
-          warningsDiv.innerHTML = `<p class="error">Error processing data: ${error.message}</p>`;
-          warningsDiv.style.display = 'block';
-          console.error("Processing error:", error);
-        }
-      }
-      
-      function parseNumericValue(str) {
-        // Handle various formats including commas
-        str = String(str).replace(/,/g, '');
-        if (str.includes('k') || str.includes('K')) {
-          return parseFloat(str.replace(/[kK]/i, '')) * 1000;
-        } else {
-          return parseFloat(str) || 0; // Return 0 if parsing fails
-        }
-      }
-      
-      function calculateMissingPercentages(teamsWithMissingPercentage) {
-        // Calculate total value of all teams with percentages
-        const teamsWithPercentage = teamsData.filter(team => !team.needsPercentage);
-        
-        if (teamsWithPercentage.length === 0) {
-          // If no teams have percentages, distribute evenly
-          const evenPercentage = Math.floor(100 / teamsData.length);
-          teamsWithMissingPercentage.forEach(team => {
-            team.percentage = evenPercentage;
-            delete team.needsPercentage;
-          });
-          return;
-        }
-        
-        const totalKnownValue = teamsWithPercentage.reduce((sum, team) => sum + team.sortValue, 0);
-        const totalKnownPercentage = teamsWithPercentage.reduce((sum, team) => sum + parseInt(team.percentage), 0);
-        
-        // Calculate percentage for each missing team based on its value relative to others
-        teamsWithMissingPercentage.forEach(team => {
-          // Calculate a fair percentage based on the value's proportion to total known value
-          const calculatedPercentage = Math.round((team.sortValue / totalKnownValue) * totalKnownPercentage);
-          
-          // Ensure it's at least 1% and not too high
-          team.percentage = Math.max(1, Math.min(calculatedPercentage, 50));
-          delete team.needsPercentage;
+          sortedItemsDiv.appendChild(itemDiv);
         });
-      }
-      
-   // Modify the useForEVCalculator function
-function useForEVCalculator() {
-  if (teamsData.length === 0) {
-    alert("No valid data to use. Please process your data first.");
-    return;
-  }
-  
-  // Show shortened mode toggle
-  const shortenedToggle = document.getElementById("shortenedModeToggle");
-  const shortenedError = document.getElementById("shortenedModeError");
-  shortenedToggle.style.display = "block";
-  
-  // Check if we have enough teams for shortened mode
-  if (teamsData.length < 8) {
-    shortenedError.style.display = "block";
-    document.getElementById("shortenedModeCheckbox").disabled = true;
-    document.getElementById("shortenedModeCheckbox").checked = false;
-    shortenedMode = false;
-  } else {
-    shortenedError.style.display = "none";
-    document.getElementById("shortenedModeCheckbox").disabled = false;
-  }
-  
-  // Set the calculator count based on mode
-  const count = shortenedMode ? 
-    Math.min(teamsData.length - 6, 20) : // Teams from position 7 onwards
-    Math.min(teamsData.length, 20);
-  
-  document.getElementById("calcCountSelect").value = count;
-  
-  // Switch to calculator tab
-  openTab('calculatorTab');
-  
-  // Generate the calculators
-  generateCalculators();
-  
-  // Fill in the data
-  setTimeout(() => {
-    const startIndex = shortenedMode ? 6 : 0; // Start from 7th position (index 6) in shortened mode
-    
-    for (let i = 0; i < count; i++) {
-      const dataIndex = startIndex + i;
-      if (dataIndex < teamsData.length) {
-        // Get the underdog odds value (remove + if present)
-        const odds = teamsData[dataIndex].odds;
-        const oddsValue = parseInt(odds.replace('+', ''));
-        
-        // Set placement as actual position (7, 8, 9, etc. for shortened mode)
-        const placement = shortenedMode ? dataIndex + 1 : Math.min(i + 1, 10);
-        document.getElementById(`placementInput${i}`).value = placement;
-        
-        // Set Real's underdog odds only
-        document.getElementById(`realOddsInput${i}`).value = oddsValue;
 
-        // Set the team name in the header
-        const teamHeader = document.getElementById(`teamHeader${i}`);
-        if (teamHeader) {
-          teamHeader.textContent = teamsData[dataIndex].team;
-        }
+        sortedResults.style.display = 'block';
+
+      } catch (error) {
+        warningsDiv.innerHTML = `<p class="error">Error processing data: ${error.message}</p>`;
+        warningsDiv.style.display = 'block';
+        console.error("Processing error:", error);
       }
     }
-  }, 100);
-}
-      function toggleShortenedMode() {
-  shortenedMode = document.getElementById("shortenedModeCheckbox").checked;
-  
-  // If we have data, regenerate the calculator with new mode
-  if (teamsData.length > 0) {
-    useForEVCalculator();
-  }
-}
-        
-        // Set the calculator count to match the number of teams
-        const count = Math.min(teamsData.length, 20); // Max is 15
-        document.getElementById("calcCountSelect").value = count;
-        
-        // Switch to calculator tab
-        openTab('calculatorTab');
-        
-        // Generate the calculators
-        generateCalculators();
-        
-        // Fill in the data
-        setTimeout(() => {
-          for (let i = 0; i < count; i++) {
-            if (i < teamsData.length) {
-              // Get the underdog odds value (remove + if present)
-              const odds = teamsData[i].odds;
-              const oddsValue = parseInt(odds.replace('+', ''));
-              
-              // Set placement as position (from 1 to max 10)
-              document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
-              
-              // Set Real's underdog odds only
-              document.getElementById(`realOddsInput${i}`).value = oddsValue;
 
-              // Set the team name in the header
-              const teamHeader = document.getElementById(`teamHeader${i}`);
-              if (teamHeader) {
-                teamHeader.textContent = teamsData[i].team;
-              }
+    function parseNumericValue(str) {
+      // Handle various formats including commas
+      str = String(str).replace(/,/g, '');
+      if (str.includes('k') || str.includes('K')) {
+        return parseFloat(str.replace(/[kK]/i, '')) * 1000;
+      } else {
+        return parseFloat(str) || 0; // Return 0 if parsing fails
+      }
+    }
+
+    function calculateMissingPercentages(teamsWithMissingPercentage) {
+      // Calculate total value of all teams with percentages
+      const teamsWithPercentage = teamsData.filter(team => !team.needsPercentage);
+
+      if (teamsWithPercentage.length === 0) {
+        // If no teams have percentages, distribute evenly
+        const evenPercentage = Math.floor(100 / teamsData.length);
+        teamsWithMissingPercentage.forEach(team => {
+          team.percentage = evenPercentage;
+          delete team.needsPercentage;
+        });
+        return;
+      }
+
+      const totalKnownValue = teamsWithPercentage.reduce((sum, team) => sum + team.sortValue, 0);
+      const totalKnownPercentage = teamsWithPercentage.reduce((sum, team) => sum + parseInt(team.percentage), 0);
+
+      // Calculate percentage for each missing team based on its value relative to others
+      teamsWithMissingPercentage.forEach(team => {
+        // Calculate a fair percentage based on the value's proportion to total known value
+        const calculatedPercentage = Math.round((team.sortValue / totalKnownValue) * totalKnownPercentage);
+
+        // Ensure it's at least 1% and not too high
+        team.percentage = Math.max(1, Math.min(calculatedPercentage, 50));
+        delete team.needsPercentage;
+      });
+    }
+
+    // Modify the useForEVCalculator function
+    function useForEVCalculator() {
+      if (teamsData.length === 0) {
+        alert("No valid data to use. Please process your data first.");
+        return;
+      }
+
+      // Show shortened mode toggle
+      const shortenedToggle = document.getElementById("shortenedModeToggle");
+      const shortenedError = document.getElementById("shortenedModeError");
+      shortenedToggle.style.display = "block";
+
+      // Check if we have enough teams for shortened mode
+      if (teamsData.length < 8) {
+        shortenedError.style.display = "block";
+        document.getElementById("shortenedModeCheckbox").disabled = true;
+        document.getElementById("shortenedModeCheckbox").checked = false;
+        shortenedMode = false;
+      } else {
+        shortenedError.style.display = "none";
+        document.getElementById("shortenedModeCheckbox").disabled = false;
+      }
+
+      // Set the calculator count based on mode
+      const count = shortenedMode ?
+        Math.min(teamsData.length - 6, 20) : // Teams from position 7 onwards
+        Math.min(teamsData.length, 20);
+
+      document.getElementById("calcCountSelect").value = count;
+
+      // Switch to calculator tab
+      openTab('calculatorTab');
+
+      // Generate the calculators
+      generateCalculators();
+
+      // Fill in the data
+      setTimeout(() => {
+        const startIndex = shortenedMode ? 6 : 0; // Start from 7th position (index 6) in shortened mode
+
+        for (let i = 0; i < count; i++) {
+          const dataIndex = startIndex + i;
+          if (dataIndex < teamsData.length) {
+            // Get the underdog odds value (remove + if present)
+            const odds = teamsData[dataIndex].odds;
+            const oddsValue = parseInt(odds.replace('+', ''));
+
+            // Set placement as actual position (7, 8, 9, etc. for shortened mode)
+            const placement = shortenedMode ? dataIndex + 1 : Math.min(i + 1, 10);
+            document.getElementById(`placementInput${i}`).value = placement;
+
+            // Set Real's underdog odds only
+            document.getElementById(`realOddsInput${i}`).value = oddsValue;
+
+            // Set the team name in the header
+            const teamHeader = document.getElementById(`teamHeader${i}`);
+            if (teamHeader) {
+              teamHeader.textContent = teamsData[dataIndex].team;
             }
           }
-        }, 100);
-      }
-      
-     function generateCalculators() {
-  const count = Number(document.getElementById("calcCountSelect").value);
-  const container = document.getElementById("calculatorContainer");
-  container.innerHTML = "";
+        }
+      }, 100);
+    }
+    function toggleShortenedMode() {
+      shortenedMode = document.getElementById("shortenedModeCheckbox").checked;
 
-  for (let i = 0; i < count; i++) {
-    const section = document.createElement("div");
-    section.className = "calculator-section";
-    
-    // Show different header text for shortened mode
-    const headerText = shortenedMode ? 
-      `Bet ${i + 1} (Placement ${i + 7})` : 
-      `Bet ${i + 1}`;
-    
-    section.innerHTML = `
+      // If we have data, regenerate the calculator with new mode
+      if (teamsData.length > 0) {
+        useForEVCalculator();
+      }
+    }
+
+    // Set the calculator count to match the number of teams
+    const count = Math.min(teamsData.length, 20); // Max is 15
+    document.getElementById("calcCountSelect").value = count;
+
+    // Switch to calculator tab
+    openTab('calculatorTab');
+
+    // Generate the calculators
+    generateCalculators();
+
+    // Fill in the data
+    setTimeout(() => {
+      for (let i = 0; i < count; i++) {
+        if (i < teamsData.length) {
+          // Get the underdog odds value (remove + if present)
+          const odds = teamsData[i].odds;
+          const oddsValue = parseInt(odds.replace('+', ''));
+
+          // Set placement as position (from 1 to max 10)
+          document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
+
+          // Set Real's underdog odds only
+          document.getElementById(`realOddsInput${i}`).value = oddsValue;
+
+          // Set the team name in the header
+          const teamHeader = document.getElementById(`teamHeader${i}`);
+          if (teamHeader) {
+            teamHeader.textContent = teamsData[i].team;
+          }
+        }
+      }
+    }, 100);
+    }
+
+    function generateCalculators() {
+      const count = Number(document.getElementById("calcCountSelect").value);
+      const container = document.getElementById("calculatorContainer");
+      container.innerHTML = "";
+
+      for (let i = 0; i < count; i++) {
+        const section = document.createElement("div");
+        section.className = "calculator-section";
+
+        // Show different header text for shortened mode
+        const headerText = shortenedMode ?
+          `Bet ${i + 1} (Placement ${i + 7})` :
+          `Bet ${i + 1}`;
+
+        section.innerHTML = `
       <h3>${headerText}</h3>
       <div class="team-header" id="teamHeader${i}"></div>
       <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
@@ -852,230 +895,230 @@ function useForEVCalculator() {
       <p id="winningsOutput${i}"></p>
       <p id="hitProbOutput${i}"></p>
     `;
-    container.appendChild(section);
-  }
+        container.appendChild(section);
+      }
 
-  toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
-}
+      toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
+    }
 
-      function toggleFavoriteInputs() {
-        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
-        const count = Number(document.getElementById("calcCountSelect").value);
+    function toggleFavoriteInputs() {
+      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+      const count = Number(document.getElementById("calcCountSelect").value);
 
-        for (let i = 0; i < count; i++) {
-          const favDiv = document.getElementById(`divFavoriteOddsInput${i}`);
-          if (favDiv) {
-            favDiv.style.display = useNoVig ? "none" : "block";
-          }
+      for (let i = 0; i < count; i++) {
+        const favDiv = document.getElementById(`divFavoriteOddsInput${i}`);
+        if (favDiv) {
+          favDiv.style.display = useNoVig ? "none" : "block";
+        }
+      }
+    }
+
+    function calculateEV(index) {
+      const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
+      let placement = Number(document.getElementById(`placementInput${index}`).value);
+      placement = placement > 10 ? 10 : placement;
+
+      const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
+      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+
+      let favoriteOdds = useNoVig
+        ? -1 * underdogOdds
+        : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+
+      const underdogIP = underdogOdds > 0
+        ? 100 / (underdogOdds + 100)
+        : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+
+      const favoriteIP = favoriteOdds > 0
+        ? 100 / (favoriteOdds + 100)
+        : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+
+      const ipTotal = favoriteIP + underdogIP;
+      const novigUnderdogIP = underdogIP / ipTotal;
+
+      const winnings = placement * 20 + realOdds;
+      const expectedValue = winnings * novigUnderdogIP;
+      const hitProbPercent = novigUnderdogIP * 100;
+
+      document.getElementById(`resultsOutput${index}`).innerText =
+        "Expected Value of Underdog: " + expectedValue.toFixed(2);
+      document.getElementById(`winningsOutput${index}`).innerText =
+        "Karma Payout: " + winnings.toFixed(2);
+      document.getElementById(`hitProbOutput${index}`).innerText =
+        "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+    }
+
+    function clearInputs(index) {
+      document.getElementById(`underdogOddsInput${index}`).value = "";
+      document.getElementById(`favoriteOddsInput${index}`).value = "";
+      document.getElementById(`placementInput${index}`).value = "";
+      document.getElementById(`realOddsInput${index}`).value = "";
+      document.getElementById(`resultsOutput${index}`).innerText = "";
+      document.getElementById(`hitProbOutput${index}`).innerText = "";
+      document.getElementById(`winningsOutput${index}`).innerText = "";
+      document.getElementById(`teamHeader${index}`).innerText = "";
+    }
+    // Add these functions to the existing script section
+
+    // Function to calculate EVs for all inputs and find the best options
+    function calculateAllEVs() {
+      const count = Number(document.getElementById("calcCountSelect").value);
+
+      // Variables to track best options
+      let bestEV = { value: -Infinity, index: -1 };
+      let bestPayout = { value: -Infinity, index: -1 };
+      let bestProb = { value: -Infinity, index: -1 };
+
+      let validOptionsFound = false;
+
+      for (let i = 0; i < count; i++) {
+        // Skip if required fields are empty
+        const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
+        const placementInput = document.getElementById(`placementInput${i}`);
+        const realOddsInput = document.getElementById(`realOddsInput${i}`);
+
+        if (!underdogOddsInput.value || !placementInput.value || !realOddsInput.value) {
+          continue;
+        }
+
+        validOptionsFound = true;
+
+        // Calculate EV for this option
+        const result = calculateEVWithReturn(i);
+
+        // Update best EV if this one is higher
+        if (result.expectedValue > bestEV.value) {
+          bestEV.value = result.expectedValue;
+          bestEV.index = i;
+        }
+
+        // Update best payout if this one is higher
+        if (result.winnings > bestPayout.value) {
+          bestPayout.value = result.winnings;
+          bestPayout.index = i;
+        }
+
+        // Update best probability if this one is higher
+        if (result.hitProbPercent > bestProb.value) {
+          bestProb.value = result.hitProbPercent;
+          bestProb.index = i;
         }
       }
 
-      function calculateEV(index) {
-        const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
-        let placement = Number(document.getElementById(`placementInput${index}`).value);
-        placement = placement > 10 ? 10 : placement;
-        
-        const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
-        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+      // Update the summary section if we found valid options
+      if (validOptionsFound) {
+        updateSummarySection(bestEV, bestPayout, bestProb);
+      } else {
+        alert("No valid options to calculate. Please fill in the required fields for at least one option.");
+      }
+    }
 
-        let favoriteOdds = useNoVig
-          ? -1 * underdogOdds
-          : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+    // Modified calculate function that returns the results instead of just displaying them
+    function calculateEVWithReturn(index) {
+      const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
+      let placement = Number(document.getElementById(`placementInput${index}`).value);
+      placement = placement > 10 ? 10 : placement;
 
-        const underdogIP = underdogOdds > 0
-          ? 100 / (underdogOdds + 100)
-          : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+      const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
+      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
-        const favoriteIP = favoriteOdds > 0
-          ? 100 / (favoriteOdds + 100)
-          : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+      let favoriteOdds = useNoVig
+        ? -1 * underdogOdds
+        : Number(document.getElementById(`favoriteOddsInput${index}`).value);
 
-        const ipTotal = favoriteIP + underdogIP;
-        const novigUnderdogIP = underdogIP / ipTotal;
+      const underdogIP = underdogOdds > 0
+        ? 100 / (underdogOdds + 100)
+        : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-        const winnings = placement * 20 + realOdds;
-        const expectedValue = winnings * novigUnderdogIP;
-        const hitProbPercent = novigUnderdogIP * 100;
+      const favoriteIP = favoriteOdds > 0
+        ? 100 / (favoriteOdds + 100)
+        : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-        document.getElementById(`resultsOutput${index}`).innerText =
-          "Expected Value of Underdog: " + expectedValue.toFixed(2);
-        document.getElementById(`winningsOutput${index}`).innerText =
-          "Karma Payout: " + winnings.toFixed(2);
-        document.getElementById(`hitProbOutput${index}`).innerText =
-          "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+      const ipTotal = favoriteIP + underdogIP;
+      const novigUnderdogIP = underdogIP / ipTotal;
+
+      const winnings = placement * 20 + realOdds;
+      const expectedValue = winnings * novigUnderdogIP;
+      const hitProbPercent = novigUnderdogIP * 100;
+
+      // Also update the display for this individual option
+      document.getElementById(`resultsOutput${index}`).innerText =
+        "Expected Value of Underdog: " + expectedValue.toFixed(2);
+      document.getElementById(`winningsOutput${index}`).innerText =
+        "Karma Payout: " + winnings.toFixed(2);
+      document.getElementById(`hitProbOutput${index}`).innerText =
+        "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+
+      // Return the calculated values
+      return {
+        expectedValue,
+        winnings,
+        hitProbPercent
+      };
+    }
+
+    function showCompleteRankings() {
+      const count = Number(document.getElementById("calcCountSelect").value);
+      const rankingsContainer = document.getElementById("rankingsContainer");
+      const rankingsSection = document.getElementById("rankingsSection");
+
+      // Array to store all team data with calculated EVs
+      let teamsWithEV = [];
+
+      // Calculate EV for each team and collect data
+      for (let i = 0; i < count; i++) {
+        const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
+        const placementInput = document.getElementById(`placementInput${i}`);
+        const realOddsInput = document.getElementById(`realOddsInput${i}`);
+
+        // Skip if required fields are empty
+        if (!underdogOddsInput.value || !placementInput.value || !realOddsInput.value) {
+          continue;
+        }
+
+        // Get team name
+        const teamHeader = document.getElementById(`teamHeader${i}`);
+        const teamName = teamHeader && teamHeader.textContent.trim() !== ""
+          ? teamHeader.textContent
+          : `Option ${i + 1}`;
+
+        // Calculate EV for this team
+        const result = calculateEVWithReturn(i);
+
+        // Add to our array
+        teamsWithEV.push({
+          index: i,
+          teamName: teamName,
+          expectedValue: result.expectedValue,
+          winnings: result.winnings,
+          hitProbPercent: result.hitProbPercent,
+          placement: Number(placementInput.value),
+          realOdds: Number(realOddsInput.value),
+          underdogOdds: Number(underdogOddsInput.value)
+        });
       }
 
-      function clearInputs(index) {
-        document.getElementById(`underdogOddsInput${index}`).value = "";
-        document.getElementById(`favoriteOddsInput${index}`).value = "";
-        document.getElementById(`placementInput${index}`).value = "";
-        document.getElementById(`realOddsInput${index}`).value = "";
-        document.getElementById(`resultsOutput${index}`).innerText = "";
-        document.getElementById(`hitProbOutput${index}`).innerText = "";
-        document.getElementById(`winningsOutput${index}`).innerText = "";
-        document.getElementById(`teamHeader${index}`).innerText = "";
+      // Check if we have any valid teams
+      if (teamsWithEV.length === 0) {
+        alert("No valid options to rank. Please fill in the required fields for at least one option.");
+        return;
       }
-      // Add these functions to the existing script section
 
-// Function to calculate EVs for all inputs and find the best options
-function calculateAllEVs() {
-  const count = Number(document.getElementById("calcCountSelect").value);
-  
-  // Variables to track best options
-  let bestEV = {value: -Infinity, index: -1};
-  let bestPayout = {value: -Infinity, index: -1};
-  let bestProb = {value: -Infinity, index: -1};
-  
-  let validOptionsFound = false;
-  
-  for (let i = 0; i < count; i++) {
-    // Skip if required fields are empty
-    const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
-    const placementInput = document.getElementById(`placementInput${i}`);
-    const realOddsInput = document.getElementById(`realOddsInput${i}`);
-    
-    if (!underdogOddsInput.value || !placementInput.value || !realOddsInput.value) {
-      continue;
-    }
-    
-    validOptionsFound = true;
-    
-    // Calculate EV for this option
-    const result = calculateEVWithReturn(i);
-    
-    // Update best EV if this one is higher
-    if (result.expectedValue > bestEV.value) {
-      bestEV.value = result.expectedValue;
-      bestEV.index = i;
-    }
-    
-    // Update best payout if this one is higher
-    if (result.winnings > bestPayout.value) {
-      bestPayout.value = result.winnings;
-      bestPayout.index = i;
-    }
-    
-    // Update best probability if this one is higher
-    if (result.hitProbPercent > bestProb.value) {
-      bestProb.value = result.hitProbPercent;
-      bestProb.index = i;
-    }
-  }
-  
-  // Update the summary section if we found valid options
-  if (validOptionsFound) {
-    updateSummarySection(bestEV, bestPayout, bestProb);
-  } else {
-    alert("No valid options to calculate. Please fill in the required fields for at least one option.");
-  }
-}
+      // Sort teams by Expected Value (highest to lowest)
+      teamsWithEV.sort((a, b) => b.expectedValue - a.expectedValue);
 
-// Modified calculate function that returns the results instead of just displaying them
-function calculateEVWithReturn(index) {
-  const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
-  let placement = Number(document.getElementById(`placementInput${index}`).value);
-  placement = placement > 10 ? 10 : placement;
-  
-  const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
-  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+      // Clear previous rankings
+      rankingsContainer.innerHTML = "";
 
-  let favoriteOdds = useNoVig
-    ? -1 * underdogOdds
-    : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+      // Create ranking display for each team
+      teamsWithEV.forEach((team, rank) => {
+        const rankingDiv = document.createElement('div');
+        rankingDiv.className = `ranking-item${rank < 3 ? ` rank-${rank + 1}` : ''}`;
 
-  const underdogIP = underdogOdds > 0
-    ? 100 / (underdogOdds + 100)
-    : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+        // Add medal emoji for top 3
+        const medalEmoji = rank === 0 ? '🥇 ' : rank === 1 ? '🥈 ' : rank === 2 ? '🥉 ' : '';
 
-  const favoriteIP = favoriteOdds > 0
-    ? 100 / (favoriteOdds + 100)
-    : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
-
-  const ipTotal = favoriteIP + underdogIP;
-  const novigUnderdogIP = underdogIP / ipTotal;
-
-  const winnings = placement * 20 + realOdds;
-  const expectedValue = winnings * novigUnderdogIP;
-  const hitProbPercent = novigUnderdogIP * 100;
-
-  // Also update the display for this individual option
-  document.getElementById(`resultsOutput${index}`).innerText =
-    "Expected Value of Underdog: " + expectedValue.toFixed(2);
-  document.getElementById(`winningsOutput${index}`).innerText =
-    "Karma Payout: " + winnings.toFixed(2);
-  document.getElementById(`hitProbOutput${index}`).innerText =
-    "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
-    
-  // Return the calculated values
-  return {
-    expectedValue,
-    winnings,
-    hitProbPercent
-  };
-}
-      
-function showCompleteRankings() {
-  const count = Number(document.getElementById("calcCountSelect").value);
-  const rankingsContainer = document.getElementById("rankingsContainer");
-  const rankingsSection = document.getElementById("rankingsSection");
-  
-  // Array to store all team data with calculated EVs
-  let teamsWithEV = [];
-  
-  // Calculate EV for each team and collect data
-  for (let i = 0; i < count; i++) {
-    const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
-    const placementInput = document.getElementById(`placementInput${i}`);
-    const realOddsInput = document.getElementById(`realOddsInput${i}`);
-    
-    // Skip if required fields are empty
-    if (!underdogOddsInput.value || !placementInput.value || !realOddsInput.value) {
-      continue;
-    }
-    
-    // Get team name
-    const teamHeader = document.getElementById(`teamHeader${i}`);
-    const teamName = teamHeader && teamHeader.textContent.trim() !== "" 
-      ? teamHeader.textContent 
-      : `Option ${i + 1}`;
-    
-    // Calculate EV for this team
-    const result = calculateEVWithReturn(i);
-    
-    // Add to our array
-    teamsWithEV.push({
-      index: i,
-      teamName: teamName,
-      expectedValue: result.expectedValue,
-      winnings: result.winnings,
-      hitProbPercent: result.hitProbPercent,
-      placement: Number(placementInput.value),
-      realOdds: Number(realOddsInput.value),
-      underdogOdds: Number(underdogOddsInput.value)
-    });
-  }
-  
-  // Check if we have any valid teams
-  if (teamsWithEV.length === 0) {
-    alert("No valid options to rank. Please fill in the required fields for at least one option.");
-    return;
-  }
-  
-  // Sort teams by Expected Value (highest to lowest)
-  teamsWithEV.sort((a, b) => b.expectedValue - a.expectedValue);
-  
-  // Clear previous rankings
-  rankingsContainer.innerHTML = "";
-  
-  // Create ranking display for each team
-  teamsWithEV.forEach((team, rank) => {
-    const rankingDiv = document.createElement('div');
-    rankingDiv.className = `ranking-item${rank < 3 ? ` rank-${rank + 1}` : ''}`;
-    
-    // Add medal emoji for top 3
-    const medalEmoji = rank === 0 ? '🥇 ' : rank === 1 ? '🥈 ' : rank === 2 ? '🥉 ' : '';
-    
-    rankingDiv.innerHTML = `
+        rankingDiv.innerHTML = `
       <div>
         <span class="ranking-number">#${rank + 1}</span>
         <span class="ranking-team">${medalEmoji}${team.teamName}</span>
@@ -1089,102 +1132,103 @@ function showCompleteRankings() {
         Placement: ${team.placement} | Real Odds: ${team.realOdds > 0 ? '+' : ''}${team.realOdds} | Underdog Odds: ${team.underdogOdds > 0 ? '+' : ''}${team.underdogOdds}
       </div>
     `;
-    
-    rankingsContainer.appendChild(rankingDiv);
-  });
-  
-  // Show the rankings section
-  rankingsSection.style.display = "block";
-  
-  // Scroll to rankings section
-  rankingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
 
-// Function to hide the rankings section
-function hideRankings() {
-  document.getElementById("rankingsSection").style.display = "none";
-}
+        rankingsContainer.appendChild(rankingDiv);
+      });
 
-// Enhanced calculateEVWithReturn function (if not already present)
-function calculateEVWithReturn(index) {
-  const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
-  let placement = Number(document.getElementById(`placementInput${index}`).value);
-  placement = placement > 10 ? 10 : placement;
-  
-  const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
-  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+      // Show the rankings section
+      rankingsSection.style.display = "block";
 
-  let favoriteOdds = useNoVig
-    ? -1 * underdogOdds
-    : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+      // Scroll to rankings section
+      rankingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
-  const underdogIP = underdogOdds > 0
-    ? 100 / (underdogOdds + 100)
-    : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+    // Function to hide the rankings section
+    function hideRankings() {
+      document.getElementById("rankingsSection").style.display = "none";
+    }
 
-  const favoriteIP = favoriteOdds > 0
-    ? 100 / (favoriteOdds + 100)
-    : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+    // Enhanced calculateEVWithReturn function (if not already present)
+    function calculateEVWithReturn(index) {
+      const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`).value);
+      let placement = Number(document.getElementById(`placementInput${index}`).value);
+      placement = placement > 10 ? 10 : placement;
 
-  const ipTotal = favoriteIP + underdogIP;
-  const novigUnderdogIP = underdogIP / ipTotal;
+      const realOdds = Number(document.getElementById(`realOddsInput${index}`).value);
+      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
-  const winnings = placement * 20 + realOdds;
-  const expectedValue = winnings * novigUnderdogIP;
-  const hitProbPercent = novigUnderdogIP * 100;
+      let favoriteOdds = useNoVig
+        ? -1 * underdogOdds
+        : Number(document.getElementById(`favoriteOddsInput${index}`).value);
 
-  // Also update the display for this individual option
-  document.getElementById(`resultsOutput${index}`).innerText =
-    "Expected Value of Underdog: " + expectedValue.toFixed(2);
-  document.getElementById(`winningsOutput${index}`).innerText =
-    "Karma Payout: " + winnings.toFixed(2);
-  document.getElementById(`hitProbOutput${index}`).innerText =
-    "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
-    
-  // Return the calculated values
-  return {
-    expectedValue,
-    winnings,
-    hitProbPercent
-  };
-}
+      const underdogIP = underdogOdds > 0
+        ? 100 / (underdogOdds + 100)
+        : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-// Function to update the summary section with the best options
-function updateSummarySection(bestEV, bestPayout, bestProb) {
-  const summarySection = document.getElementById("summarySection");
-  
-  // Get team names for each best option
-  const getTeamName = (index) => {
-    if (index < 0) return "-";
-    const teamHeader = document.getElementById(`teamHeader${index}`);
-    return teamHeader && teamHeader.textContent.trim() !== "" 
-      ? teamHeader.textContent 
-      : `Option ${index + 1}`;
-  };
-  
-  // Update best EV display
-  document.getElementById("bestEVName").textContent = getTeamName(bestEV.index);
-  document.getElementById("bestEVValue").textContent = bestEV.value.toFixed(2);
-  
-  // Update best payout display
-  document.getElementById("bestPayoutName").textContent = getTeamName(bestPayout.index);
-  document.getElementById("bestPayoutValue").textContent = bestPayout.value.toFixed(2);
-  
-  // Update best probability display
-  document.getElementById("bestProbName").textContent = getTeamName(bestProb.index);
-  document.getElementById("bestProbValue").textContent = bestProb.value.toFixed(2);
-  
-  // Show the summary section
-  summarySection.style.display = "block";
-}
+      const favoriteIP = favoriteOdds > 0
+        ? 100 / (favoriteOdds + 100)
+        : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-// Modify the original calculateEV function to use the new function with return
-function calculateEV(index) {
-  calculateEVWithReturn(index);
-}
+      const ipTotal = favoriteIP + underdogIP;
+      const novigUnderdogIP = underdogIP / ipTotal;
 
-      // Initialize with 1 calculator on load
-      window.onload = generateCalculators;
-    </script>
-  </body>
+      const winnings = placement * 20 + realOdds;
+      const expectedValue = winnings * novigUnderdogIP;
+      const hitProbPercent = novigUnderdogIP * 100;
+
+      // Also update the display for this individual option
+      document.getElementById(`resultsOutput${index}`).innerText =
+        "Expected Value of Underdog: " + expectedValue.toFixed(2);
+      document.getElementById(`winningsOutput${index}`).innerText =
+        "Karma Payout: " + winnings.toFixed(2);
+      document.getElementById(`hitProbOutput${index}`).innerText =
+        "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+
+      // Return the calculated values
+      return {
+        expectedValue,
+        winnings,
+        hitProbPercent
+      };
+    }
+
+    // Function to update the summary section with the best options
+    function updateSummarySection(bestEV, bestPayout, bestProb) {
+      const summarySection = document.getElementById("summarySection");
+
+      // Get team names for each best option
+      const getTeamName = (index) => {
+        if (index < 0) return "-";
+        const teamHeader = document.getElementById(`teamHeader${index}`);
+        return teamHeader && teamHeader.textContent.trim() !== ""
+          ? teamHeader.textContent
+          : `Option ${index + 1}`;
+      };
+
+      // Update best EV display
+      document.getElementById("bestEVName").textContent = getTeamName(bestEV.index);
+      document.getElementById("bestEVValue").textContent = bestEV.value.toFixed(2);
+
+      // Update best payout display
+      document.getElementById("bestPayoutName").textContent = getTeamName(bestPayout.index);
+      document.getElementById("bestPayoutValue").textContent = bestPayout.value.toFixed(2);
+
+      // Update best probability display
+      document.getElementById("bestProbName").textContent = getTeamName(bestProb.index);
+      document.getElementById("bestProbValue").textContent = bestProb.value.toFixed(2);
+
+      // Show the summary section
+      summarySection.style.display = "block";
+    }
+
+    // Modify the original calculateEV function to use the new function with return
+    function calculateEV(index) {
+      calculateEVWithReturn(index);
+    }
+
+    // Initialize with 1 calculator on load
+    window.onload = generateCalculators;
+  </script>
+</body>
+
 </html>
