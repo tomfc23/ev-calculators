@@ -412,14 +412,10 @@ BAL +113
       <br /><br />
 
       <label>
-        <input
-          type="checkbox"
-          id="shortenedModeToggle"
-          onchange="toggleShortenedMode()"
-        />
+        <input type="checkbox" id="shortenedModeToggle" onchange="toggleShortenedMode()">
         Shortened Mode (Placement >= 7)
       </label>
-      <br />
+      <br>
 
       <div id="calculatorContainer"></div>
       <!-- Add this after the calculator container div -->
@@ -497,8 +493,6 @@ BAL +113
       // Global variable to store the parsed data
       let teamsData = [];
       let shortenedMode = false; // Global variable to track shortened mode
-      let calculatorData = {}; // Store calculator data
-
       function clearData() {
         document.getElementById("inputData").value = "";
       }
@@ -791,7 +785,7 @@ BAL +113
           0
         );
 
-        // Calculate percentage for each missing team based on the value's proportion to total known value
+        // Calculate percentage for each missing team based on its value relative to others
         teamsWithMissingPercentage.forEach((team) => {
           // Calculate a fair percentage based on the value's proportion to total known value
           const calculatedPercentage = Math.round(
@@ -833,15 +827,11 @@ BAL +113
               const odds = teamsData[i].odds;
               const oddsValue = parseInt(odds.replace("+", ""));
 
-              // Store the data in calculatorData
-              calculatorData[i] = {
-                team: teamsData[i].team,
-                oddsValue: oddsValue,
-                placement: Math.min(i + 1, 10),
-                realOdds: oddsValue, // Default realOdds to oddsValue
-                underdogOdds: oddsValue, // Default underdogOdds to oddsValue
-                favoriteOdds: -oddsValue, // Default favoriteOdds to -oddsValue
-              };
+              // Set placement as position (from 1 to max 10)
+              document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
+
+              // Set Real's underdog odds only
+              document.getElementById(`realOddsInput${i}`).value = oddsValue;
 
               // Set the team name in the header
               const teamHeader = document.getElementById(`teamHeader${i}`);
@@ -850,7 +840,6 @@ BAL +113
               }
             }
           }
-          populateCalculatorInputs(); // Populate the calculator inputs
         }, 100);
       }
 
@@ -886,32 +875,6 @@ BAL +113
         }
 
         toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
-        populateCalculatorInputs(); // Populate the calculator inputs after generating
-      }
-
-      function populateCalculatorInputs() {
-        const count = Number(document.getElementById("calcCountSelect").value);
-
-        for (let i = 0; i < count; i++) {
-          if (shortenedMode && i < 6) {
-            continue; // Skip if in shortened mode and placement < 7
-          }
-
-          if (calculatorData[i]) {
-            document.getElementById(`placementInput${i}`).value =
-              calculatorData[i].placement;
-            document.getElementById(`realOddsInput${i}`).value =
-              calculatorData[i].realOdds;
-            document.getElementById(`underdogOddsInput${i}`).value =
-              calculatorData[i].underdogOdds;
-            document.getElementById(`favoriteOddsInput${i}`).value =
-              calculatorData[i].favoriteOdds;
-            const teamHeader = document.getElementById(`teamHeader${i}`);
-            if (teamHeader) {
-              teamHeader.textContent = calculatorData[i].team;
-            }
-          }
-        }
       }
 
       function toggleFavoriteInputs() {
@@ -953,7 +916,6 @@ BAL +113
           favoriteOdds > 0
             ? 100 / (favoriteOdds + 100)
             : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
-        0);
 
         const ipTotal = favoriteIP + underdogIP;
         const novigUnderdogIP = underdogIP / ipTotal;
@@ -980,7 +942,8 @@ BAL +113
         document.getElementById(`winningsOutput${index}`).innerText = "";
         document.getElementById(`teamHeader${index}`).innerText = "";
       }
-      // Add these functions to the existing script section
+      // Add these functions to the existing script
+            // Add these functions to the existing script section
 
       // Function to calculate EVs for all inputs and find the best options
       function calculateAllEVs() {
@@ -995,9 +958,6 @@ BAL +113
 
         for (let i = 0; i < count; i++) {
           // Skip if required fields are empty
-          if (shortenedMode && i < 6) {
-            continue;
-          }
           const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
           const placementInput = document.getElementById(`placementInput${i}`);
           const realOddsInput = document.getElementById(`realOddsInput${i}`);
@@ -1102,9 +1062,6 @@ BAL +113
 
         // Calculate EV for each team and collect data
         for (let i = 0; i < count; i++) {
-          if (shortenedMode && i < 6) {
-            continue;
-          }
           const underdogOddsInput = document.getElementById(`underdogOddsInput${i}`);
           const placementInput = document.getElementById(`placementInput${i}`);
           const realOddsInput = document.getElementById(`realOddsInput${i}`);
