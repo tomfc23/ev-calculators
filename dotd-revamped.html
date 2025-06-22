@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -890,47 +891,54 @@ BAL +113
       }
 
       function calculateEV(index) {
-        const underdogOdds = Number(
-          document.getElementById(`underdogOddsInput${index}`).value
-        );
-        let placement = Number(
-          document.getElementById(`placementInput${index}`).value
-        );
-        placement = placement > 10 ? 10 : placement;
+  const underdogOdds = Number(
+    document.getElementById(`underdogOddsInput${index}`).value
+  );
+  let placement = Number(
+    document.getElementById(`placementInput${index}`).value
+  );
+  placement = placement > 10 ? 10 : placement;
 
-        const realOdds = Number(
-          document.getElementById(`realOddsInput${index}`).value
-        );
-        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+  const realOdds = Number(
+    document.getElementById(`realOddsInput${index}`).value
+  );
+  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
-        let favoriteOdds = useNoVig
-          ? -1 * underdogOdds
-          : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+  let favoriteOdds = useNoVig
+    ? -1 * underdogOdds
+    : Number(document.getElementById(`favoriteOddsInput${index}`).value);
 
-        const underdogIP =
-          underdogOdds > 0
-            ? 100 / (underdogOdds + 100)
-            : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+  const underdogIP =
+    underdogOdds > 0
+      ? 100 / (underdogOdds + 100)
+      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-        const favoriteIP =
-          favoriteOdds > 0
-            ? 100 / (favoriteOdds + 100)
-            : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+  const favoriteIP =
+    favoriteOdds > 0
+      ? 100 / (favoriteOdds + 100)
+      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-        const ipTotal = favoriteIP + underdogIP;
-        const novigUnderdogIP = underdogIP / ipTotal;
+  const ipTotal = favoriteIP + underdogIP;
+  const novigUnderdogIP = underdogIP / ipTotal;
 
-        const winnings = placement * 20 + realOdds;
-        const expectedValue = winnings * novigUnderdogIP;
-        const hitProbPercent = novigUnderdogIP * 100;
+  // Updated payout formula based on whether real odds are negative
+  let winnings;
+  if (realOdds < 0) {
+    winnings = placement * 20 + 100 / (Math.abs(realOdds) / 100);
+  } else {
+    winnings = placement * 20 + realOdds;
+  }
 
-        document.getElementById(`resultsOutput${index}`).innerText =
-          "Expected Value of Underdog: " + expectedValue.toFixed(2);
-        document.getElementById(`winningsOutput${index}`).innerText =
-          "Karma Payout: " + winnings.toFixed(2);
-        document.getElementById(`hitProbOutput${index}`).innerText =
-          "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
-      }
+  const expectedValue = winnings * novigUnderdogIP;
+  const hitProbPercent = novigUnderdogIP * 100;
+
+  document.getElementById(`resultsOutput${index}`).innerText =
+    "Expected Value of Underdog: " + expectedValue.toFixed(2);
+  document.getElementById(`winningsOutput${index}`).innerText =
+    "Karma Payout: " + winnings.toFixed(2);
+  document.getElementById(`hitProbOutput${index}`).innerText =
+    "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+}
 
       function clearInputs(index) {
         document.getElementById(`underdogOddsInput${index}`).value = "";
@@ -1002,55 +1010,61 @@ BAL +113
 
       // Modified calculate function that returns the results instead of just displaying them
       function calculateEVWithReturn(index) {
-        const underdogOdds = Number(
-          document.getElementById(`underdogOddsInput${index}`).value
-        );
-        let placement = Number(
-          document.getElementById(`placementInput${index}`).value
-        );
-        placement = placement > 10 ? 10 : placement;
+  const underdogOdds = Number(
+    document.getElementById(`underdogOddsInput${index}`).value
+  );
+  let placement = Number(
+    document.getElementById(`placementInput${index}`).value
+  );
+  placement = placement > 10 ? 10 : placement;
 
-        const realOdds = Number(
-          document.getElementById(`realOddsInput${index}`).value
-        );
-        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+  const realOdds = Number(
+    document.getElementById(`realOddsInput${index}`).value
+  );
+  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
-        let favoriteOdds = useNoVig
-          ? -1 * underdogOdds
-          : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+  let favoriteOdds = useNoVig
+    ? -1 * underdogOdds
+    : Number(document.getElementById(`favoriteOddsInput${index}`).value);
 
-        const underdogIP =
-          underdogOdds > 0
-            ? 100 / (underdogOdds + 100)
-            : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+  const underdogIP =
+    underdogOdds > 0
+      ? 100 / (underdogOdds + 100)
+      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-        const favoriteIP =
-          favoriteOdds > 0
-            ? 100 / (favoriteOdds + 100)
-            : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+  const favoriteIP =
+    favoriteOdds > 0
+      ? 100 / (favoriteOdds + 100)
+      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-        const ipTotal = favoriteIP + underdogIP;
-        const novigUnderdogIP = underdogIP / ipTotal;
+  const ipTotal = favoriteIP + underdogIP;
+  const novigUnderdogIP = underdogIP / ipTotal;
 
-        const winnings = placement * 20 + realOdds;
-        const expectedValue = winnings * novigUnderdogIP;
-        const hitProbPercent = novigUnderdogIP * 100;
+  // Updated payout formula based on whether real odds are negative
+  let winnings;
+  if (realOdds < 0) {
+    winnings = placement * 20 + 100 / (Math.abs(realOdds) / 100);
+  } else {
+    winnings = placement * 20 + realOdds;
+  }
 
-        // Also update the display for this individual option
-        document.getElementById(`resultsOutput${index}`).innerText =
-          "Expected Value of Underdog: " + expectedValue.toFixed(2);
-        document.getElementById(`winningsOutput${index}`).innerText =
-          "Karma Payout: " + winnings.toFixed(2);
-        document.getElementById(`hitProbOutput${index}`).innerText =
-          "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+  const expectedValue = winnings * novigUnderdogIP;
+  const hitProbPercent = novigUnderdogIP * 100;
 
-        // Return the calculated values
-        return {
+  document.getElementById(`resultsOutput${index}`).innerText =
+    "Expected Value of Underdog: " + expectedValue.toFixed(2);
+  document.getElementById(`winningsOutput${index}`).innerText =
+    "Karma Payout: " + winnings.toFixed(2);
+  document.getElementById(`hitProbOutput${index}`).innerText =
+    "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+           
+  return {
           expectedValue,
           winnings,
           hitProbPercent,
         };
-      }
+}
+
 
       function showCompleteRankings() {
         const count = Number(document.getElementById("calcCountSelect").value);
@@ -1148,56 +1162,62 @@ BAL +113
       }
 
       // Enhanced calculateEVWithReturn function (if not already present)
-      function calculateEVWithReturn(index) {
-        const underdogOdds = Number(
-          document.getElementById(`underdogOddsInput${index}`).value
-        );
-        let placement = Number(
-          document.getElementById(`placementInput${index}`).value
-        );
-        placement = placement > 10 ? 10 : placement;
+         function calculateEVWithReturn(index) {
+  const underdogOdds = Number(
+    document.getElementById(`underdogOddsInput${index}`).value
+  );
+  let placement = Number(
+    document.getElementById(`placementInput${index}`).value
+  );
+  placement = placement > 10 ? 10 : placement;
 
-        const realOdds = Number(
-          document.getElementById(`realOddsInput${index}`).value
-        );
-        const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+  const realOdds = Number(
+    document.getElementById(`realOddsInput${index}`).value
+  );
+  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
 
-        let favoriteOdds = useNoVig
-          ? -1 * underdogOdds
-          : Number(document.getElementById(`favoriteOddsInput${index}`).value);
+  let favoriteOdds = useNoVig
+    ? -1 * underdogOdds
+    : Number(document.getElementById(`favoriteOddsInput${index}`).value);
 
-        const underdogIP =
-          underdogOdds > 0
-            ? 100 / (underdogOdds + 100)
-            : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+  const underdogIP =
+    underdogOdds > 0
+      ? 100 / (underdogOdds + 100)
+      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-        const favoriteIP =
-          favoriteOdds > 0
-            ? 100 / (favoriteOdds + 100)
-            : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+  const favoriteIP =
+    favoriteOdds > 0
+      ? 100 / (favoriteOdds + 100)
+      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-        const ipTotal = favoriteIP + underdogIP;
-        const novigUnderdogIP = underdogIP / ipTotal;
+  const ipTotal = favoriteIP + underdogIP;
+  const novigUnderdogIP = underdogIP / ipTotal;
 
-        const winnings = placement * 20 + realOdds;
-        const expectedValue = winnings * novigUnderdogIP;
-        const hitProbPercent = novigUnderdogIP * 100;
+  // Updated payout formula based on whether real odds are negative
+  let winnings;
+  if (realOdds < 0) {
+    winnings = placement * 20 + 100 / (Math.abs(realOdds) / 100);
+  } else {
+    winnings = placement * 20 + realOdds;
+  }
 
-        // Also update the display for this individual option
-        document.getElementById(`resultsOutput${index}`).innerText =
-          "Expected Value of Underdog: " + expectedValue.toFixed(2);
-        document.getElementById(`winningsOutput${index}`).innerText =
-          "Karma Payout: " + winnings.toFixed(2);
-        document.getElementById(`hitProbOutput${index}`).innerText =
-          "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+  const expectedValue = winnings * novigUnderdogIP;
+  const hitProbPercent = novigUnderdogIP * 100;
 
-        // Return the calculated values
-        return {
+  document.getElementById(`resultsOutput${index}`).innerText =
+    "Expected Value of Underdog: " + expectedValue.toFixed(2);
+  document.getElementById(`winningsOutput${index}`).innerText =
+    "Karma Payout: " + winnings.toFixed(2);
+  document.getElementById(`hitProbOutput${index}`).innerText =
+    "Hit Probability: " + hitProbPercent.toFixed(2) + "%";
+           
+  return {
           expectedValue,
           winnings,
           hitProbPercent,
         };
-      }
+}
+
 
       // Function to update the summary section with the best options
       function updateSummarySection(bestEV, bestPayout, bestProb) {
