@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Guide</title>
+    <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background-color: black;
+      color: lightgray;
+      
+    }
+      h1 {
+        text-align: center;
+      }
+      button {
+      cursor: pointer;
+      background-color: #6f42c1;
+      color: white;
+      border: none;
+        margin: 5px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 25px;
+      border: 2px solid #ccc;
+      transition: border-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #5a32a3;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>
+      Guide
+    </h1>
+    <h2>Presets:</h2>
+<p>The preset calculator has options tailored to sport-specific pregame polls. Just select the sport from the dropdown at the top and fill it out like you would with the normal calculator.</p>
+
+<h2>2-Way:</h2>
+<p>This is the standard calculator for calculating expected value (EV) on any two-option poll.</p>
+<ul>
+  <li><strong>Show Real Odds:</strong> Check this box <em>only</em> if the poll in the real app displays odds (e.g., MLB winner polls). Leave it unchecked if no odds are shown.</li>
+  <li><strong>Show Advanced Calculations:</strong> This one is up to you. Enable it if you want to see deeper calculations like hit probability and payout breakdown.</li>
+  <li><strong>Sportsbook Odds:</strong> Enter the odds exactly as they appear on your sportsbook (e.g., FanDuel). The calculator will convert them to no-vig (fair) odds automatically.</li>
+  <li><strong>Real Odds:</strong> Enter the odds shown in the actual app for each team or side. <strong>Be sure to match the correct team to the correct input box.</strong></li>
+  <li><strong>Max Bet:</strong> Hold your wager in the app to see the max karma allowed on that poll.<br>
+    In parentheses next to this is the payout for a “0” wager.<br>
+    Use <strong>payout 5</strong> for player polls. Use <strong>payout 10</strong> for regular game polls (if no 0-wager payout is shown, default to 10).
+  </li>
+</ul>
+
+<h2>3-Way:</h2>
+<p>This works the same way as the 2-way calculator but is specifically built for <strong>FC (Fantasy Contests)</strong>, where three choices are possible.</p>
+
+<h2>Dog of the Day (DOTD):</h2>
+<p>You have two ways to use this calculator: <strong>Manual Entry</strong> or <strong>Auto-Ranker</strong>.</p>
+
+<h3>Manual:</h3>
+<ul>
+  <li><strong>Placement:</strong> Rank the selections by percent picked: 1st highest = 1, 2nd highest = 2, and so on. If two picks have the same percent, use the number in parentheses to break the tie.</li>
+  <li><strong>Real Odds:</strong> Use the odds shown next to each team in the DOTD selection screen.</li>
+  <li><strong>Sportsbook Odds:</strong> Manually input odds from your sportsbook. Check the <strong>no-vig</strong> box if your book displays no-vig odds. Make sure the underdog (DOTD pick) and favorite are in the correct boxes.</li>
+</ul>
+<p>Skip the auto-ranker section if you’re entering everything manually.</p>
+
+<h3>Auto-Ranker:</h3>
+<ul>
+  <p>
+      <strong>iphone section</strong> 
+  </p>
+    <ol>
+      <li>Take a screenshot of the DOTD screen (Ex. below)</li>
+      <img src="https://cdn.glitch.global/f68551de-ed34-4a98-965e-33266452208a/thumbnails%2FScreenshot%202025-04-25%208.05.35%20PM.png?1745625949392" id="ssExample">
+      <li>Go into photos and copy and paste the text as you would usually do</li>
+      <li>Copy and paste this text into the input box and follow directions on site</li>
+      <li>dm @tomfc on Real if you have any issues/questions</li>
+    </ol>
+    <p>
+      <strong>Other section (Android or Laptop)</strong>
+    </p>
+    <li>Take a screenshot of the DOTD screen (see ex. in iphone section)</li>
+    <li>Attach this screenshot to Chatgpt and tell it to convert this image to text in the following format:"Enter players and odds (one per line, alternating name and odds)"</li>
+    <li>Copy and paste this text into the input box and follow directions on site</li>
+    <li>dm @tomfc on Real if you have any issues/questions</li>
+  <li>Once all data is filled in, hit <strong>“Use Data for EV Calculator”</strong>.</li>
+  <li>Then enter sportsbook odds for each team. Use the no-vig checkbox if needed. Double-check which input is for the underdog and which is for the favorite.</li>
+</ul>
+
+<p>Once everything is entered, press <strong>“Calculate All”</strong> to see a summary of:
+<ul>
+  <li>Top payout</li>
+  <li>Highest hit probability</li>
+  <li>Best expected value</li>
+</ul>
+<p>Click <strong>“Show Complete EV Rankings”</strong> to view all teams sorted by EV.</p>
+
+<p><strong>⚠️ TIP:</strong> Do DOTD close to the first game start time, as selection percentages can change.</p>
+
+<h2>PSP Calculator:</h2>
+<p>Estimate placement by ranking the sportsbook odds for the prop.</p>
+<p><strong>Example:</strong></p>
+<ul>
+  <li>Player 1: -120</li>
+  <li>Player 2: +230</li>
+  <li>Player 3: +150</li>
+</ul>
+<p>Placement would be: Player 1 (1), Player 3 (2), Player 2 (3).<br>
+Use an American Odds to Implied Probability calculator to help with this.</p>
+<p>Next, enter each player’s sportsbook odds.</p>
+
+<h2>Pool Calculator:</h2>
+<ul>
+  <li>Select how many games are in the pool (2–4).</li>
+  <li>If it’s FC, select the version marked with <code>_ games fc</code>.</li>
+  <li>First input = sportsbook odds</li>
+  <li>Second input = percent selected (must pick a side to see this)</li>
+</ul>
+<p><strong>L</strong> = left side, <strong>R</strong> = right side. Match them correctly.</p>
+<p>By default, the table sorts by EV. You can also sort by payout, hit probability, or selection %.</p>
+
+<p><strong>Note:</strong> A positive EV is good long-term. But for <strong>3-game pools</strong>, it is highly unlikely it will ever be worth entering.</p>
+<p>Selections and payouts are estimates, but very accurate.</p>
+
+<h2>Golf and PSP Calcs:</h2>
+<p>Use the guides found on each respective page.</p>
+
+     <button onclick="window.location.href='index.html'">Go Home</button>
+    <script></script>
+  </body>
+</html>
