@@ -850,39 +850,62 @@ BAL +113
     }, 100);
   }
 
-  function generateCalculators() {
-    const count = Number(document.getElementById("calcCountSelect").value);
-    const container = document.getElementById("calculatorContainer");
-    container.innerHTML = "";
+ function generateCalculators() {
+  const count = Number(document.getElementById("calcCountSelect").value);
+  const container = document.getElementById("calculatorContainer");
 
-    for (let i = 0; i < count; i++) {
-      // Only generate input fields for teams with placement >= 7 in shortened mode
-      if (shortenedMode && i < 6) {
-        continue;
-      }
-
-      const section = document.createElement("div");
-      section.className = "calculator-section";
-      section.innerHTML = `
-        <h3>Bet ${i + 1}</h3>
-        <div class="team-header" id="teamHeader${i}"></div>
-        <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
-        <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
-        <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
-        <div id="divFavoriteOddsInput${i}">
-          <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
-        </div>
-        <button onclick="calculateEV(${i})">Calculate</button>
-        <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
-        <p id="resultsOutput${i}"></p>
-        <p id="winningsOutput${i}"></p>
-        <p id="hitProbOutput${i}"></p>
-      `;
-      container.appendChild(section);
+  // --- START: Save values for placement >= 7 ---
+  let savedValues = {};
+  for (let i = 0; i < count; i++) {
+    if (i >= 6) { // Placement 7+
+      savedValues[i] = {
+        placement: document.getElementById(`placementInput${i}`)?.value || "",
+        realOdds: document.getElementById(`realOddsInput${i}`)?.value || "",
+        underdogOdds: document.getElementById(`underdogOddsInput${i}`)?.value || "",
+        favoriteOdds: document.getElementById(`favoriteOddsInput${i}`)?.value || "",
+      };
     }
-
-    toggleFavoriteInputs(); // Hide favorite odds fields if global checkbox is on
   }
+  // --- END: Save values ---
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < count; i++) {
+    if (shortenedMode && i < 6) continue;
+
+    const section = document.createElement("div");
+    section.className = "calculator-section";
+    section.innerHTML = `
+      <h3>Bet ${i + 1}</h3>
+      <div class="team-header" id="teamHeader${i}"></div>
+      <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
+      <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
+      <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+      <div id="divFavoriteOddsInput${i}">
+        <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+      </div>
+      <button onclick="calculateEV(${i})">Calculate</button>
+      <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
+      <p id="resultsOutput${i}"></p>
+      <p id="winningsOutput${i}"></p>
+      <p id="hitProbOutput${i}"></p>
+    `;
+    container.appendChild(section);
+  }
+
+  // --- START: Restore saved values for placement >= 7 ---
+  for (let i = 6; i < count; i++) {
+    if (savedValues[i]) {
+      document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
+      document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
+      document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
+      document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
+    }
+  }
+  // --- END: Restore saved values ---
+
+  toggleFavoriteInputs();
+}
 
   function toggleFavoriteInputs() {
     const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
