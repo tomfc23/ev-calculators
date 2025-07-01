@@ -499,10 +499,30 @@ BAL +113
   let shortenedMode = false; // Global variable to track shortened mode
 
 window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById("shortenedModeToggle").checked = false;
+  const shortenedBox = document.getElementById("shortenedModeToggle");
+  const msg = document.getElementById("shortenedModeMsg");
+  if (shortenedBox) shortenedBox.checked = false;
   shortenedMode = false;
-  document.getElementById("shortenedModeMsg").style.display = "none";
+  if (msg) msg.style.display = "none";
+  checkShortenedModeEligibility();
 });
+
+function checkShortenedModeEligibility() {
+  const shortenedBox = document.getElementById("shortenedModeToggle");
+  const count = Number(document.getElementById("calcCountSelect").value);
+  if (shortenedBox) {
+    if (count < 10) {
+      shortenedBox.checked = false;
+      shortenedBox.disabled = true;
+      shortenedMode = false;
+      document.getElementById("shortenedModeMsg").style.display = "none";
+      document.getElementById("shortenedModeMsg").textContent = "Shortened Mode is only available with 10 or more options.";
+    } else {
+      shortenedBox.disabled = false;
+      document.getElementById("shortenedModeMsg").textContent = "Only bets with placement 7 or higher are shown.";
+    }
+  }
+}
       
   function clearData() {
     document.getElementById("inputData").value = "";
@@ -860,20 +880,17 @@ window.addEventListener('DOMContentLoaded', function() {
   const count = Number(document.getElementById("calcCountSelect").value);
   const container = document.getElementById("calculatorContainer");
 
-  // --- START: Save values and team names for placement >= 7 ---
+  // --- Save values and team names for all options (not just ≥7) ---
   let savedValues = {};
   for (let i = 0; i < count; i++) {
-    if (i >= 6) { // Placement 7+
-      savedValues[i] = {
-        placement: document.getElementById(`placementInput${i}`)?.value || "",
-        realOdds: document.getElementById(`realOddsInput${i}`)?.value || "",
-        underdogOdds: document.getElementById(`underdogOddsInput${i}`)?.value || "",
-        favoriteOdds: document.getElementById(`favoriteOddsInput${i}`)?.value || "",
-        teamHeader: document.getElementById(`teamHeader${i}`)?.textContent || "",
-      };
-    }
+    savedValues[i] = {
+      placement: document.getElementById(`placementInput${i}`)?.value || "",
+      realOdds: document.getElementById(`realOddsInput${i}`)?.value || "",
+      underdogOdds: document.getElementById(`underdogOddsInput${i}`)?.value || "",
+      favoriteOdds: document.getElementById(`favoriteOddsInput${i}`)?.value || "",
+      teamHeader: document.getElementById(`teamHeader${i}`)?.textContent || "",
+    };
   }
-  // --- END: Save values ---
 
   container.innerHTML = "";
 
@@ -900,6 +917,27 @@ window.addEventListener('DOMContentLoaded', function() {
     container.appendChild(section);
   }
 
+  // --- Restore saved values and team names for all visible options ---
+  for (let i = 0; i < count; i++) {
+    if (shortenedMode && i < 6) continue;
+    if (savedValues[i]) {
+      document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
+      document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
+      document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
+      document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
+      document.getElementById(`teamHeader${i}`).textContent = savedValues[i].teamHeader;
+    }
+  }
+
+  toggleFavoriteInputs();
+  checkShortenedModeEligibility();
+}
+
+document.getElementById("calcCountSelect").addEventListener("change", function() {
+  checkShortenedModeEligibility();
+  // Optional: Regenerate calculators if needed on count change
+  generateCalculators();
+});
   // --- START: Restore saved values and team names for placement >= 7 ---
   for (let i = 6; i < count; i++) {
     if (savedValues[i]) {
@@ -928,11 +966,12 @@ window.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  function toggleShortenedMode() {
-    shortenedMode = document.getElementById("shortenedModeToggle").checked;
-    generateCalculators();
-    document.getElementById("shortenedModeMsg").style.display = shortenedMode ? "block" : "none";
-  }
+function toggleShortenedMode() {
+  const shortenedBox = document.getElementById("shortenedModeToggle");
+  shortenedMode = shortenedBox && shortenedBox.checked;
+  generateCalculators();
+  document.getElementById("shortenedModeMsg").style.display = shortenedMode ? "block" : "none";
+}
 
   function calculateEV(index) {
     const underdogOdds = Number(
