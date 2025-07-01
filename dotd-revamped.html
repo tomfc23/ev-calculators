@@ -938,21 +938,7 @@ document.getElementById("calcCountSelect").addEventListener("change", function()
   // Optional: Regenerate calculators if needed on count change
   generateCalculators();
 });
-  // --- START: Restore saved values and team names for placement >= 7 ---
-  for (let i = 6; i < count; i++) {
-    if (savedValues[i]) {
-      document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
-      document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
-      document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
-      document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
-      document.getElementById(`teamHeader${i}`).textContent = savedValues[i].teamHeader;
-    }
-  }
-  // --- END: Restore saved values ---
-
-  toggleFavoriteInputs();
-}
-
+ 
   function toggleFavoriteInputs() {
     const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
     const count = Number(document.getElementById("calcCountSelect").value);
