@@ -335,7 +335,6 @@ BAL +113
   </div>
 
   <script>
-    // --- GLOBALS
     let teamsData = [];
     let shortenedMode = false;
 
@@ -349,7 +348,6 @@ BAL +113
       generateCalculators();
     });
 
-    // --- TABS ---
     function openTab(tabName) {
       const tabContents = document.getElementsByClassName("tab-content");
       for (let i = 0; i < tabContents.length; i++) {
@@ -371,7 +369,6 @@ BAL +113
       }
     }
 
-    // --- SHORTENED MODE ---
     function checkShortenedModeEligibility() {
       const shortenedBox = document.getElementById("shortenedModeToggle");
       const count = Number(document.getElementById("calcCountSelect").value);
@@ -394,10 +391,10 @@ BAL +113
       document.getElementById("shortenedModeMsg").style.display = shortenedMode ? "block" : "none";
     }
 
-    // --- ODDS SORTER ---
     function clearData() {
       document.getElementById("inputData").value = "";
     }
+
     function processData() {
       const inputText = document.getElementById("inputData").value.trim();
       const sortedItemsDiv = document.getElementById("sortedItems");
@@ -538,6 +535,24 @@ BAL +113
             );
           });
         }
+
+        // Deduplicate: assign displayTeam as "XYZ #1", "XYZ #2", etc. for duplicates
+        let abbrevMap = {};
+        teamsData.forEach(item => {
+          if (!abbrevMap[item.team]) abbrevMap[item.team] = 0;
+          abbrevMap[item.team]++;
+        });
+        let runningCount = {};
+        teamsData.forEach(item => {
+          if (abbrevMap[item.team] > 1) {
+            if (!runningCount[item.team]) runningCount[item.team] = 1;
+            item.displayTeam = `${item.team} #${runningCount[item.team]}`;
+            runningCount[item.team]++;
+          } else {
+            item.displayTeam = item.team;
+          }
+        });
+
         if (warnings.length > 0 || autoFixes.length > 0) {
           let warningsHTML = "<h3>Attention Required:</h3>";
           if (warnings.length > 0) {
@@ -567,7 +582,7 @@ BAL +113
         teamsData.forEach((item, index) => {
           const itemDiv = document.createElement("div");
           itemDiv.className = "sorted-item";
-          itemDiv.innerHTML = `${index + 1}. ${item.team} (${item.odds}) - ${item.percentage}% (${item.display})`;
+          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${item.odds}) - ${item.percentage}% (${item.display})`;
           sortedItemsDiv.appendChild(itemDiv);
         });
         sortedResults.style.display = "block";
@@ -577,6 +592,7 @@ BAL +113
         console.error("Processing error:", error);
       }
     }
+
     function parseNumericValue(str) {
       str = String(str).replace(/,/g, "");
       if (str.includes("k") || str.includes("K")) {
@@ -612,7 +628,6 @@ BAL +113
       });
     }
 
-    // --- EV CALCULATOR ---
     function useForEVCalculator() {
       if (teamsData.length === 0) {
         alert("No valid data to use. Please process your data first.");
@@ -636,7 +651,7 @@ BAL +113
             document.getElementById(`realOddsInput${i}`).value = oddsValue;
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
-              teamHeader.textContent = teamsData[i].team;
+              teamHeader.textContent = teamsData[i].displayTeam;
             }
           }
         }
@@ -751,7 +766,6 @@ BAL +113
       document.getElementById(`resultsOutput${index}`).textContent = "";
     }
 
-    // --- CALCULATE ALL & RANKINGS ---
     function calculateAllEVs() {
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
