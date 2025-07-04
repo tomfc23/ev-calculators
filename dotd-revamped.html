@@ -221,7 +221,7 @@
       </svg>
       Home
     </a>
-    <h1>DOTD EV calc</h1>
+    <h1>DOTD EV calc 1.0</h1>
   </div>
   <div class="tab-container">
     <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
@@ -717,47 +717,65 @@ BAL +113
         }
       }
     }
-    function calculateEV(index) {
-      const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
-      const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
-      let placement = Number(document.getElementById(`placementInput${index}`)?.value);
-      placement = placement > 10 ? 10 : placement;
-      const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
-      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
-      let favoriteOdds = useNoVig
-        ? -1 * underdogOdds
-        : Number(document.getElementById(`favoriteOddsInput${index}`)?.value);
+   function calculateEV(index) {
+  const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index + 1}`;
+  const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
+  let placement = Number(document.getElementById(`placementInput${index}`)?.value);
+  const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+  let favoriteOdds = useNoVig
+    ? -1 * underdogOdds
+    : Number(document.getElementById(`favoriteOddsInput${index}`)?.value);
 
-      const underdogIP =
-        underdogOdds > 0
-          ? 100 / (underdogOdds + 100)
-          : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+  // ❗ Check for invalid or missing values
+  if (
+    isNaN(underdogOdds) ||
+    isNaN(placement) ||
+    placement <= 0 ||
+    placement > 10 ||
+    isNaN(realOdds) ||
+    (!useNoVig && isNaN(favoriteOdds))
+  ) {
+    document.getElementById(`resultsOutput${index}`).textContent = "⚠️ Incomplete or invalid input.";
+    return null;
+  }
 
-      const favoriteIP =
-        favoriteOdds > 0
-          ? 100 / (favoriteOdds + 100)
-          : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+  placement = Math.min(placement, 10); // cap placement
 
-      const ipTotal = favoriteIP + underdogIP;
-      const novigUnderdogIP = underdogIP / ipTotal;
+  const underdogIP =
+    underdogOdds > 0
+      ? 100 / (underdogOdds + 100)
+      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-      let payout;
-      if (realOdds < 0) payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
-      else payout = placement * 20 + realOdds;
+  const favoriteIP =
+    favoriteOdds > 0
+      ? 100 / (favoriteOdds + 100)
+      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-      const expectedValue = payout * novigUnderdogIP;
-      const hitProbPercent = novigUnderdogIP * 100;
+  const ipTotal = favoriteIP + underdogIP;
+  const novigUnderdogIP = underdogIP / ipTotal;
 
-      document.getElementById(`resultsOutput${index}`).textContent =
-        `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
+  let payout;
+  if (realOdds < 0) {
+    payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
+  } else {
+    payout = placement * 20 + realOdds;
+  }
 
-      return {
-        team: team,
-        ev: expectedValue,
-        payout: payout,
-        hitProb: hitProbPercent
-      };
-    }
+  const expectedValue = payout * novigUnderdogIP;
+  const hitProbPercent = novigUnderdogIP * 100;
+
+  document.getElementById(`resultsOutput${index}`).textContent =
+    `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
+
+  return {
+    team: team,
+    ev: expectedValue,
+    payout: payout,
+    hitProb: hitProbPercent
+  };
+}
+
     function clearInputs(index) {
       document.getElementById(`underdogOddsInput${index}`).value = "";
       document.getElementById(`favoriteOddsInput${index}`).value = "";
@@ -788,11 +806,13 @@ BAL +113
     }
     function showCompleteRankings() {
       const count = Number(document.getElementById("calcCountSelect").value);
-      let results = [];
-      for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
-        results.push(calculateEV(i));
-      }
+    let results = [];
+for (let i = 0; i < count; i++) {
+  if (shortenedMode && i < 6) continue;
+  const result = calculateEV(i);
+  if (result !== null) results.push(result); // skip invalid ones
+}
+
       results.sort((a, b) => b.ev - a.ev);
       const rankingsContainer = document.getElementById("rankingsContainer");
       rankingsContainer.innerHTML = "";
