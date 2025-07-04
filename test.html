@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .poll-item {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-bottom: 20px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="poll-container">
+        <button onclick="fetchPollData()">Refresh</button>
+        <div id="poll-results">Loading...</div>
+    </div>
+
+    <script>
+        let pollId = 263425
+        async function fetchPollData() {
+            try {
+                const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
+                const data = JSON.parse(response.data.contents);
+                
+                displayPollResults(data.poll.options);
+            } catch (error) {
+                document.getElementById('poll-results').innerHTML = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+
+        function displayPollResults(options) {
+            const container = document.getElementById('poll-results');
+            
+            const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
+            
+            const html = options.map(option => {
+                const percentage = Math.round((option.count / totalVotes) * 100);
+                return `
+                    <div class="poll-item">
+                        <div>${option.label} ${option.odds}</div>
+                        <div>${percentage}% (${option.count})</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        fetchPollData();
+    </script>
+</body>
+</html>
