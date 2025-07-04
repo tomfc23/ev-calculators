@@ -221,14 +221,14 @@
       </svg>
       Home
     </a>
-    <h1>DOTD EV calc 1.1</h1>
+    <h1>DOTD EV calc</h1>
   </div>
   <div class="tab-container">
     <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
     <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
   </div>
   <h4>
-    This <a href="https://real-dotd.vercel.app/" target="_blank">website</a> should be accurate in fetching the dotd screen (no screenshotting)
+    If you do not want to use the auto-ranker, click the EV Calculator tab above.
   </h4>
   <a href="formatter.html" target="_blank">Formatter</a>
   <a href="help-dotd.html">How to use</a><br />
@@ -717,91 +717,47 @@ BAL +113
         }
       }
     }
-function calculateEV(index) {
-  const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
-  const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
-  let placement = Number(document.getElementById(`placementInput${index}`)?.value);
-  placement = placement > 10 ? 10 : placement;
-  const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
-  const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
-  let favoriteOdds = useNoVig
-    ? -1 * underdogOdds
-    : Number(document.getElementById(`favoriteOddsInput${index}`)?.value);
+    function calculateEV(index) {
+      const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
+      const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
+      let placement = Number(document.getElementById(`placementInput${index}`)?.value);
+      placement = placement > 10 ? 10 : placement;
+      const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+      const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
+      let favoriteOdds = useNoVig
+        ? -1 * underdogOdds
+        : Number(document.getElementById(`favoriteOddsInput${index}`)?.value);
 
-  // If any required input is missing, return EV: 0
-  if (isNaN(underdogOdds) || isNaN(favoriteOdds) || isNaN(realOdds) || isNaN(placement)) {
-    document.getElementById(`resultsOutput${index}`).textContent =
-      `EV: 0.00 | Payout: 0.00 | Hit Prob: 0.00%`;
-    return {
-      team: team,
-      ev: 0,
-      payout: 0,
-      hitProb: 0
-    };
-  }
+      const underdogIP =
+        underdogOdds > 0
+          ? 100 / (underdogOdds + 100)
+          : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
 
-  const underdogIP =
-    underdogOdds > 0
-      ? 100 / (underdogOdds + 100)
-      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+      const favoriteIP =
+        favoriteOdds > 0
+          ? 100 / (favoriteOdds + 100)
+          : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
 
-  const favoriteIP =
-    favoriteOdds > 0
-      ? 100 / (favoriteOdds + 100)
-      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+      const ipTotal = favoriteIP + underdogIP;
+      const novigUnderdogIP = underdogIP / ipTotal;
 
-  const ipTotal = favoriteIP + underdogIP;
-  const novigUnderdogIP = underdogIP / ipTotal;
+      let payout;
+      if (realOdds < 0) payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
+      else payout = placement * 20 + realOdds;
 
-  let payout;
-  if (realOdds < 0) payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
-  else payout = placement * 20 + realOdds;
+      const expectedValue = payout * novigUnderdogIP;
+      const hitProbPercent = novigUnderdogIP * 100;
 
-  const expectedValue = payout * novigUnderdogIP;
-  const hitProbPercent = novigUnderdogIP * 100;
+      document.getElementById(`resultsOutput${index}`).textContent =
+        `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
 
-  document.getElementById(`resultsOutput${index}`).textContent =
-    `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
-
-  return {
-    team: team,
-    ev: expectedValue,
-    payout: payout,
-    hitProb: hitProbPercent
-  };
-}
-
-  placement = placement > 10 ? 10 : placement;
-
-  const underdogIP = underdogOdds > 0
-    ? 100 / (underdogOdds + 100)
-    : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
-
-  const favoriteIP = favoriteOdds > 0
-    ? 100 / (favoriteOdds + 100)
-    : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
-
-  const ipTotal = favoriteIP + underdogIP;
-  const novigUnderdogIP = underdogIP / ipTotal;
-
-  let payout = realOdds < 0
-    ? placement * 20 + (100 / (Math.abs(realOdds) / 100))
-    : placement * 20 + realOdds;
-
-  const expectedValue = payout * novigUnderdogIP;
-  const hitProbPercent = novigUnderdogIP * 100;
-
-  document.getElementById(`resultsOutput${index}`).textContent =
-    `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
-
-  return {
-    team: team,
-    ev: expectedValue,
-    payout: payout,
-    hitProb: hitProbPercent
-  };
-}
-
+      return {
+        team: team,
+        ev: expectedValue,
+        payout: payout,
+        hitProb: hitProbPercent
+      };
+    }
     function clearInputs(index) {
       document.getElementById(`underdogOddsInput${index}`).value = "";
       document.getElementById(`favoriteOddsInput${index}`).value = "";
@@ -809,62 +765,54 @@ function calculateEV(index) {
       document.getElementById(`realOddsInput${index}`).value = "";
       document.getElementById(`resultsOutput${index}`).textContent = "";
     }
-function calculateAllEVs() {
-  const count = Number(document.getElementById("calcCountSelect").value);
-  let results = [];
-  for (let i = 0; i < count; i++) {
-    if (shortenedMode && i < 6) continue;
-    const result = calculateEV(i);
-    if (result) results.push(result); // ✅ Only push valid
-  }
-  if (!results.length) return;
 
-  document.getElementById("summarySection").style.display = "block";
-  let bestEV = results.reduce((a, b) => a.ev > b.ev ? a : b);
-  let bestPayout = results.reduce((a, b) => a.payout > b.payout ? a : b);
-  let bestProb = results.reduce((a, b) => a.hitProb > b.hitProb ? a : b);
+    function calculateAllEVs() {
+      const count = Number(document.getElementById("calcCountSelect").value);
+      let results = [];
+      for (let i = 0; i < count; i++) {
+        if (shortenedMode && i < 6) continue;
+        results.push(calculateEV(i));
+      }
+      if (!results.length) return;
+      document.getElementById("summarySection").style.display = "block";
+      let bestEV = results.reduce((a, b) => a.ev > b.ev ? a : b);
+      let bestPayout = results.reduce((a, b) => a.payout > b.payout ? a : b);
+      let bestProb = results.reduce((a, b) => a.hitProb > b.hitProb ? a : b);
 
-  document.getElementById("bestEVName").textContent = bestEV.team;
-  document.getElementById("bestEVValue").textContent = bestEV.ev.toFixed(2);
-  document.getElementById("bestPayoutName").textContent = bestPayout.team;
-  document.getElementById("bestPayoutValue").textContent = bestPayout.payout.toFixed(2);
-  document.getElementById("bestProbName").textContent = bestProb.team;
-  document.getElementById("bestProbValue").textContent = bestProb.hitProb.toFixed(2);
-}
-
-  function showCompleteRankings() {
-  const count = Number(document.getElementById("calcCountSelect").value);
-  let results = [];
-  for (let i = 0; i < count; i++) {
-    if (shortenedMode && i < 6) continue;
-    const result = calculateEV(i);
-    if (result) results.push(result); // ✅ Only push valid results
-  }
-  if (results.length === 0) return;
-
-  results.sort((a, b) => b.ev - a.ev);
-  const rankingsContainer = document.getElementById("rankingsContainer");
-  rankingsContainer.innerHTML = "";
-
-  results.forEach((r, idx) => {
-    const div = document.createElement("div");
-    div.className = "ranking-item" +
-      (idx === 0 ? " rank-1" : idx === 1 ? " rank-2" : idx === 2 ? " rank-3" : "");
-    div.innerHTML = `
-      <span class="ranking-number">${idx + 1}.</span>
-      <span class="ranking-team">${r.team}</span>
-      <div class="ranking-details">
-        <span class="ranking-ev">EV: ${r.ev.toFixed(2)}</span> |
-        <span class="ranking-payout">Payout: ${r.payout.toFixed(2)}</span> |
-        <span class="ranking-prob">Hit Prob: ${r.hitProb.toFixed(2)}%</span>
-      </div>
-    `;
-    rankingsContainer.appendChild(div);
-  });
-
-  document.getElementById("rankingsSection").style.display = "block";
-}
-
+      document.getElementById("bestEVName").textContent = bestEV.team || "-";
+      document.getElementById("bestEVValue").textContent = bestEV.ev ? bestEV.ev.toFixed(2) : "-";
+      document.getElementById("bestPayoutName").textContent = bestPayout.team || "-";
+      document.getElementById("bestPayoutValue").textContent = bestPayout.payout ? bestPayout.payout.toFixed(2) : "-";
+      document.getElementById("bestProbName").textContent = bestProb.team || "-";
+      document.getElementById("bestProbValue").textContent = bestProb.hitProb ? bestProb.hitProb.toFixed(2) : "-";
+    }
+    function showCompleteRankings() {
+      const count = Number(document.getElementById("calcCountSelect").value);
+      let results = [];
+      for (let i = 0; i < count; i++) {
+        if (shortenedMode && i < 6) continue;
+        results.push(calculateEV(i));
+      }
+      results.sort((a, b) => b.ev - a.ev);
+      const rankingsContainer = document.getElementById("rankingsContainer");
+      rankingsContainer.innerHTML = "";
+      results.forEach((r, idx) => {
+        const div = document.createElement("div");
+        div.className = "ranking-item" +
+          (idx === 0 ? " rank-1" : idx === 1 ? " rank-2" : idx === 2 ? " rank-3" : "");
+        div.innerHTML = `
+          <span class="ranking-number">${idx + 1}.</span>
+          <span class="ranking-team">${r.team}</span>
+          <div class="ranking-details">
+            <span class="ranking-ev">EV: ${r.ev.toFixed(2)}</span> |
+            <span class="ranking-payout">Payout: ${r.payout.toFixed(2)}</span> |
+            <span class="ranking-prob">Hit Prob: ${r.hitProb.toFixed(2)}%</span>
+          </div>
+        `;
+        rankingsContainer.appendChild(div);
+      });
+      document.getElementById("rankingsSection").style.display = "block";
+    }
     function hideRankings() {
       document.getElementById("rankingsSection").style.display = "none";
     }
