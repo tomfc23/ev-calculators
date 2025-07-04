@@ -222,7 +222,7 @@
       </svg>
       Home
     </a>
-    <h1>DOTD EV calc 1.0</h1>
+    <h1>DOTD EV calc</h1>
   </div>
   <div class="tab-container">
     <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
@@ -821,7 +821,7 @@ BAL +113
        let pollId = 263425
         async function fetchPollData() {
             try {
-                const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}&t=${Date.now()}`);
+                const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
                 const data = JSON.parse(response.data.contents);
                 
                 displayPollResults(data.poll.options);
