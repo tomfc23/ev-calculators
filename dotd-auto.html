@@ -344,11 +344,26 @@ BAL +113
       const inputBox = document.getElementById('inputData');
       inputBox.value = 'Loading poll data...';
       try {
-        const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${POLL_ID}`);
+        const response = await axios.get(
+          `https://api.allorigins.win/get?url=https://api.real.vg/polls/${POLL_ID}`
+        );
         const data = JSON.parse(response.data.contents);
+        // Format output as required:
+        // TEAM +###\n##% (###)
         const formatted = data.poll.options.map(opt => {
-          let oddsString = opt.odds !== undefined ? (opt.odds > 0 ? `+${opt.odds}` : `${opt.odds}`) : '';
-          let percent = typeof opt.percentage === 'number' ? Math.round(opt.percentage) : '';
+          // Format odds: always a single + or -, never ++
+          let oddsNum = Number(opt.odds);
+          let oddsString = '';
+          if (!isNaN(oddsNum)) {
+            oddsString = (oddsNum >= 0 ? '+' : '') + oddsNum;
+          } else {
+            oddsString = '';
+          }
+          // Percentage as integer with % always
+          let percent = (typeof opt.percentage === 'number' && !isNaN(opt.percentage))
+            ? Math.round(opt.percentage)
+            : '';
+          // Count: fallback to 0 if null
           let count = opt.count || 0;
           return `${opt.label} ${oddsString}\n${percent}% (${count})`;
         }).join('\n');
@@ -360,6 +375,8 @@ BAL +113
     }
     // --- End: Poll Fetch Integration ---
 
+    // ... The rest of your script remains unchanged
+    // -- keep all other JS from your original file below here --
     let teamsData = [];
     let shortenedMode = false;
 
