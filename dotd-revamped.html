@@ -718,27 +718,58 @@ BAL +113
       }
     }
 function calculateEV(index) {
-  const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index + 1}`;
+  const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
   const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
   let placement = Number(document.getElementById(`placementInput${index}`)?.value);
+  placement = placement > 10 ? 10 : placement;
   const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
   const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
-  const favoriteOddsRaw = document.getElementById(`favoriteOddsInput${index}`)?.value;
-  const favoriteOdds = useNoVig
+  let favoriteOdds = useNoVig
     ? -1 * underdogOdds
-    : Number(favoriteOddsRaw);
+    : Number(document.getElementById(`favoriteOddsInput${index}`)?.value);
 
-  // ✅ Input validation — skip incomplete
-  if (
-    isNaN(underdogOdds) ||
-    isNaN(realOdds) ||
-    (!useNoVig && isNaN(favoriteOdds)) ||
-    isNaN(placement) || placement <= 0
-  ) {
+  // If any required input is missing, return EV: 0
+  if (isNaN(underdogOdds) || isNaN(favoriteOdds) || isNaN(realOdds) || isNaN(placement)) {
     document.getElementById(`resultsOutput${index}`).textContent =
-      `❗ Incomplete or invalid input`;
-    return null;
+      `EV: 0.00 | Payout: 0.00 | Hit Prob: 0.00%`;
+    return {
+      team: team,
+      ev: 0,
+      payout: 0,
+      hitProb: 0
+    };
   }
+
+  const underdogIP =
+    underdogOdds > 0
+      ? 100 / (underdogOdds + 100)
+      : Math.abs(underdogOdds) / (Math.abs(underdogOdds) + 100);
+
+  const favoriteIP =
+    favoriteOdds > 0
+      ? 100 / (favoriteOdds + 100)
+      : Math.abs(favoriteOdds) / (Math.abs(favoriteOdds) + 100);
+
+  const ipTotal = favoriteIP + underdogIP;
+  const novigUnderdogIP = underdogIP / ipTotal;
+
+  let payout;
+  if (realOdds < 0) payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
+  else payout = placement * 20 + realOdds;
+
+  const expectedValue = payout * novigUnderdogIP;
+  const hitProbPercent = novigUnderdogIP * 100;
+
+  document.getElementById(`resultsOutput${index}`).textContent =
+    `EV: ${expectedValue.toFixed(2)} | Payout: ${payout.toFixed(2)} | Hit Prob: ${hitProbPercent.toFixed(2)}%`;
+
+  return {
+    team: team,
+    ev: expectedValue,
+    payout: payout,
+    hitProb: hitProbPercent
+  };
+}
 
   placement = placement > 10 ? 10 : placement;
 
