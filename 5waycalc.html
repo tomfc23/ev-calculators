@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5-way EV Calc</title>
+    <style>
+        body {
+            font-family: sans-serif; 
+            margin: 20px;
+            background-color: black;
+            color: lightgray; 
+            text-align:center;
+        }
+
+        input,
+        button,
+        select {
+            margin: 5px;
+            padding: 15px; /* Increased padding for larger size */
+            font-size: 16px; /* Increased font size */
+            border-radius: 25px; /* Rounded corners */
+            border: 2px solid #ccc; /* Border style */
+            transition: border-color 0.3s; /* Smooth border color transition */
+        }
+
+        input,
+        select {
+            background-color: #333; /* Dark background for input and select in dark mode */
+            color: lightgray; /* Light gray text color for input and select in dark mode */
+            border: 2px solid #555; /* Darker border in dark mode */
+        }
+
+        input:focus,
+        button:focus,
+        select:focus {
+            border-color: #007BFF; /* Change border color on focus */
+            outline: none; /* Remove default outline */
+        }
+
+        button {
+            cursor: pointer; /* Change cursor to pointer for buttons */
+            background-color: #6f42c1; /* Purple button background color */
+            color: white; /* Button text color */
+            border: none; /* Remove default border */
+        }
+
+        button:hover {
+            background-color: #5a32a3; /* Darker shade on hover */
+        }
+
+        #clearButton {
+            background-color: red; /* Red background for clear button */
+            margin-left: 10px; /* Space between buttons */
+        }
+
+        #modeToggle {
+            margin-top: 20px; /* Add some space above the button */
+        }
+
+        .odds-toggle {
+            margin: 10px 0;
+        }
+        
+        .odds-toggle button {
+            background-color: #444;
+            margin: 0 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .odds-toggle button.active {
+            background-color: #007BFF;
+        }
+        
+        a {
+            color: #858bf0;
+        }
+        
+        .green-check {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .ev-result {
+            padding: 5px;
+            margin: 2px 0;
+            border-radius: 5px;
+        }
+        
+        .highest-ev {
+            background-color: rgba(76, 175, 80, 0.2);
+        }
+
+        .team-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background-color: #111;
+        }
+
+        .team-section h3 {
+            margin: 0 0 10px 0;
+            color: #007BFF;
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+    <h1>5-way EV Calc</h1>
+    
+    <div class="odds-toggle">
+        <button id="americanOddsBtn" class="active" onclick="setOddsFormat('american')">American Odds</button>
+        <button id="decimalOddsBtn" onclick="setOddsFormat('decimal')">Decimal Odds</button>
+    </div>
+    
+    <label>
+        <input type="checkbox" id="toggleOutput">
+        Show All Outputs
+    </label>
+    <br>
+    
+    <div class="team-section">
+        <h3>Side 1</h3>
+        <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 Sportsbook Odds">
+        <br>
+        <input type="text" id="realOddsInput1" placeholder="Enter Team 1 Real App Odds">
+    </div>
+
+    <div class="team-section">
+        <h3>Side 2</h3>
+        <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 Sportsbook Odds">
+        <br>
+        <input type="text" id="realOddsInput2" placeholder="Enter Team 2 Real App Odds">
+    </div>
+
+    <div class="team-section">
+        <h3>Side 3</h3>
+        <input type="text" id="sportsbookOddsInput3" placeholder="Enter Team 3 Sportsbook Odds">
+        <br>
+        <input type="text" id="realOddsInput3" placeholder="Enter Team 3 Real App Odds">
+    </div>
+
+    <div class="team-section">
+        <h3>Side 4</h3>
+        <input type="text" id="sportsbookOddsInput4" placeholder="Enter Team 4 Sportsbook Odds">
+        <br>
+        <input type="text" id="realOddsInput4" placeholder="Enter Team 4 Real App Odds">
+    </div>
+
+    <div class="team-section">
+        <h3>Side 5</h3>
+        <input type="text" id="sportsbookOddsInput5" placeholder="Enter Team 5 Sportsbook Odds">
+        <br>
+        <input type="text" id="realOddsInput5" placeholder="Enter Team 5 Real App Odds">
+    </div>
+    
+    <select id="maxBetInput">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="200">200</option>
+    </select>
+    <label for="maxBetInput">Max Bet Amount:</label>
+    <br>
+  
+    <br>
+    <button onclick="calculateNoVigOdds()">Calculate</button>
+    <button id="clearButton" onclick="clearInputs()">Clear</button>
+    <p id="result"></p>
+
+    
+    <!-- New button to navigate to index.html -->
+    <button onclick="window.location.href='index.html'">Go Home</button>
+    <br>
+    <p>designed by @tomfc on Real </p>
+  
+
+
+    <script>
+        let currentOddsFormat = 'american'; // Default to American odds
+
+        function setOddsFormat(format) {
+            currentOddsFormat = format;
+            
+            // Update button states
+            document.getElementById('americanOddsBtn').classList.toggle('active', format === 'american');
+            document.getElementById('decimalOddsBtn').classList.toggle('active', format === 'decimal');
+            
+            // Update placeholder text
+            const inputs = [
+                'sportsbookOddsInput1', 'realOddsInput1',
+                'sportsbookOddsInput2', 'realOddsInput2', 
+                'sportsbookOddsInput3', 'realOddsInput3',
+                'sportsbookOddsInput4', 'realOddsInput4',
+                'sportsbookOddsInput5', 'realOddsInput5'
+            ];
+            
+            inputs.forEach((inputId, index) => {
+                const teamNum = Math.floor(index / 2) + 1;
+                const bookType = index % 2 === 0 ? 'Sportsbook' : 'Real App';
+                const placeholder = format === 'american' 
+                    ? `Enter Team ${teamNum} ${bookType} Odds`
+                    : `Enter Team ${teamNum} ${bookType} Odds (Decimal)`;
+                document.getElementById(inputId).placeholder = placeholder;
+            });
+        }
+
+        function convertDecimalToAmerican(decimalOdds) {
+            if (decimalOdds >= 2.0) {
+                return Math.round((decimalOdds - 1) * 100);
+            } else {
+                return Math.round(-100 / (decimalOdds - 1));
+            }
+        }
+
+        function convertAmericanToDecimal(americanOdds) {
+            if (americanOdds > 0) {
+                return (americanOdds / 100) + 1;
+            } else {
+                return (100 / Math.abs(americanOdds)) + 1;
+            }
+        }
+
+        function parseOddsInput(input) {
+            const value = parseFloat(input);
+            if (isNaN(value)) return null;
+            
+            if (currentOddsFormat === 'decimal') {
+                // Convert decimal to American for internal calculations
+                return convertDecimalToAmerican(value);
+            } else {
+                // Already American odds
+                return Math.round(value);
+            }
+        }
+
+        function calculateImpliedProbability(odds) {
+            if (odds > 0) {
+                return 100 / (100 + odds); // Corrected logic for positive odds
+            } else {
+                return Math.abs(odds) / (Math.abs(odds) + 100);
+            }
+        }
+
+        function roundToWhole(value) {
+            return Math.round(value); // Round to the nearest whole number
+        }
+
+        function roundToTwoDecimals(value) {
+            return Math.round(value * 100) / 100; // Round to two decimal places
+        }
+
+        function calculatePayout(realOdds, wager) {
+            let winnings;
+            if (wager === 0) {
+                // For a wager of 0, payout is always based on $10
+                if (realOdds > 0) { // Underdog
+                    winnings = (10 / 100) * realOdds; // Calculate winnings based on $10
+                } else { // Favorite (negative odds)
+                    winnings = (100 / Math.abs(realOdds)) * 10; // Calculate winnings based on $10
+                }
+            } else {
+                if (realOdds > 0) { // Underdog
+                    winnings = (wager / 100) * realOdds; // Only the winnings
+                } else { // Favorite
+                    winnings = (100 / Math.abs(realOdds)) * wager; // Only the winnings
+                }
+            }
+            return roundToWhole(winnings); // Return winnings rounded to the nearest whole number
+        }
+
+        function calculateFractionalProbability(odds) {
+            const total = odds > 0 ? (100 + odds) : (100 - odds);
+            const numerator = odds > 0 ? 100 : Math.abs(odds);
+            return `${roundToWhole(numerator)}/${roundToWhole(total)}`;
+        }
+
+        function calculateExpectedValue(winnings, noVigProbWin, wager, noVigProbLose) {
+            return roundToTwoDecimals((winnings * noVigProbWin) - (wager * noVigProbLose));
+        }
+
+        function formatOddsForDisplay(americanOdds) {
+            if (currentOddsFormat === 'decimal') {
+                return convertAmericanToDecimal(americanOdds).toFixed(2);
+            } else {
+                return americanOdds;
+            }
+        }
+
+        function calculateNoVigOdds() {
+            const sportsbookOdds1 = parseOddsInput(document.getElementById('sportsbookOddsInput1').value);
+            const realOdds1 = parseOddsInput(document.getElementById('realOddsInput1').value);
+            const sportsbookOdds2 = parseOddsInput(document.getElementById('sportsbookOddsInput2').value);
+            const realOdds2 = parseOddsInput(document.getElementById('realOddsInput2').value);
+            const sportsbookOdds3 = parseOddsInput(document.getElementById('sportsbookOddsInput3').value);
+            const realOdds3 = parseOddsInput(document.getElementById('realOddsInput3').value);
+            const sportsbookOdds4 = parseOddsInput(document.getElementById('sportsbookOddsInput4').value);
+            const realOdds4 = parseOddsInput(document.getElementById('realOddsInput4').value);
+            const sportsbookOdds5 = parseOddsInput(document.getElementById('sportsbookOddsInput5').value);
+            const realOdds5 = parseOddsInput(document.getElementById('realOddsInput5').value);
+
+            // Check if any odds are null (invalid input)
+            if ([sportsbookOdds1, realOdds1, sportsbookOdds2, realOdds2, sportsbookOdds3, realOdds3, sportsbookOdds4, realOdds4, sportsbookOdds5, realOdds5].some(odds => odds === null)) {
+                document.getElementById('result').innerHTML = 'Please enter valid odds for all teams.';
+                return;
+            }
+
+            const maxBet = parseFloat(document.getElementById('maxBetInput').value);
+
+            const prob1 = calculateImpliedProbability(sportsbookOdds1);
+            const prob2 = calculateImpliedProbability(sportsbookOdds2);
+            const prob3 = calculateImpliedProbability(sportsbookOdds3);
+            const prob4 = calculateImpliedProbability(sportsbookOdds4);
+            const prob5 = calculateImpliedProbability(sportsbookOdds5);
+
+            const totalProb = prob1 + prob2 + prob3 + prob4 + prob5;
+            const noVigProb1 = prob1 / totalProb;
+            const noVigProb2 = prob2 / totalProb;
+            const noVigProb3 = prob3 / totalProb;
+            const noVigProb4 = prob4 / totalProb;
+            const noVigProb5 = prob5 / totalProb;
+
+            // Calculate No-Vig American Odds
+            const noVigOdds1 = noVigProb1 < 0.5 
+                ? roundToWhole(100 * (1 - noVigProb1) / noVigProb1) 
+                : roundToWhole(-100 * noVigProb1 / (1 - noVigProb1));
+
+            const noVigOdds2 = noVigProb2 < 0.5 
+                ? roundToWhole(100 * (1 - noVigProb2) / noVigProb2) 
+                : roundToWhole(-100 * noVigProb2 / (1 - noVigProb2));
+
+            const noVigOdds3 = noVigProb3 < 0.5 
+                ? roundToWhole(100 * (1 - noVigProb3) / noVigProb3) 
+                : roundToWhole(-100 * noVigProb3 / (1 - noVigProb3));
+
+            const noVigOdds4 = noVigProb4 < 0.5 
+                ? roundToWhole(100 * (1 - noVigProb4) / noVigProb4) 
+                : roundToWhole(-100 * noVigProb4 / (1 - noVigProb4));
+
+            const noVigOdds5 = noVigProb5 < 0.5 
+                ? roundToWhole(100 * (1 - noVigProb5) / noVigProb5) 
+                : roundToWhole(-100 * noVigProb5 / (1 - noVigProb5));
+
+            // Calculate No-Vig Decimal Probabilities using rounded No-Vig American Odds
+            const noVigDecimalProb1 = noVigOdds1 > 0 
+                ? 100 / (100 + noVigOdds1) 
+                : Math.abs(noVigOdds1) / (Math.abs(noVigOdds1) + 100);
+
+            const noVigDecimalProb2 = noVigOdds2 > 0 
+                ? 100 / (100 + noVigOdds2) 
+                : Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
+
+            const noVigDecimalProb3 = noVigOdds3 > 0 
+                ? 100 / (100 + noVigOdds3) 
+                : Math.abs(noVigOdds3) / (Math.abs(noVigOdds3) + 100);
+
+            const noVigDecimalProb4 = noVigOdds4 > 0 
+                ? 100 / (100 + noVigOdds4) 
+                : Math.abs(noVigOdds4) / (Math.abs(noVigOdds4) + 100);
+
+            const noVigDecimalProb5 = noVigOdds5 > 0 
+                ? 100 / (100 + noVigOdds5) 
+                : Math.abs(noVigOdds5) / (Math.abs(noVigOdds5) + 100);
+
+            // Calculate winnings based on real odds
+            const winnings1Wager0 = calculatePayout(realOdds1, 0);
+            const winnings1WagerMax = calculatePayout(realOdds1, maxBet);
+            const winnings2Wager0 = calculatePayout(realOdds2, 0);
+            const winnings2WagerMax = calculatePayout(realOdds2, maxBet);
+            const winnings3Wager0 = calculatePayout(realOdds3, 0);
+            const winnings3WagerMax = calculatePayout(realOdds3, maxBet);
+            const winnings4Wager0 = calculatePayout(realOdds4, 0);
+            const winnings4WagerMax = calculatePayout(realOdds4, maxBet);
+            const winnings5Wager0 = calculatePayout(realOdds5, 0);
+            const winnings5WagerMax = calculatePayout(realOdds5, maxBet);
+
+            // Round winnings to the nearest whole number for EV calculations
+            const roundedWinnings1Wager0 = roundToWhole(winnings1Wager0);
+            const roundedWinnings1WagerMax = roundToWhole(winnings1WagerMax);
+            const roundedWinnings2Wager0 = roundToWhole(winnings2Wager0);
+            const roundedWinnings2WagerMax = roundToWhole(winnings2WagerMax);
+            const roundedWinnings3Wager0 = roundToWhole(winnings3Wager0);
+            const roundedWinnings3WagerMax = roundToWhole(winnings3WagerMax);
+            const roundedWinnings4Wager0 = roundToWhole(winnings4Wager0);
+            const roundedWinnings4WagerMax = roundToWhole(winnings4WagerMax);
+            const roundedWinnings5Wager0 = roundToWhole(winnings5Wager0);
+            const roundedWinnings5WagerMax = roundToWhole(winnings5WagerMax);
+
+            // Calculate fractional No-Vig implied probabilities
+            const fractionalProb1 = calculateFractionalProbability(noVigOdds1);
+            const fractionalProb2 = calculateFractionalProbability(noVigOdds2);
+            const fractionalProb3 = calculateFractionalProbability(noVigOdds3);
+            const fractionalProb4 = calculateFractionalProbability(noVigOdds4);
+            const fractionalProb5 = calculateFractionalProbability(noVigOdds5);
+
+            // Calculate Expected Values using rounded winnings
+            const ev1Wager0 = calculateExpectedValue(roundedWinnings1Wager0, noVigDecimalProb1, 0, noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev1WagerMax = calculateExpectedValue(roundedWinnings1WagerMax, noVigDecimalProb1, maxBet, noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev2Wager0 = calculateExpectedValue(roundedWinnings2Wager0, noVigDecimalProb2, 0, noVigDecimalProb1 + noVigDecimalProb3 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev2WagerMax = calculateExpectedValue(roundedWinnings2WagerMax, noVigDecimalProb2, maxBet, noVigDecimalProb1 + noVigDecimalProb3 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev3Wager0 = calculateExpectedValue(roundedWinnings3Wager0, noVigDecimalProb3, 0, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev3WagerMax = calculateExpectedValue(roundedWinnings3WagerMax, noVigDecimalProb3, maxBet, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb4 + noVigDecimalProb5);
+            const ev4Wager0 = calculateExpectedValue(roundedWinnings4Wager0, noVigDecimalProb4, 0, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb5);
+            const ev4WagerMax = calculateExpectedValue(roundedWinnings4WagerMax, noVigDecimalProb4, maxBet, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb5);
+            const ev5Wager0 = calculateExpectedValue(roundedWinnings5Wager0, noVigDecimalProb5, 0, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb4);
+            const ev5WagerMax = calculateExpectedValue(roundedWinnings5WagerMax, noVigDecimalProb5, maxBet, noVigDecimalProb1 + noVigDecimalProb2 + noVigDecimalProb3 + noVigDecimalProb4);
+
+            // Create array of all EVs to find the highest
+            const evValues = [
+                { name: `Side 1 (Wager 0)`, value: ev1Wager0 },
+                { name: `Side 1 (Max Bet)`, value: ev1WagerMax },
+                { name: `Side 2 (Wager 0)`, value: ev2Wager0 },
+                { name: `Side 2 (Max Bet)`, value: ev2WagerMax },
+                { name: `Side 3 (Wager 0)`, value: ev3Wager0 },
+                { name: `Side 3 (Max Bet)`, value: ev3WagerMax },
+                { name: `Side 4 (Wager 0)`, value: ev4Wager0 },
+                { name: `Side 4 (Max Bet)`, value: ev4WagerMax },
+                { name: `Side 5 (Wager 0)`, value: ev5Wager0 },
+                { name: `Side 5 (Max Bet)`, value: ev5WagerMax }
+            ];
+
+            // Find the highest EV
+            const highestEV = Math.max(...evValues.map(ev => ev.value));
+
+            const showAllOutputs = document.getElementById('toggleOutput').checked;
+            const oddsFormatLabel = currentOddsFormat === 'american' ? 'American' : 'Decimal';
+
+            let resultHTML = '';
+
+            if (showAllOutputs) {
+                resultHTML += 
+                    `Side 1 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds1)}<br>` +
+                    `Side 2 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds2)}<br>` +
+                    `Side 3 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds3)}<br>` +
+                    `Side 4 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds4)}<br>` +
+                    `Side 5 No-Vig ${oddsFormatLabel} Odds: ${formatOddsForDisplay(noVigOdds5)}<br>` +
+                    `Side 1 Winnings (Wager 0): ${roundedWinnings1Wager0}<br>` +
+                    `Side 1 Winnings (Max Bet): ${roundedWinnings1WagerMax}<br>` +
+                    `Side 2 Winnings (Wager 0): ${roundedWinnings2Wager0}<br>` +
+                    `Side 2 Winnings (Max Bet): ${roundedWinnings2WagerMax}<br>` +
+                    `Side 3 Winnings (Wager 0): ${roundedWinnings3Wager0}<br>` +
+                    `Side 3 Winnings (Max Bet): ${roundedWinnings3WagerMax}<br>` +
+                    `Side 4 Winnings (Wager 0): ${roundedWinnings4Wager0}<br>` +
+                    `Side 4 Winnings (Max Bet): ${roundedWinnings4WagerMax}<br>` +
+                    `Side 5 Winnings (Wager 0): ${roundedWinnings5Wager0}<br>` +
+                    `Side 5 Winnings (Max Bet): ${roundedWinnings5WagerMax}<br>` +
+                    `Side 1 No-Vig Probability: ${noVigProb1.toFixed(4)}<br>` +
+                    `Side 2 No-Vig Probability: ${noVigProb2.toFixed(4)}<br>` +
+                    `Side 3 No-Vig Probability: ${noVigProb3.toFixed(4)}<br>` +
+                    `Side 4 No-Vig Probability: ${noVigProb4.toFixed(4)}<br>` +
+                    `Side 5 No-Vig Probability: ${noVigProb5.toFixed(4)}<br>` +
+                    `Side 1 Fractional No-Vig Implied Probability: ${fractionalProb1}<br>` +
+                    `Side 2 Fractional No-Vig Implied Probability: ${fractionalProb2}<br>` +
+                    `Side 3 Fractional No-Vig Implied Probability: ${fractionalProb3}<br>` +
+                    `Side 4 Fractional No-Vig Implied Probability: ${fractionalProb4}<br>` +
+                    `Side 5 Fractional No-Vig Implied Probability: ${fractionalProb5}<br>`;
+            }
+
+            // Add EVs with check mark for highest one
+            resultHTML += `<div id="ev-results">`;
+            
+            // Function to add EV result
+            function addEVResult(side, wager, ev) {
+                const isHighest = ev === highestEV;
+                resultHTML += `<div class="ev-result ${isHighest ? 'highest-ev' : ''}">` +
+                    `<strong>Side ${side} Expected Value (${wager}): ${ev}` +
+                    `${isHighest ? '<span class="green-check">✓</span>' : ''}</strong></div>`;
+            }
+
+            // Add all EV results
+            addEVResult(1, 'Wager 0', ev1Wager0);
+            addEVResult(1, 'Max Bet', ev1WagerMax);
+            addEVResult(2, 'Wager 0', ev2Wager0);
+            addEVResult(2, 'Max Bet', ev2WagerMax);
+            addEVResult(3, 'Wager 0', ev3Wager0);
+            addEVResult(3, 'Max Bet', ev3WagerMax);
+            addEVResult(4, 'Wager 0', ev4Wager0);
+            addEVResult(4, 'Max Bet', ev4WagerMax);
+            addEVResult(5, 'Wager 0', ev5Wager0);
+            addEVResult(5, 'Max Bet', ev5WagerMax);
+            
+            resultHTML += `</div>`;
+
+            document.getElementById('result').innerHTML = resultHTML;
+        }
+
+        function clearInputs() {
+            // Clear all input fields
+            document.getElementById('sportsbookOddsInput1').value = '';
+            document.getElementById('realOddsInput1').value = '';
+            document.getElementById('sportsbookOddsInput2').value = '';
+            document.getElementById('realOddsInput2').value = '';
+            document.getElementById('sportsbookOddsInput3').value = '';
+            document.getElementById('realOddsInput3').value = '';
+            document.getElementById('sportsbookOddsInput4').value = '';
+            document.getElementById('realOddsInput4').value = '';
+            document.getElementById('sportsbookOddsInput5').value = '';
+            document.getElementById('realOddsInput5').value = '';
+            document.getElementById('maxBetInput').value = '100'; // Reset to default 100
+            document.getElementById('toggleOutput').checked = false; // Uncheck the checkbox
+            document.getElementById('result').innerHTML = ''; // Clear the result display
+        }
+
+        // Light/Dark Mode Toggle
+        const modeToggle = document.getElementById('modeToggle');
+        if (modeToggle) {
+            modeToggle.addEventListener('click', () => {
+                const body = document.body;
+                body.classList.toggle('dark-mode');
+                body.classList.toggle('light-mode');
+                modeToggle.textContent = body.classList.contains('dark-mode') ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+            });
+        }
+
+        // Initialize odds format on load
+        setOddsFormat('american');
+    </script>
+</body>
+
+</html>
