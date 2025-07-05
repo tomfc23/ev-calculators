@@ -149,7 +149,15 @@
           combo: userPick, 
           ev: EV, 
           pickProb: pickProb, 
-          estCount: Math.round(pickProb * totalEntrants) 
+          estCount: Math.round(pickProb * totalEntrants),
+          tier1Payout: Math.min(Math.floor(100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))), 800),
+          tier2Payout: Math.min(Math.floor((100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))) / 2), 600)
         });
       });
 
@@ -164,8 +172,8 @@
               <td>${readable}</td>
               <td>${(r.pickProb * 100).toFixed(2)}%</td>
               <td>${r.estCount}</td>
-              <td>600</td>
-              <td>800</td>
+              <td>${r.tier2Payout}</td>
+              <td>${r.tier1Payout}</td>
               <td>${Math.round(r.ev)}</td>
             </tr>`;
           }).join('')}
