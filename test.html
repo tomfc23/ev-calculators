@@ -44,8 +44,8 @@
   </style>
 </head>
 <body>
-  <h1>4-Pick Pool EV Calculator</h1>
-  <p>Enter % of entrants picking each team and win % for your side.</p>
+  <h1>4-Pick Pool EV Calculator 1.0</h1>
+  <p>Enter % of entrants picking each team and American odds for both teams.</p>
   <div id="inputs"></div>
   <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label><br />
   <button onclick="calculateEV()">Calculate EV</button>
@@ -59,10 +59,19 @@
           Game ${i + 1} - L${i + 1} vs R${i + 1}:<br>
           % Picked L${i + 1}: <input id="pickL${i}" type="number" value="50"> 
           % Picked R${i + 1}: <input id="pickR${i}" type="number" value="50"> <br>
-          Win % if you pick L${i + 1}: <input id="winL${i}" type="number" value="50"> 
-          Win % if you pick R${i + 1}: <input id="winR${i}" type="number" value="50"> 
+          Odds L${i + 1} (e.g. -120): <input id="oddsL${i}" type="number" value="-110"> 
+          Odds R${i + 1} (e.g. +100): <input id="oddsR${i}" type="number" value="-110"> 
         </div><br>
       `;
+    }
+
+    function americanToImplied(odds) {
+      return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+    }
+
+    function calculateNoVigProb(p1, p2) {
+      const total = p1 + p2;
+      return [p1 / total, p2 / total];
     }
 
     function calculateEV() {
@@ -72,10 +81,15 @@
       for (let i = 0; i < 4; i++) {
         let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
         let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
-        let lWin = parseFloat(document.getElementById(`winL${i}`).value) / 100;
-        let rWin = parseFloat(document.getElementById(`winR${i}`).value) / 100;
+        let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
+        let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
+
         pickPercents.push([lPick, rPick]);
-        winProbs.push([lWin, rWin]);
+
+        const impL = americanToImplied(lOdds);
+        const impR = americanToImplied(rOdds);
+        const [probL, probR] = calculateNoVigProb(impL, impR);
+        winProbs.push([probL, probR]);
       }
 
       const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
