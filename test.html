@@ -146,7 +146,27 @@
       margin-top: 0.3rem;
       text-align: center;
     }
+.copy-btn {
+  background: linear-gradient(45deg, #10b981, #059669);
+  border: none;
+  padding: 0.6rem 1.5rem;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+}
 
+.copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
     .controls {
       display: flex;
       gap: 1rem;
@@ -512,6 +532,10 @@
       document.getElementById('results').innerHTML = table;
       document.getElementById('results-container').style.display = 'block';
 
+      // Add this after the table variable is created, before setting innerHTML
+const copyButton = `<button class="copy-btn" onclick="copyTableData()">Copy Results</button>`;
+document.getElementById('results').innerHTML = table + copyButton;
+      
       if (showExtras) {
         const extraTable = `
           <table>
@@ -528,7 +552,29 @@
       } else {
         document.getElementById('extras-container').style.display = 'none';
       }
+      // Add this line near the end of calculateEV function, before building the table
+window.lastResults = results;
     }
+    function copyTableData() {
+  const results = window.lastResults; // Store results globally
+  if (!results) return;
+  
+  const copyText = results.map(r => {
+    const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join('');
+    return `${readable} - ${(r.pickProb * 100).toFixed(2)}% - ${r.ev.toFixed(2)}`;
+  }).join('\n');
+  
+  navigator.clipboard.writeText(copyText).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+    }, 1500);
+  });
+}
   </script>
 </body>
 </html>
