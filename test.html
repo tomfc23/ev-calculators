@@ -110,6 +110,9 @@
 
       combos.forEach(userPick => {
         let EV = 0;
+        let pickProb = 1;
+        for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
+
         combos.forEach(outcome => {
           let p = 1;
           for (let i = 0; i < 4; i++) {
@@ -131,7 +134,6 @@
           });
           if (isTier2) w2++;
 
-          const losers = totalEntrants - w1 - w2;
           const pool = 100 * totalEntrants;
           const shares = w1 + 0.5 * w2;
           const shareValue = pool / shares;
@@ -142,17 +144,31 @@
 
           EV += p * gain;
         });
-        results.push({ combo: userPick, ev: EV });
+
+        results.push({ 
+          combo: userPick, 
+          ev: EV, 
+          pickProb: pickProb, 
+          estCount: Math.round(pickProb * totalEntrants) 
+        });
       });
 
       results.sort((a, b) => b.ev - a.ev);
 
       const table = `
         <table>
-          <tr><th>Rank</th><th>Pick (L/R)</th><th>Expected Value</th></tr>
-          ${results.map((r, i) => `
-            <tr><td>${i + 1}</td><td>${r.combo.replace(/./g, b => b === '0' ? 'L' : 'R')}</td><td>${r.ev.toFixed(2)}</td></tr>
-          `).join('')}
+          <tr><th>Pick</th><th>% Entries</th><th># Entries</th><th>2nd Payout</th><th>1st Payout</th><th>EV</th></tr>
+          ${results.map((r) => {
+            const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
+            return `<tr>
+              <td>${readable}</td>
+              <td>${(r.pickProb * 100).toFixed(2)}%</td>
+              <td>${r.estCount}</td>
+              <td>600</td>
+              <td>800</td>
+              <td>${Math.round(r.ev)}</td>
+            </tr>`;
+          }).join('')}
         </table>
       `;
       document.getElementById('results').innerHTML = table;
