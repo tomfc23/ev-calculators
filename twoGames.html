@@ -281,7 +281,7 @@ a {
 </head>
 <body>
   <div class="container" id="app">
-    <h1 class="heading">Pool EV Calculator - 2 Matchups 1.0</h1>
+    <h1 class="heading">Pool EV Calculator - 2 Matchups</h1>
     <div class="instructions">
       <h2 class="section-title">Instructions</h2>
       <p>1. Select the sport type to set the number of entrants.</p>
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const letters = combo.teams.map(t => t.name[0]).join('');
         const pct = combo.winProbability.toFixed(2);
         const ev = combo.expectedValue.toFixed(2);
-        return `Combo ${letters} - hit % for at least 3/4: ${pct}% - expected value: ${ev}`;
+        return `${letters} - ${pct}% - ${ev}`;
       }).join('\n');
 
       navigator.clipboard.writeText(text).then(() => alert("Results copied to clipboard!")).catch(err => alert("Copy failed."));
