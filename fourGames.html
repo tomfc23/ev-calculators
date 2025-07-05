@@ -226,7 +226,8 @@
       box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
     }
 
-     .copy-btn {
+    .results-btn {
+       background: linear-gradient(45deg, #10b981, #059669);
       border: none;
       padding: 0.8rem 2rem;
       color: white;
@@ -239,9 +240,11 @@
       letter-spacing: 0.5px;
     }
 
-    .copy-btn:hover {
+    .results-btn:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
+
 
     .results-section {
       background: rgba(255, 255, 255, 0.05);
@@ -362,7 +365,7 @@
       <div class="control-group">
         <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
       </div>
-      <button class="copy-btn" onclick="autofillRightPercents()">Autofill %</button>
+      <button class="results-btn" onclick="autofillRightPercents()">Autofill %</button>
       <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
     </div>
 
