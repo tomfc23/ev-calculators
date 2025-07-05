@@ -294,10 +294,6 @@ a {
     <form id="calculator-form">
       <div class="sport-selector">
         <label class="form-label">Select Sport</label>
-        <select id="sport-select" class="form-select">
-          <option value="nba">NBA (8,200 entrants)</option>
-          <option value="nhl">NHL (3,250 entrants)</option>
-        </select>
       </div>
       
       <div class="games-grid" id="games-container">
@@ -333,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         results: { combinations: [], payouts: {} },
         sportEntrants: { nba: 8200, nhl: 3250 },
-        totalEntrants: 8200,
+        totalEntrants: 4600,
         maxPayout: 400,
         sortBy: 'expectedValue',
         sortDirection: 'desc'
@@ -351,9 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         this.calculateAllCombinations();
       });
 
-      document.getElementById('sport-select').addEventListener('change', (e) => {
-        this.state.totalEntrants = this.state.sportEntrants[e.target.value];
-      });
+
 
       document.getElementById('results-container').addEventListener('click', (e) => {
         if (e.target && e.target.id === 'copy-results-btn') {
@@ -400,9 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     collectFormData() {
-      const sportSelect = document.getElementById('sport-select');
-      this.state.totalEntrants = this.state.sportEntrants[sportSelect.value];
-
       this.state.games.forEach(game => {
         game.team1.odds = parseInt(document.getElementById(`game-${game.id}-team1-odds`).value) || 0;
         game.team1.selectionPercentage = Math.min(100, Math.max(0, parseInt(document.getElementById(`game-${game.id}-team1-selection`).value) || 0));
