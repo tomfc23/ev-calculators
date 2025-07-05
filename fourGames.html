@@ -607,7 +607,7 @@ window.lastResults = results;
       if (match >= 3) prob3Plus += outcomeProb;
     });
     
-    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - ${r.ev.toFixed(2)}`;
+    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - (${r.ev.toFixed(2)})`;
   }).join('\n');
   
   navigator.clipboard.writeText(copyText).then(() => {
