@@ -605,7 +605,7 @@ window.lastResults = results;
   for (let i = 0; i < 4; i++) {
     const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
     const rightInput = document.getElementById(`pickR${i}`);
-    rightInput.value = (100 - leftVal).toFixed(2);
+    rightInput.value = (100 - leftVal).toFixed(0);
   }
 }
 
