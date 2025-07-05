@@ -44,7 +44,7 @@
   </style>
 </head>
 <body>
-  <h1>4-Pick Pool EV Calculator 2.0</h1>
+  <h1>4-Pick Pool EV Calculator</h1>
   <p>Enter % of entrants picking each team and American odds for both teams.</p>
   <div id="inputs"></div>
   <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label><br />
@@ -174,7 +174,7 @@
               <td>${r.estCount}</td>
               <td>${r.tier2Payout}</td>
               <td>${r.tier1Payout}</td>
-              <td>${Math.round(r.ev)}</td>
+              <td>${r.ev.toFixed(2)}</td>
             </tr>`;
           }).join('')}
         </table>
