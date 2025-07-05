@@ -242,7 +242,7 @@ PHI +104
 BAL +113
 3% (241)
 ..."></textarea><br/>
-     <button onclick="fetchPollData()">Refresh Data<button>
+     <button onclick="fetchPollData()">Refresh Data</button>
     <button onclick="processData()">Process and Sort Data</button>
     <button onclick="clearData()" id="clearButton">Clear Data</button>
     <div id="warnings"></div>
@@ -838,15 +838,16 @@ if (realOdds < 0) {
     }
 
     function displayPollResults(options) {
-        const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
+    const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
 
-        const textOutput = options.map(option => {
-            const percentage = Math.round((option.count / totalVotes) * 100);
-            return `${option.label} ${option.odds} - ${percentage}% (${option.count})`;
-        }).join('\n');
+    const textOutput = options.map(option => {
+        const percentage = Math.round((option.count / totalVotes) * 100);
+        return `${option.label} ${option.odds}\n${percentage}% (${option.count})`;
+    }).join('\n');
 
-        document.getElementById('inputData').value = textOutput;
-    }
+    document.getElementById('inputData').value = textOutput;
+}
+
 
     fetchPollData();
   </script>
