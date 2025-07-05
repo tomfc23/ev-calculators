@@ -1,65 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pos 2</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .poll-item {
-            margin-bottom: 10px;
-        }
-        button {
-            margin-bottom: 20px;
-            padding: 5px 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4-Pick Pool EV Calculator</title>
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    input {
+      width: 80px;
+      padding: 5px;
+      margin: 5px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #555;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #222;
+    }
+    button {
+      background: #4caf50;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="poll-container">
-        <button onclick="fetchPollData()">Refresh</button>
-        <div id="poll-results">Loading...</div>
-    </div>
+  <h1>4-Pick Pool EV Calculator</h1>
+  <p>Enter % of entrants picking each team and win % for your side.</p>
+  <div id="inputs"></div>
+  <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label><br />
+  <button onclick="calculateEV()">Calculate EV</button>
+  <div id="results"></div>
 
-    <script>
-       
-        let pollId = 263425
-        async function fetchPollData() {
-            try {
-                const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
-                const data = JSON.parse(response.data.contents);
-                
-                displayPollResults(data.poll.options);
-            } catch (error) {
-                document.getElementById('poll-results').innerHTML = 'Error: ' + error.message;
-                console.error('Error:', error);
-            }
+  <script>
+    const inputContainer = document.getElementById('inputs');
+    for (let i = 0; i < 4; i++) {
+      inputContainer.innerHTML += `
+        <div>
+          Game ${i + 1} - L${i + 1} vs R${i + 1}:<br>
+          % Picked L${i + 1}: <input id="pickL${i}" type="number" value="50"> 
+          % Picked R${i + 1}: <input id="pickR${i}" type="number" value="50"> <br>
+          Win % if you pick L${i + 1}: <input id="winL${i}" type="number" value="50"> 
+          Win % if you pick R${i + 1}: <input id="winR${i}" type="number" value="50"> 
+        </div><br>
+      `;
+    }
+
+    function calculateEV() {
+      const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
+      let pickPercents = [], winProbs = [];
+
+      for (let i = 0; i < 4; i++) {
+        let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
+        let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
+        let lWin = parseFloat(document.getElementById(`winL${i}`).value) / 100;
+        let rWin = parseFloat(document.getElementById(`winR${i}`).value) / 100;
+        pickPercents.push([lPick, rPick]);
+        winProbs.push([lWin, rWin]);
+      }
+
+      const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+      let counts = {}, results = [];
+
+      combos.forEach(combo => {
+        let prob = 1;
+        for (let i = 0; i < 4; i++) {
+          let pick = +combo[i];
+          prob *= pickPercents[i][pick];
         }
+        counts[combo] = (totalEntrants - 1) * prob;
+      });
 
-        function displayPollResults(options) {
-            const container = document.getElementById('poll-results');
-            
-            const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
-            
-            const html = options.map(option => {
-                const percentage = Math.round((option.count / totalVotes) * 100);
-                return `
-                    <div class="poll-item">
-                        <div>${option.label} ${option.odds}</div>
-                        <div>${percentage}% (${option.count})</div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = html;
-        }
+      combos.forEach(userPick => {
+        let EV = 0;
+        combos.forEach(outcome => {
+          let p = 1;
+          for (let i = 0; i < 4; i++) {
+            let win = +outcome[i];
+            p *= winProbs[i][win];
+          }
 
-        fetchPollData();
-    
-    </script>
+          const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
+          const isTier1 = match === 4;
+          const isTier2 = match === 3;
+
+          let w1 = counts[outcome] || 0;
+          if (userPick === outcome) w1++;
+
+          let w2 = 0;
+          combos.forEach(other => {
+            const m = [...other].filter((bit, i) => bit === outcome[i]).length;
+            if (m === 3) w2 += counts[other] || 0;
+          });
+          if (isTier2) w2++;
+
+          const losers = totalEntrants - w1 - w2;
+          const pool = 100 * totalEntrants;
+          const shares = w1 + 0.5 * w2;
+          const shareValue = pool / shares;
+
+          let gain = -100;
+          if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
+          else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+
+          EV += p * gain;
+        });
+        results.push({ combo: userPick, ev: EV });
+      });
+
+      results.sort((a, b) => b.ev - a.ev);
+
+      const table = `
+        <table>
+          <tr><th>Rank</th><th>Pick (L/R)</th><th>Expected Value</th></tr>
+          ${results.map((r, i) => `
+            <tr><td>${i + 1}</td><td>${r.combo.replace(/./g, b => b === '0' ? 'L' : 'R')}</td><td>${r.ev.toFixed(2)}</td></tr>
+          `).join('')}
+        </table>
+      `;
+      document.getElementById('results').innerHTML = table;
+    }
+  </script>
 </body>
 </html>
