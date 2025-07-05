@@ -514,22 +514,30 @@ window.winProbs = winProbs;
       results.sort((a, b) => b.ev - a.ev);
 
       const table = `
-        <table>
-          <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
-          ${results.map((r) => {
-            const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
-            const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
-            return `<tr>
-              <td>${readable}</td>
-              <td>${(r.pickProb * 100).toFixed(2)}%</td>
-              <td>${r.estCount}</td>
-              <td>${r.tier2Payout}</td>
-              <td>${r.tier1Payout}</td>
-              <td class="${evClass}">${r.ev.toFixed(2)}</td>
-            </tr>`;
-          }).join('')}
-        </table>
-      `;
+  <table>
+    <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
+    ${results.map((r) => {
+      const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
+      const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
+      
+      // Calculate actual win probability for this combo
+      let winProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let pick = +r.combo[i];
+        winProb *= winProbs[i][pick];
+      }
+      
+      return `<tr>
+        <td>${readable}</td>
+        <td>${(winProb * 100).toFixed(2)}%</td>
+        <td>${r.estCount}</td>
+        <td>${r.tier2Payout}</td>
+        <td>${r.tier1Payout}</td>
+        <td class="${evClass}">${r.ev.toFixed(2)}</td>
+      </tr>`;
+    }).join('')}
+  </table>
+`;
       document.getElementById('results').innerHTML = table;
       document.getElementById('results-container').style.display = 'block';
 
