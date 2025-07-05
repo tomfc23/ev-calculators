@@ -443,6 +443,7 @@
         const [probL, probR] = calculateNoVigProb(impL, impR);
         winProbs.push([probL, probR]);
         extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
+window.winProbs = winProbs;
       }
 
       const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
@@ -555,13 +556,27 @@ document.getElementById('results').innerHTML = table + copyButton;
       // Add this line near the end of calculateEV function, before building the table
 window.lastResults = results;
     }
-    function copyTableData() {
-  const results = window.lastResults; // Store results globally
+  function copyTableData() {
+  const results = window.lastResults;
   if (!results) return;
   
   const copyText = results.map(r => {
     const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join('');
-    return `${readable} - ${(r.pickProb * 100).toFixed(2)}% - ${r.ev.toFixed(2)}`;
+    
+    // Calculate 3/4+ probability for this combo
+    let prob3Plus = 0;
+    const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+    combos.forEach(outcome => {
+      let outcomeProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let win = +outcome[i];
+        outcomeProb *= window.winProbs[i][win];
+      }
+      const match = [...r.combo].filter((bit, i) => bit === outcome[i]).length;
+      if (match >= 3) prob3Plus += outcomeProb;
+    });
+    
+    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - ${r.ev.toFixed(2)}`;
   }).join('\n');
   
   navigator.clipboard.writeText(copyText).then(() => {
