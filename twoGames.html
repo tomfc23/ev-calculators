@@ -281,7 +281,7 @@ a {
 </head>
 <body>
   <div class="container" id="app">
-    <h1 class="heading">Pool EV Calculator - 2 Matchups</h1>
+    <h1 class="heading">Pool EV Calculator - 2 Matchups 1.1</h1>
     <div class="instructions">
       <h2 class="section-title">Instructions</h2>
       <p>1. Select the sport type to set the number of entrants.</p>
@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     formatCombination(combo) {
-      return combo.teams.map(t => t.name).join(', ');
+      return combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
     }
 
     sortTable(column) {
@@ -536,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const tableRows = sorted.map(combo => `
         <tr>
-          <td>${combo.teams.map(t => t.name).join(', ')}</td>
+          <td>${this.formatCombination(combo)}</td>
           <td>${combo.winProbability.toFixed(2)}%</td>
           <td>${combo.numberOfSelections}</td>
           <td>${Math.round(combo.payout)}</td>
