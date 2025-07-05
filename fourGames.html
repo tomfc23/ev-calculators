@@ -1,867 +1,603 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pool EV Calculator</title>
   <style>
-   * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  font-family: sans-serif;
-  line-height: 1.6;
-  background-color: black;
-  color: lightgray;
-  text-align: center;
-}
+    body {
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+    }
 
-.container {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1rem;
-}
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-.heading {
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h4 {
+      text-align: center;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
 
-.subheading {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
+    .instructions h3 {
+      color: #ffffff;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
 
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
+    .instructions ol {
+      color: #b3b3b3;
+      padding-left: 1.5rem;
+    }
 
-.instructions {
-  background-color: #333;
-  padding: 1rem;
-  border-radius: 25px;
-  margin-bottom: 1.5rem;
-  border: 2px solid #555;
-}
+    .instructions li {
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
 
-.instructions p {
-  margin-bottom: 0.5rem;
-}
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
 
-.form-control {
-  margin-bottom: 1.5rem;
-}
+    .game-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
 
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: lightgray;
-  margin-bottom: 0.25rem;
-}
+    .game-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
 
-.form-input {
-  border: 2px solid #555;
-  border-radius: 25px;
-  padding: 15px;
-  width: 100%;
-  font-size: 16px;
-  background-color: #333;
-  color: lightgray;
-  transition: border-color 0.3s;
-}
+    .team-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
 
-.form-input:focus {
-  border-color: #007BFF;
-  outline: none;
-}
+    .team-section {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 1rem;
+    }
 
-.games-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
+    .team-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
 
-.card {
-  border: 2px solid #555;
-  border-radius: 25px;
-  padding: 1rem;
-  background-color: #222;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+    .input-group {
+      margin-bottom: 0.8rem;
+    }
 
-.game-card {
-  border: 2px solid #555;
-  border-radius: 25px;
-  padding: 1rem;
-  background-color: #222;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+    .input-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #b3b3b3;
+      margin-bottom: 0.3rem;
+    }
 
-.teams-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
+    .input-field {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
 
-.team-card {
-  border: 2px solid #555;
-  border-radius: 25px;
-  padding: 0.75rem;
-  background-color: #333;
-}
+    .input-field:focus {
+      outline: none;
+      border-color: #8B5CF6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
 
-.btn {
+    .odds-display {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.3rem;
+      text-align: center;
+    }
+.copy-btn {
+  background: linear-gradient(45deg, #10b981, #059669);
   border: none;
-  border-radius: 25px;
-  padding: 15px;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100%;
-  transition: background-color 0.3s;
-}
-
-.btn-default {
-  background-color: #444;
+  padding: 0.6rem 1.5rem;
   color: white;
-}
-
-.btn-primary {
-  background-color: #6f42c1;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #5a32a3;
-}
-
-.calculate-btn {
-  background-color: #6f42c1;
-  color: white;
-  padding: 15px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
-  border-radius: 25px;
-}
-
-.calculate-btn:hover {
-  background-color: #5a32a3;
-}
-
-.results-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.info-box {
-  background-color: #333;
-  padding: 1rem;
-  border-radius: 25px;
-  margin-bottom: 1rem;
-  border: 2px solid #555;
-}
-
-.table-container {
-  background-color: #333;
-  padding: 1rem;
-  border-radius: 25px;
-  max-height: 30rem;
-  overflow-y: auto;
-  border: 2px solid #555;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  color: lightgray;
-}
-
-th {
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 1px solid #555;
-  position: sticky;
-  top: 0;
-  background-color: #222;
-  color: lightgray;
-}
-
-td {
-  padding: 0.5rem;
-}
-
-tr:nth-child(even) {
-  background-color: #2a2a2a;
-}
-
-.explanation {
-  border: 2px solid #555;
-  border-radius: 25px;
-  padding: 1.5rem;
-  background-color: #222;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin-top: 2rem;
-}
-
-.code-block {
-  background-color: #333;
-  padding: 0.5rem;
-  border-radius: 15px;
-  overflow-x: auto;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  color: #ddd;
-  border: 1px solid #555;
-}
-
-.text-note {
-  font-size: 0.75rem;
-  color: #aaa;
-  margin-top: 0.5rem;
-}
-
-.sort-button {
-  background: none;
-  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  color: #858bf0;
-  margin-left: 0.25rem;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
 }
 
-a {
-  color: #858bf0;
+.copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
-@media (min-width: 768px) {
-  .games-grid, .results-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.copy-btn:active {
+  transform: translateY(0);
 }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="number"] {
+      width: 80px;
+      padding: 0.4rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #8B5CF6;
+    }
+
+    .calculate-btn {
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      border: none;
+      padding: 0.8rem 2rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .calculate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+
+    .results-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .results-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .info-note {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .info-note p {
+      color: #b3b3b3;
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      padding: 1rem 0.8rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+      padding: 0.8rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .ev-positive {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .ev-negative {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    .extras-table {
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .team-row {
+        flex-direction: column;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      body {
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container" id="app">
-    <h1 class="heading">Pool EV Calculator</h1>
+  <div class="container">
+    <h1>Pool EV Calculator</h1>
+    <h4>Major props to @xpr0digy, he helped a lot with developement</h4>
     <div class="instructions">
-      <h2 class="section-title">Instructions</h2>
-      <p>1. Enter the details for each of the 4 games including odds (American format), and selection percentages.</p>
-      <p>2. Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</p>
-      <p>3. Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</p>
+      <h3>Instructions</h3>
+      <ol>
+        <li>Enter the details for each of the 4 games including odds (American format), and selection percentages.</li>
+        <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
+        <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
+      </ol>
     </div>
-    
-    <form id="calculator-form">
-      <div class="games-grid" id="games-container">
-        <!-- Games will be dynamically added here -->
+
+    <div class="games-grid" id="inputs"></div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label>
       </div>
-      
-      <button type="button" class="btn calculate-btn" id="calculate-btn">Calculate Results</button>
-    </form>
-    
-    <div id="results-container" style="display: none;">
-      <!-- Results will be dynamically added here -->
+      <div class="control-group">
+        <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
+      </div>
+      <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
     </div>
-    
-    <!-- Explanation Section -->
+
+    <div class="results-section" id="results-container" style="display: none;">
+      <div class="info-note">
+        <p><strong>Win Probabilities Based On:</strong><br>
+        No-vig odds are used for calculations to remove bookmakers' edge.</p>
+      </div>
+      <h3 class="results-title">All Combinations and Payouts</h3>
+      <div id="results"></div>
+    </div>
+
+    <div class="results-section extras-table" id="extras-container" style="display: none;">
+      <div id="extras"></div>
+    </div>
   </div>
 
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Use a class to encapsulate the application logic
-  class PoolCalculator {
-    constructor() {
-      this.state = {
-        games: [
-          { 
-            id: 1,
-            team1: { name: 'L1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 },
-            team2: { name: 'R1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }
-          },
-          { 
-            id: 2,
-            team1: { name: 'L2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 },
-            team2: { name: 'R2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }
-          },
-          { 
-            id: 3,
-            team1: { name: 'L3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 },
-            team2: { name: 'R3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }
-          },
-          { 
-            id: 4,
-            team1: { name: 'L4', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 },
-            team2: { name: 'R4', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }
-          }
-        ],
-        results: {
-          combinations: [],
-          payouts: {
-            threeOutOfFour: 0,
-            fourOutOfFour: 0
-          }
-        },
-        totalEntrants: 4600, // Fixed at 4600
-        sortBy: 'expectedValue',
-        sortDirection: 'desc'
-      };
-      
-      this.bindEvents();
-      this.renderGames();
-      
-      // Calculate initial no-vig odds
-      this.calculateNoVigOddsForAllGames();
-    }
-    
-    // Event binding
-    bindEvents() {
-      const calculateBtn = document.getElementById('calculate-btn');
-      calculateBtn.addEventListener('click', () => {
-        this.collectFormData();
-        this.calculateNoVigOddsForAllGames();
-        this.calculateAllCombinations();
-      });
-      
-      // Make methods accessible for inline event handlers
-      window.sortTable = this.sortTable.bind(this);
-    }
-    
-    // Sort table by column
-    sortTable(column) {
-      if (this.state.sortBy === column) {
-        this.state.sortDirection = this.state.sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        this.state.sortBy = column;
-        this.state.sortDirection = 'desc';
-      }
-      
-      this.renderResults();
-    }
-    
-    // Collect form data
-    collectFormData() {
-      // Get game data
-      this.state.games.forEach(game => {
-        // Team 1
-        const team1OddsInput = document.getElementById(`game-${game.id}-team1-odds`);
-        const team1SelectionInput = document.getElementById(`game-${game.id}-team1-selection`);
-        
-        game.team1.odds = parseInt(team1OddsInput.value) || 0;
-        game.team1.selectionPercentage = Math.min(100, Math.max(0, parseInt(team1SelectionInput.value) || 0));
-        
-        // Team 2
-        const team2OddsInput = document.getElementById(`game-${game.id}-team2-odds`);
-        const team2SelectionInput = document.getElementById(`game-${game.id}-team2-selection`);
-        
-        game.team2.odds = parseInt(team2OddsInput.value) || 0;
-        game.team2.selectionPercentage = Math.min(100, Math.max(0, parseInt(team2SelectionInput.value) || 0));
-      });
-    }
-    
-    // Convert American odds to implied probability
-    oddsToImpliedProbability(odds) {
-      return odds > 0 ? 100 / (odds + 100) : Math.abs(odds) / (Math.abs(odds) + 100);
-    }
-    
-    // Convert probability to American odds
-    probabilityToAmericanOdds(probability) {
-      if (probability <= 0 || probability >= 1) return 0;
-      return probability > 0.5 ? -100 * probability / (1 - probability) : 100 * (1 - probability) / probability;
-    }
-    
-    // Calculate no-vig odds for a game
-    calculateNoVigOdds(team1Odds, team2Odds) {
-      // Convert American odds to probabilities
-      const team1Prob = this.oddsToImpliedProbability(team1Odds);
-      const team2Prob = this.oddsToImpliedProbability(team2Odds);
-      
-      // Calculate the overround (total probability)
-      const overround = team1Prob + team2Prob;
-      
-      // Calculate fair probabilities by removing the vig
-      const team1FairProb = team1Prob / overround;
-      const team2FairProb = team2Prob / overround;
-      
-      // Convert fair probabilities back to American odds
-      const team1NoVigOdds = Math.round(this.probabilityToAmericanOdds(team1FairProb));
-      const team2NoVigOdds = Math.round(this.probabilityToAmericanOdds(team2FairProb));
-      
-      return {
-        team1: { noVigOdds: team1NoVigOdds, noVigProbability: team1FairProb },
-        team2: { noVigOdds: team2NoVigOdds, noVigProbability: team2FairProb }
-      };
-    }
-    
-    // Calculate no-vig odds for all games
-    calculateNoVigOddsForAllGames() {
-      this.state.games.forEach(game => {
-        const { team1, team2 } = this.calculateNoVigOdds(game.team1.odds, game.team2.odds);
-        
-        game.team1.noVigOdds = team1.noVigOdds;
-        game.team1.noVigProbability = team1.noVigProbability;
-        
-        game.team2.noVigOdds = team2.noVigOdds;
-        game.team2.noVigProbability = team2.noVigProbability;
-      });
-      
-      // Update the UI
-      this.renderGames();
-    }
-    
-    // Calculate all combinations and their values
-    calculateAllCombinations() {
-      const combinations = this.generateCombinations();
-      const withSelections = this.calculateSelections(combinations);
-      const withProbabilities = this.calculateWinProbabilities(withSelections);
-      const { combinations: enhancedCombinations, payouts } = this.calculatePayouts(withProbabilities);
-      
-      this.state.results = {
-        combinations: enhancedCombinations,
-        payouts
-      };
-      
-      this.renderResults();
-    }
-    
-    // Generate all possible combinations of team selections
-    generateCombinations() {
-      // Start with first game's teams
-      let combinations = [
-        { teams: [this.state.games[0].team1], gameIds: [1], side: ['team1'] },
-        { teams: [this.state.games[0].team2], gameIds: [1], side: ['team2'] }
-      ];
-      
-      // Add each subsequent game's teams
-      for (let i = 1; i < this.state.games.length; i++) {
-        const game = this.state.games[i];
-        const newCombinations = [];
-        
-        combinations.forEach(combo => {
-          // Add team1 and team2 from this game to existing combinations
-          newCombinations.push({
-            teams: [...combo.teams, game.team1],
-            gameIds: [...combo.gameIds, i + 1],
-            side: [...combo.side, 'team1']
-          });
-          
-          newCombinations.push({
-            teams: [...combo.teams, game.team2],
-            gameIds: [...combo.gameIds, i + 1],
-            side: [...combo.side, 'team2']
-          });
-        });
-        
-        combinations = newCombinations;
-      }
-      
-      return combinations;
-    }
-    
-    // Calculate how many people selected each combination
-    calculateSelections(combinations) {
-      return combinations.map(combo => {
-        // Calculate the probability of this combination being selected
-        const percentage = combo.teams.reduce((acc, _, i) => {
-          const gameId = combo.gameIds[i] - 1;
-          const side = combo.side[i];
-          return acc * (this.state.games[gameId][side].selectionPercentage / 100);
-        }, 1);
-        
-        const numberOfSelections = Math.round(this.state.totalEntrants * percentage);
-        
-        return {
-          ...combo,
-          selectionPercentage: percentage * 100,
-          numberOfSelections
-        };
-      });
-    }
-    
-    // Calculate win probability for each combination
-    calculateWinProbabilities(combinations) {
-      return combinations.map(combo => {
-        // Calculate the probability of this combination winning using no-vig probabilities
-        const probability = combo.teams.reduce((acc, team, i) => {
-          // Use the no-vig probability instead of the implied probability from raw odds
-          const noVigProb = team.noVigProbability;
-          return acc * noVigProb;
-        }, 1);
-        
-        return {
-          ...combo,
-          winProbability: probability * 100
-        };
-      });
-    }
-    
-    // Calculate payouts for each combination
-    calculatePayouts(combinations) {
-      // Group combinations by number of correct picks
-      const matchCounts = {};
-      
-      combinations.forEach(combo => {
-        // Calculate the number of correct picks for each possible combination
-        for (let i = 0; i <= 4; i++) {
-          if (!matchCounts[i]) {
-            matchCounts[i] = [];
-          }
-        }
-        
-        // Add this combination to each match count entry with its expected payout
-        for (let correctPicks = 0; correctPicks <= 4; correctPicks++) {
-          const combinationWithMatches = { ...combo, matches: correctPicks };
-          matchCounts[correctPicks].push(combinationWithMatches);
-        }
-      });
-      
-      // Calculate payouts
-      const totalPool = this.state.totalEntrants * 100; // $1 = 100 cents
-      
-      // Calculate total number of combinations with 3 or 4 correct picks for each possible user selection
-      const allCombinationsWithPayouts = [];
-      
-      combinations.forEach(userCombo => {
-        // Calculate the potential payouts for this combination
-        const payoutsForCombination = this.calculatePayoutsForCombination(userCombo, combinations, totalPool);
-        
-        // Apply the payout caps
-        const cappedFourOutOfFourPayout = Math.min(payoutsForCombination.fourOutOfFour, 800);
-        const cappedThreeOutOfFourPayout = (cappedFourOutOfFourPayout > 800) ? 600 : 
-                                           (payoutsForCombination.fourOutOfFour > 800) ? 600 : 
-                                           payoutsForCombination.threeOutOfFour;
-        
-        // Calculate the probability of each outcome scenario for this user combination
-        const outcomeScenarios = this.calculateOutcomeScenarios(userCombo);
-        
-        // Calculate expected value using the updated formula that includes 3/4 correct scenarios
-        // Formula: (WWWW probability * 4/4 payout) + (WWWL probability * 3/4 payout) + ... + (2/4 or less probability * -100)
-        const expectedValue = 
-          // 4/4 correct scenario
-          (outcomeScenarios.fourCorrect * cappedFourOutOfFourPayout) + 
-          // 3/4 correct scenarios (sum of all possible ways to get 3/4)
-          (outcomeScenarios.threeCorrect * cappedThreeOutOfFourPayout) +
-          // 2/4 or fewer correct scenarios (loss)
-          (outcomeScenarios.twoOrFewerCorrect * (-100));
-        
-        const enhancedCombination = {
-          ...userCombo,
-          threeOutOfFourPayout: cappedThreeOutOfFourPayout,
-          fourOutOfFourPayout: cappedFourOutOfFourPayout,
-          expectedValue: expectedValue
-        };
-        
-        allCombinationsWithPayouts.push(enhancedCombination);
-      });
-      
-      return {
-        combinations: allCombinationsWithPayouts,
-        payouts: {}
-      };
-    }
-    
-    // Calculate the probability of each outcome scenario for a given user combination
-    calculateOutcomeScenarios(userCombo) {
-      // Get the individual team win probabilities (using no-vig probabilities)
-      const teamProbs = userCombo.teams.map(team => {
-        return team.noVigProbability;
-      });
-      
-      // Calculate probability of exactly 4 correct (all teams win)
-      const fourCorrect = teamProbs.reduce((acc, prob) => acc * prob, 1);
-      
-      // Calculate probabilities for exactly 3 correct (one team loses, all others win)
-      let threeCorrect = 0;
-      for (let i = 0; i < teamProbs.length; i++) {
-        // For each position, calculate the scenario where this team loses and all others win
-        let scenarioProb = 1;
-        for (let j = 0; j < teamProbs.length; j++) {
-          if (i === j) {
-            // This team loses
-            scenarioProb *= (1 - teamProbs[j]);
-          } else {
-            // All other teams win
-            scenarioProb *= teamProbs[j];
-          }
-        }
-        threeCorrect += scenarioProb;
-      }
-      
-      // Calculate probability of 2 or fewer correct
-      // This is the complement of (probability of 3 correct + probability of 4 correct)
-      const twoOrFewerCorrect = 1 - (fourCorrect + threeCorrect);
-      
-      return {
-        fourCorrect,
-        threeCorrect,
-        twoOrFewerCorrect
-      };
-    }
-    
-    // Calculate payouts if the user selects a specific combination
-    calculatePayoutsForCombination(userCombo, allCombinations, totalPool) {
-      // Calculate how many entrants have 3 or 4 matching picks with the user's selection
-      const threeOutOfFourWinners = allCombinations.reduce((sum, combo) => {
-        const matches = this.countMatches(userCombo.side, combo.side);
-        return sum + (matches === 3 ? combo.numberOfSelections : 0);
-      }, 0);
-      
-      const fourOutOfFourWinners = allCombinations.reduce((sum, combo) => {
-        const matches = this.countMatches(userCombo.side, combo.side);
-        return sum + (matches === 4 ? combo.numberOfSelections : 0);
-      }, 0);
-      
-      // Calculate payouts using the formula
-      const weightedWinners = threeOutOfFourWinners + (fourOutOfFourWinners * 2);
-      
-      let threeOutOfFourPayout = 0;
-      let fourOutOfFourPayout = 0;
-      
-      if (weightedWinners > 0) {
-        threeOutOfFourPayout = totalPool / weightedWinners;
-        fourOutOfFourPayout = threeOutOfFourPayout * 2;
-      }
-      
-      return {
-        threeOutOfFour: threeOutOfFourPayout,
-        fourOutOfFour: fourOutOfFourPayout
-      };
-    }
-    
-    // Count how many picks match between two combinations
-    countMatches(combo1, combo2) {
-      return combo1.reduce((acc, side, index) => acc + (side === combo2[index] ? 1 : 0), 0);
-    }
-    
-    // Format a combination to a readable string
-    formatCombination(combo) {
-      return combo.teams.map((team, i) => team.name).join(', ');
-    }
-    
-    // Render games UI
-    renderGames() {
-      const gamesContainer = document.getElementById('games-container');
-      gamesContainer.innerHTML = '';
-      
-      this.state.games.forEach(game => {
-        const gameElement = document.createElement('div');
-        gameElement.className = 'game-card';
-        gameElement.innerHTML = `
-          <h3 class="section-title">Game ${game.id}</h3>
-          
-          <div class="teams-grid">
-            <!-- Team 1 -->
-            <div class="team-card">
-              <div class="form-control">
-                <label class="form-label">${game.team1.name}</label>
+    const inputContainer = document.getElementById('inputs');
+    for (let i = 0; i < 4; i++) {
+      inputContainer.innerHTML += `
+        <div class="game-card">
+          <div class="game-title">Game ${i + 1}</div>
+          <div class="team-row">
+            <div class="team-section">
+              <div class="team-name">L${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
+                <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
               </div>
-              
-              <div class="form-control">
-                <label class="form-label">American Odds</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  id="game-${game.id}-team1-odds"
-                  value="${game.team1.odds}"
-                />
-              </div>
-              
-              <div class="form-control">
-                <label class="form-label">Selection %</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  id="game-${game.id}-team1-selection"
-                  value="${game.team1.selectionPercentage}"
-                  min="0"
-                  max="100"
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="form-label">No-Vig Odds: ${game.team1.noVigOdds}</label>
-                <div class="text-note">No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%</div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickL${i}" type="number" value="50">
               </div>
             </div>
-            
-            <!-- Team 2 -->
-            <div class="team-card">
-              <div class="form-control">
-                <label class="form-label">${game.team2.name}</label>
+            <div class="team-section">
+              <div class="team-name">R${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
+                <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
               </div>
-              
-              <div class="form-control">
-                <label class="form-label">American Odds</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  id="game-${game.id}-team2-odds"
-                  value="${game.team2.odds}"
-                />
-              </div>
-              
-              <div class="form-control">
-                <label class="form-label">Selection %</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  id="game-${game.id}-team2-selection"
-                  value="${game.team2.selectionPercentage}"
-                  min="0"
-                  max="100"
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="form-label">No-Vig Odds: ${game.team2.noVigOdds}</label>
-                <div class="text-note">No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%</div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickR${i}" type="number" value="50">
               </div>
             </div>
           </div>
-        `;
-        
-        gamesContainer.appendChild(gameElement);
-      });
-    }
-    
-    // Render results UI
-    renderResults() {
-      if (this.state.results.combinations.length === 0) {
-        document.getElementById('results-container').style.display = 'none';
-        return;
-      }
-      
-      // Sort combinations
-      const sortedCombinations = [...this.state.results.combinations].sort((a, b) => {
-        let valueA, valueB;
-        
-        switch (this.state.sortBy) {
-          case 'picks':
-            valueA = this.formatCombination(a);
-            valueB = this.formatCombination(b);
-            break;
-          case 'winProbability':
-            valueA = a.winProbability;
-            valueB = b.winProbability;
-            break;
-          case 'selections':
-            valueA = a.numberOfSelections;
-            valueB = b.numberOfSelections;
-            break;
-          case 'threeOutOfFourPayout':
-            valueA = a.threeOutOfFourPayout;
-            valueB = b.threeOutOfFourPayout;
-            break;
-          case 'fourOutOfFourPayout':
-            valueA = a.fourOutOfFourPayout;
-            valueB = b.fourOutOfFourPayout;
-            break;
-          case 'expectedValue':
-          default:
-            valueA = a.expectedValue;
-            valueB = b.expectedValue;
-            break;
-        }
-        
-        if (this.state.sortDirection === 'asc') {
-          return valueA > valueB ? 1 : -1;
-        } else {
-          return valueA < valueB ? 1 : -1;
-        }
-      });
-      
-      const resultsContainer = document.getElementById('results-container');
-      resultsContainer.style.display = 'block';
-      
-      resultsContainer.innerHTML = `
-        <div class="info-box">
-          <h3 class="section-title">Win Probabilities Based On:</h3>
-          <p>No-vig odds are used for calculations to remove bookmakers' edge.</p>
-        </div>
-
-        <div class="card">
-          <h2 class="subheading">All Combinations and Payouts</h2>
-          
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Picks 
-                    <button class="sort-button" onclick="sortTable('picks')">
-                      ${this.state.sortBy === 'picks' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                  <th>Win Probability 
-                    <button class="sort-button" onclick="sortTable('winProbability')">
-                      ${this.state.sortBy === 'winProbability' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                  <th>Selections 
-                    <button class="sort-button" onclick="sortTable('selections')">
-                      ${this.state.sortBy === 'selections' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                  <th>3/4 Payout (karma) 
-                    <button class="sort-button" onclick="sortTable('threeOutOfFourPayout')">
-                      ${this.state.sortBy === 'threeOutOfFourPayout' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                  <th>4/4 Payout (karma) 
-                    <button class="sort-button" onclick="sortTable('fourOutOfFourPayout')">
-                      ${this.state.sortBy === 'fourOutOfFourPayout' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                  <th>Expected Value (karma) 
-                    <button class="sort-button" onclick="sortTable('expectedValue')">
-                      ${this.state.sortBy === 'expectedValue' ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : ''}
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                ${sortedCombinations.map(combo => `
-                  <tr>
-                    <td>
-                      ${combo.teams.map((team, i) => `
-                        <span>${team.name}${i < combo.teams.length - 1 ? ', ' : ''}</span>
-                      `).join('')}
-                    </td>
-                    <td>${combo.winProbability.toFixed(2)}%</td>
-                    <td>${combo.numberOfSelections}</td>
-                    <td>${Math.round(combo.threeOutOfFourPayout)}</td>
-                    <td>${Math.round(combo.fourOutOfFourPayout)}</td>
-                    <td>${Math.round(combo.expectedValue)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="explanation">
-          <h3 class="subheading">About No-Vig Odds</h3>
-          <p>Bookmakers add a margin (vig) to their odds. This calculator removes that margin to get the true probability estimates.</p>
-          <p>For example, standard -110/-110 odds imply a 52.4% probability for each outcome (104.8% total), which is impossible. No-vig odds adjust this to 50%/50% (100% total).</p>
         </div>
       `;
     }
-  }
+
+    function americanToImplied(odds) {
+      return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+    }
+
+    function calculateNoVigProb(p1, p2) {
+      const total = p1 + p2;
+      return [p1 / total, p2 / total];
+    }
+
+    function updateOddsDisplay(gameIndex, side) {
+      const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+      const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+      
+      const impL = americanToImplied(lOdds);
+      const impR = americanToImplied(rOdds);
+      const [probL, probR] = calculateNoVigProb(impL, impR);
+      
+      document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+      document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+    }
+
+    // Initialize odds displays
+    for (let i = 0; i < 4; i++) {
+      updateOddsDisplay(i, 'L');
+    }
+
+    function calculateEV() {
+      const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
+      const showExtras = document.getElementById('showExtras').checked;
+      let pickPercents = [], winProbs = [], extraData = [];
+
+      for (let i = 0; i < 4; i++) {
+        let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
+        let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
+        let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
+        let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
+
+        pickPercents.push([lPick, rPick]);
+
+        const impL = americanToImplied(lOdds);
+        const impR = americanToImplied(rOdds);
+        const [probL, probR] = calculateNoVigProb(impL, impR);
+        winProbs.push([probL, probR]);
+        extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
+window.winProbs = winProbs;
+      }
+
+      const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+      let counts = {}, results = [];
+
+      combos.forEach(combo => {
+        let prob = 1;
+        for (let i = 0; i < 4; i++) {
+          let pick = +combo[i];
+          prob *= pickPercents[i][pick];
+        }
+        counts[combo] = (totalEntrants - 1) * prob;
+      });
+
+      combos.forEach(userPick => {
+        let EV = 0;
+        let pickProb = 1;
+        for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
+
+        combos.forEach(outcome => {
+          let p = 1;
+          for (let i = 0; i < 4; i++) {
+            let win = +outcome[i];
+            p *= winProbs[i][win];
+          }
+
+          const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
+          const isTier1 = match === 4;
+          const isTier2 = match === 3;
+
+          let w1 = counts[outcome] || 0;
+          if (userPick === outcome) w1++;
+
+          let w2 = 0;
+          combos.forEach(other => {
+            const m = [...other].filter((bit, i) => bit === outcome[i]).length;
+            if (m === 3) w2 += counts[other] || 0;
+          });
+          if (isTier2) w2++;
+
+          const pool = 100 * totalEntrants;
+          const shares = w1 + 0.5 * w2;
+          const shareValue = pool / shares;
+
+          let gain = -100;
+          if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
+          else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+
+          EV += p * gain;
+        });
+
+        results.push({ 
+          combo: userPick, 
+          ev: EV, 
+          pickProb: pickProb, 
+          estCount: Math.round(pickProb * totalEntrants),
+          tier1Payout: Math.min(Math.floor(100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))), 800),
+          tier2Payout: Math.min(Math.floor((100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))) / 2), 600)
+        });
+      });
+
+      results.sort((a, b) => b.ev - a.ev);
+
+      const table = `
+  <table>
+    <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
+    ${results.map((r) => {
+      const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
+      const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
+      
+      // Calculate actual win probability for this combo
+      let winProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let pick = +r.combo[i];
+        winProb *= winProbs[i][pick];
+      }
+      
+      return `<tr>
+        <td>${readable}</td>
+        <td>${(winProb * 100).toFixed(2)}%</td>
+        <td>${r.estCount}</td>
+        <td>${r.tier2Payout}</td>
+        <td>${r.tier1Payout}</td>
+        <td class="${evClass}">${r.ev.toFixed(2)}</td>
+      </tr>`;
+    }).join('')}
+  </table>
+`;
+      document.getElementById('results').innerHTML = table;
+      document.getElementById('results-container').style.display = 'block';
+
+      // Add this after the table variable is created, before setting innerHTML
+const copyButton = `<button class="copy-btn" onclick="copyTableData()">Copy Results</button>`;
+document.getElementById('results').innerHTML = table + copyButton;
+      
+      if (showExtras) {
+        const extraTable = `
+          <table>
+            <tr><th>Game</th><th>Odds L</th><th>Odds R</th><th>Imp. L</th><th>Imp. R</th><th>No-Vig L</th><th>No-Vig R</th></tr>
+            ${extraData.map((row, i) => `
+              <tr><td>${i + 1}</td><td>${row.lOdds}</td><td>${row.rOdds}</td>
+              <td>${(row.impL * 100).toFixed(1)}%</td><td>${(row.impR * 100).toFixed(1)}%</td>
+              <td>${(row.probL * 100).toFixed(1)}%</td><td>${(row.probR * 100).toFixed(1)}%</td></tr>
+            `).join('')}
+          </table>
+        `;
+        document.getElementById('extras').innerHTML = extraTable;
+        document.getElementById('extras-container').style.display = 'block';
+      } else {
+        document.getElementById('extras-container').style.display = 'none';
+      }
+      // Add this line near the end of calculateEV function, before building the table
+window.lastResults = results;
+    }
+  function copyTableData() {
+  const results = window.lastResults;
+  if (!results) return;
   
-  // Initialize the calculator
-  new PoolCalculator();
-});
+  const copyText = results.map(r => {
+    const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join('');
+    
+    // Calculate 3/4+ probability for this combo
+    let prob3Plus = 0;
+    const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+    combos.forEach(outcome => {
+      let outcomeProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let win = +outcome[i];
+        outcomeProb *= window.winProbs[i][win];
+      }
+      const match = [...r.combo].filter((bit, i) => bit === outcome[i]).length;
+      if (match >= 3) prob3Plus += outcomeProb;
+    });
+    
+    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - ${r.ev.toFixed(2)}`;
+  }).join('\n');
+  
+  navigator.clipboard.writeText(copyText).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+    }, 1500);
+  });
+}
   </script>
 </body>
 </html>
