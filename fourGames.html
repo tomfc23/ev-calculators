@@ -517,7 +517,7 @@ window.winProbs = winProbs;
   <table>
     <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
     ${results.map((r) => {
-      const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
+      const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
       const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
       
       // Calculate actual win probability for this combo
@@ -569,7 +569,8 @@ window.lastResults = results;
   if (!results) return;
   
   const copyText = results.map(r => {
-    const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join('');
+    const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
+
     
     // Calculate 3/4+ probability for this combo
     let prob3Plus = 0;
