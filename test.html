@@ -3,67 +3,370 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>4-Pick Pool EV Calculator</title>
+  <title>Pool EV Calculator</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      background: #111;
-      color: #eee;
-      font-family: sans-serif;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
       padding: 2rem;
     }
-    input {
-      width: 80px;
-      padding: 5px;
-      margin: 5px;
-      background: #222;
-      color: #fff;
-      border: 1px solid #444;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    table {
-      border-collapse: collapse;
-      margin-top: 20px;
-      width: 100%;
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    th, td {
-      border: 1px solid #555;
-      padding: 6px;
+
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .instructions h3 {
+      color: #ffffff;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .instructions ol {
+      color: #b3b3b3;
+      padding-left: 1.5rem;
+    }
+
+    .instructions li {
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .game-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
       text-align: center;
     }
-    th {
-      background-color: #222;
+
+    .team-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
-    button {
-      background: #4caf50;
+
+    .team-section {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .team-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .input-group {
+      margin-bottom: 0.8rem;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #b3b3b3;
+      margin-bottom: 0.3rem;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #8B5CF6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .odds-display {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.3rem;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="number"] {
+      width: 80px;
+      padding: 0.4rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #8B5CF6;
+    }
+
+    .calculate-btn {
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
       border: none;
-      padding: 10px 20px;
+      padding: 0.8rem 2rem;
       color: white;
       font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
       cursor: pointer;
-      margin-top: 10px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .calculate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+
+    .results-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .results-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .info-note {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .info-note p {
+      color: #b3b3b3;
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      padding: 1rem 0.8rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+      padding: 0.8rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .ev-positive {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .ev-negative {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    .extras-table {
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .team-row {
+        flex-direction: column;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      body {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>4-Pick Pool EV Calculator</h1>
-  <p>Enter % of entrants picking each team and American odds for both teams.</p>
-  <div id="inputs"></div>
-  <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label><br />
-  <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label><br />
-  <button onclick="calculateEV()">Calculate EV</button>
-  <div id="results"></div>
-  <div id="extras"></div>
+  <div class="container">
+    <h1>Pool EV Calculator</h1>
+    <h4>Major props to @xpr0digy, he helped a lot with developement</h4>
+    <div class="instructions">
+      <h3>Instructions</h3>
+      <ol>
+        <li>Enter the details for each of the 4 games including odds (American format), and selection percentages.</li>
+        <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
+        <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
+      </ol>
+    </div>
+
+    <div class="games-grid" id="inputs"></div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label>
+      </div>
+      <div class="control-group">
+        <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
+      </div>
+      <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
+    </div>
+
+    <div class="results-section" id="results-container" style="display: none;">
+      <div class="info-note">
+        <p><strong>Win Probabilities Based On:</strong><br>
+        No-vig odds are used for calculations to remove bookmakers' edge.</p>
+      </div>
+      <h3 class="results-title">All Combinations and Payouts</h3>
+      <div id="results"></div>
+    </div>
+
+    <div class="results-section extras-table" id="extras-container" style="display: none;">
+      <div id="extras"></div>
+    </div>
+  </div>
 
   <script>
     const inputContainer = document.getElementById('inputs');
     for (let i = 0; i < 4; i++) {
       inputContainer.innerHTML += `
-        <div>
-          Game ${i + 1} - L${i + 1} vs R${i + 1}:<br>
-          % Picked L${i + 1}: <input id="pickL${i}" type="number" value="50"> 
-          % Picked R${i + 1}: <input id="pickR${i}" type="number" value="50"> <br>
-          Odds L${i + 1} (e.g. -120): <input id="oddsL${i}" type="number" value="-110"> 
-          Odds R${i + 1} (e.g. +100): <input id="oddsR${i}" type="number" value="-110"> 
-        </div><br>
+        <div class="game-card">
+          <div class="game-title">Game ${i + 1}</div>
+          <div class="team-row">
+            <div class="team-section">
+              <div class="team-name">L${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
+                <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickL${i}" type="number" value="50">
+              </div>
+            </div>
+            <div class="team-section">
+              <div class="team-name">R${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
+                <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickR${i}" type="number" value="50">
+              </div>
+            </div>
+          </div>
+        </div>
       `;
     }
 
@@ -74,6 +377,25 @@
     function calculateNoVigProb(p1, p2) {
       const total = p1 + p2;
       return [p1 / total, p2 / total];
+    }
+
+    function updateOddsDisplay(gameIndex, side) {
+      const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+      const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+      
+      const impL = americanToImplied(lOdds);
+      const impR = americanToImplied(rOdds);
+      const [probL, probR] = calculateNoVigProb(impL, impR);
+      
+      document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+      document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+    }
+
+    // Initialize odds displays
+    for (let i = 0; i < 4; i++) {
+      updateOddsDisplay(i, 'L');
     }
 
     function calculateEV() {
@@ -165,21 +487,23 @@
 
       const table = `
         <table>
-          <tr><th>Pick</th><th>% Entries</th><th># Entries</th><th>2nd Payout</th><th>1st Payout</th><th>EV</th></tr>
+          <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
           ${results.map((r) => {
             const readable = r.combo.split('').map((v, i) => v === '0' ? `L${i+1}` : `R${i+1}`).join(', ');
+            const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
             return `<tr>
               <td>${readable}</td>
               <td>${(r.pickProb * 100).toFixed(2)}%</td>
               <td>${r.estCount}</td>
               <td>${r.tier2Payout}</td>
               <td>${r.tier1Payout}</td>
-              <td>${r.ev.toFixed(2)}</td>
+              <td class="${evClass}">${r.ev.toFixed(0)}</td>
             </tr>`;
           }).join('')}
         </table>
       `;
       document.getElementById('results').innerHTML = table;
+      document.getElementById('results-container').style.display = 'block';
 
       if (showExtras) {
         const extraTable = `
@@ -193,8 +517,9 @@
           </table>
         `;
         document.getElementById('extras').innerHTML = extraTable;
+        document.getElementById('extras-container').style.display = 'block';
       } else {
-        document.getElementById('extras').innerHTML = '';
+        document.getElementById('extras-container').style.display = 'none';
       }
     }
   </script>
