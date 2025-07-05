@@ -20,44 +20,43 @@
     </style>
 </head>
 <body>
+<h1>Test 1.0</h1>
+    <div id="text">
+        <textarea id="inputData" placeholder="Data will show here"></textarea>
+    </div>
     <div class="poll-container">
         <button onclick="fetchPollData()">Refresh</button>
         <div id="poll-results">Loading...</div>
     </div>
 
     <script>
-        let pollId = 263748
-        async function fetchPollData() {
-            try {
-                const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
-                const data = JSON.parse(response.data.contents);
-                
-                displayPollResults(data.poll.options);
-            } catch (error) {
-                document.getElementById('poll-results').innerHTML = 'Error: ' + error.message;
-                console.error('Error:', error);
-            }
-        }
+    let pollId = 263748;
 
-        function displayPollResults(options) {
-            const container = document.getElementById('poll-results');
-            
-            const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
-            
-            const html = options.map(option => {
-                const percentage = Math.round((option.count / totalVotes) * 100);
-                return `
-                    <div class="poll-item">
-                        <div>${option.label} ${option.odds}</div>
-                        <div>${percentage}% (${option.count})</div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = html;
-        }
+    async function fetchPollData() {
+        try {
+            const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
+            const data = JSON.parse(response.data.contents);
 
-        fetchPollData();
-    </script>
+            displayPollResults(data.poll.options);
+        } catch (error) {
+            document.getElementById('inputData').value = 'Error: ' + error.message;
+            console.error('Error:', error);
+        }
+    }
+
+    function displayPollResults(options) {
+        const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
+
+        const textOutput = options.map(option => {
+            const percentage = Math.round((option.count / totalVotes) * 100);
+            return `${option.label} ${option.odds} - ${percentage}% (${option.count})`;
+        }).join('\n');
+
+        document.getElementById('inputData').value = textOutput;
+    }
+
+    fetchPollData();
+</script>
+
 </body>
 </html>
