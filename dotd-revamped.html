@@ -741,9 +741,13 @@ BAL +113
       const ipTotal = favoriteIP + underdogIP;
       const novigUnderdogIP = underdogIP / ipTotal;
 
-      let payout;
-      if (realOdds < 0) payout = placement * 20 + (100 / (Math.abs(realOdds) / 100));
-      else payout = placement * 20 + realOdds;
+     let payout;
+if (realOdds < 0) {
+  payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
+} else {
+  payout = Math.round(placement * 20 + realOdds);
+}
+
 
       const expectedValue = payout * novigUnderdogIP;
       const hitProbPercent = novigUnderdogIP * 100;
