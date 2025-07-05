@@ -345,6 +345,7 @@
       <div class="control-group">
         <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
       </div>
+      <button class="copy-btn" onclick="autofillRightPercents()">Autofill %</button>
       <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
     </div>
 
@@ -600,6 +601,14 @@ window.lastResults = results;
     }, 1500);
   });
 }
+    function autofillRightPercents() {
+  for (let i = 0; i < 4; i++) {
+    const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
+    const rightInput = document.getElementById(`pickR${i}`);
+    rightInput.value = (100 - leftVal).toFixed(2);
+  }
+}
+
   </script>
 </body>
 </html>
