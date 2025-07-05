@@ -256,7 +256,7 @@ a {
 </head>
 <body>
   <div class="container" id="app">
-    <h1 class="heading">Pool EV Calculator - 3 Matchups 1.0</h1>
+    <h1 class="heading">Pool EV Calculator - 3 Matchups 1.1</h1>
     <div class="instructions">
       <h2 class="section-title">Instructions</h2>
       <p>1. Enter the details for each of the 3 games including odds (American format), and selection percentages.</p>
@@ -434,7 +434,24 @@ document.addEventListener('DOMContentLoaded', () => {
       
       this.renderResults();
     }
-    
+    copyResultsToClipboard() {
+  const results = this.state.results.combinations;
+  if (!results.length) return;
+
+  const formatted = results.map(combo => {
+    const comboStr = combo.teams.map(team => team.name).join('');
+    const hitProb = combo.winProbability.toFixed(2);
+    const ev = combo.expectedValue.toFixed(2);
+    return `Combo: ${comboStr}, Hit %: ${hitProb}%, EV: ${ev}`;
+  }).join('\n');
+
+  navigator.clipboard.writeText(formatted).then(() => {
+    alert("Results copied to clipboard!");
+  }).catch(err => {
+    console.error('Copy failed', err);
+  });
+}
+
     // Generate all possible combinations of team selections
     generateCombinations() {
       // Start with first game's teams
@@ -768,25 +785,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize the calculator
   new PoolCalculator();
 });
-
-  copyResultsToClipboard() {
-  const results = this.state.results.combinations;
-  if (!results.length) return;
-
-  const formatted = results.map(combo => {
-    const comboStr = combo.teams.map(team => team.name).join('');
-    const hitProb = combo.winProbability.toFixed(2);
-    const ev = combo.expectedValue.toFixed(2);
-    return `Combo: ${comboStr}, Hit %: ${hitProb}%, EV: ${ev}`;
-  }).join('\n');
-
-  navigator.clipboard.writeText(formatted).then(() => {
-    alert("Results copied to clipboard!");
-  }).catch(err => {
-    console.error('Copy failed', err);
-  });
-}
-
   </script>
 </body>
 </html>
