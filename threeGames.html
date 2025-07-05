@@ -256,7 +256,7 @@ a {
 </head>
 <body>
   <div class="container" id="app">
-    <h1 class="heading">Pool EV Calculator - 3 Matchups 1.1</h1>
+    <h1 class="heading">Pool EV Calculator - 3 Matchups 1.2</h1>
     <div class="instructions">
       <h2 class="section-title">Instructions</h2>
       <p>1. Enter the details for each of the 3 games including odds (American format), and selection percentages.</p>
@@ -439,10 +439,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!results.length) return;
 
   const formatted = results.map(combo => {
-    const comboStr = combo.teams.map(team => team.name).join('');
+    const comboStr = combo.teams.map(team => team.name.replace(/\d+/g, '')).join('');
     const hitProb = combo.winProbability.toFixed(2);
     const ev = combo.expectedValue.toFixed(2);
-    return `Combo: ${comboStr}, Hit %: ${hitProb}%, EV: ${ev}`;
+    return `${comboStr} - ${hitProb}% - ${ev}`;
   }).join('\n');
 
   navigator.clipboard.writeText(formatted).then(() => {
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Format a combination to a readable string
     formatCombination(combo) {
-      return combo.teams.map((team, i) => team.name).join(', ');
+      return combo.teams.map(team => team.name.replace(/\d+/g, '')).join('');
     }
     
     // Render games UI
@@ -751,11 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <tbody>
                 ${sortedCombinations.map(combo => `
                   <tr>
-                    <td>
-                      ${combo.teams.map((team, i) => `
-                        <span>${team.name}${i < combo.teams.length - 1 ? ', ' : ''}</span>
-                      `).join('')}
-                    </td>
+                   <td>${this.formatCombination(combo)}</td>
                     <td>${combo.winProbability.toFixed(2)}%</td>
                     <td>${combo.numberOfSelections}</td>
                     <td>${Math.round(combo.payout)}</td>
