@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-  <title>Pool EV Calculator 1.2</title>
+  <title>Pool EV Calculator 1.3</title>
   <style>
     * {
       margin: 0;
@@ -383,251 +383,157 @@
     </div>
   </div>
 
-  <script>
-    const inputContainer = document.getElementById('inputs');
-    for (let i = 0; i < 4; i++) {
-      inputContainer.innerHTML += `
-        <div class="game-card">
-          <div class="game-title">Game ${i + 1}</div>
-          <div class="team-row">
-            <div class="team-section">
-              <div class="team-name">L${i + 1}</div>
-              <div class="input-group">
-                <label class="input-label">American Odds</label>
-                <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
-                <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
-              </div>
-              <div class="input-group">
-                <label class="input-label">Selection %</label>
-                <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
-              </div>
-            </div>
-            <div class="team-section">
-              <div class="team-name">R${i + 1}</div>
-              <div class="input-group">
-                <label class="input-label">American Odds</label>
-                <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
-                <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
-              </div>
-              <div class="input-group">
-                <label class="input-label">Selection %</label>
-                <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
-              </div>
-            </div>
+<script>
+const inputContainer = document.getElementById('inputs');
+for (let i = 0; i < 4; i++) {
+  inputContainer.innerHTML += `
+    <div class="game-card">
+      <div class="game-title">Game ${i + 1}</div>
+      <div class="team-row">
+        <div class="team-section">
+          <div class="team-name" id="labelL${i}">L${i + 1}</div>
+          <div class="input-group">
+            <label class="input-label">American Odds</label>
+            <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i})">
+            <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Selection %</label>
+            <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
           </div>
         </div>
-      `;
-    }
-
-    function americanToImplied(odds) {
-      return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
-    }
-
-    function calculateNoVigProb(p1, p2) {
-      const total = p1 + p2;
-      return [p1 / total, p2 / total];
-    }
-
-    function updateOddsDisplay(gameIndex, side) {
-      const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
-      const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
-      
-      const impL = americanToImplied(lOdds);
-      const impR = americanToImplied(rOdds);
-      const [probL, probR] = calculateNoVigProb(impL, impR);
-      
-      document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
-        `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
-      document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
-        `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
-    }
-
-    // Initialize odds displays
-    for (let i = 0; i < 4; i++) {
-      updateOddsDisplay(i, 'L');
-    }
-
-    function calculateEV() {
-      const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
-      const showExtras = document.getElementById('showExtras').checked;
-      let pickPercents = [], winProbs = [], extraData = [];
-
-      for (let i = 0; i < 4; i++) {
-        let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
-        let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
-        let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
-        let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
-
-        pickPercents.push([lPick, rPick]);
-
-        const impL = americanToImplied(lOdds);
-        const impR = americanToImplied(rOdds);
-        const [probL, probR] = calculateNoVigProb(impL, impR);
-        winProbs.push([probL, probR]);
-        extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
-window.winProbs = winProbs;
-      }
-
-      const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
-      let counts = {}, results = [];
-
-      combos.forEach(combo => {
-        let prob = 1;
-        for (let i = 0; i < 4; i++) {
-          let pick = +combo[i];
-          prob *= pickPercents[i][pick];
-        }
-        counts[combo] = (totalEntrants - 1) * prob;
-      });
-
-      combos.forEach(userPick => {
-        let EV = 0;
-        let pickProb = 1;
-        for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
-
-        combos.forEach(outcome => {
-          let p = 1;
-          for (let i = 0; i < 4; i++) {
-            let win = +outcome[i];
-            p *= winProbs[i][win];
-          }
-
-          const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
-          const isTier1 = match === 4;
-          const isTier2 = match === 3;
-
-          let w1 = counts[outcome] || 0;
-          if (userPick === outcome) w1++;
-
-          let w2 = 0;
-          combos.forEach(other => {
-            const m = [...other].filter((bit, i) => bit === outcome[i]).length;
-            if (m === 3) w2 += counts[other] || 0;
-          });
-          if (isTier2) w2++;
-
-          const pool = 100 * totalEntrants;
-          const shares = w1 + 0.5 * w2;
-          const shareValue = pool / shares;
-
-          let gain = -100;
-          if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
-          else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
-
-          EV += p * gain;
-        });
-
-        results.push({ 
-          combo: userPick, 
-          ev: EV, 
-          pickProb: pickProb, 
-          estCount: Math.round(pickProb * totalEntrants),
-          tier1Payout: Math.min(Math.floor(100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
-            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
-            return sum + (m === 3 ? (counts[c] || 0) : 0);
-          }, 0))), 800),
-          tier2Payout: Math.min(Math.floor((100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
-            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
-            return sum + (m === 3 ? (counts[c] || 0) : 0);
-          }, 0))) / 2), 600)
-        });
-      });
-
-      results.sort((a, b) => b.ev - a.ev);
-
-      const table = `
-  <table>
-    <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
-    ${results.map((r) => {
-      const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
-      const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
-      
-      // Calculate actual win probability for this combo
-      let winProb = 1;
-      for (let i = 0; i < 4; i++) {
-        let pick = +r.combo[i];
-        winProb *= winProbs[i][pick];
-      }
-      
-      return `<tr>
-        <td>${readable}</td>
-        <td>${(winProb * 100).toFixed(2)}%</td>
-        <td>${r.estCount}</td>
-        <td>${r.tier2Payout}</td>
-        <td>${r.tier1Payout}</td>
-        <td class="${evClass}">${r.ev.toFixed(2)}</td>
-      </tr>`;
-    }).join('')}
-  </table>
-`;
-      document.getElementById('results').innerHTML = table;
-      document.getElementById('results-container').style.display = 'block';
-
-      // Add this after the table variable is created, before setting innerHTML
-const copyButton = `<button class="copy-btn" onclick="copyTableData()">Copy Results</button>`;
-document.getElementById('results').innerHTML = table + copyButton;
-      
-      if (showExtras) {
-        const extraTable = `
-          <table>
-            <tr><th>Game</th><th>Odds L</th><th>Odds R</th><th>Imp. L</th><th>Imp. R</th><th>No-Vig L</th><th>No-Vig R</th></tr>
-            ${extraData.map((row, i) => `
-              <tr><td>${i + 1}</td><td>${row.lOdds}</td><td>${row.rOdds}</td>
-              <td>${(row.impL * 100).toFixed(1)}%</td><td>${(row.impR * 100).toFixed(1)}%</td>
-              <td>${(row.probL * 100).toFixed(1)}%</td><td>${(row.probR * 100).toFixed(1)}%</td></tr>
-            `).join('')}
-          </table>
-        `;
-        document.getElementById('extras').innerHTML = extraTable;
-        document.getElementById('extras-container').style.display = 'block';
-      } else {
-        document.getElementById('extras-container').style.display = 'none';
-      }
-      // Add this line near the end of calculateEV function, before building the table
-window.lastResults = results;
-    }
-  function copyTableData() {
-  const results = window.lastResults;
-  if (!results) return;
-  
-  const copyText = results.map(r => {
-    const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
-
-    
-    // Calculate 3/4+ probability for this combo
-    let prob3Plus = 0;
-    const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
-    combos.forEach(outcome => {
-      let outcomeProb = 1;
-      for (let i = 0; i < 4; i++) {
-        let win = +outcome[i];
-        outcomeProb *= window.winProbs[i][win];
-      }
-      const match = [...r.combo].filter((bit, i) => bit === outcome[i]).length;
-      if (match >= 3) prob3Plus += outcomeProb;
-    });
-    
-    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - (${r.ev.toFixed(2)})`;
-  }).join('\n');
-  
-  navigator.clipboard.writeText(copyText).then(() => {
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
-    }, 1500);
-  });
+        <div class="team-section">
+          <div class="team-name" id="labelR${i}">R${i + 1}</div>
+          <div class="input-group">
+            <label class="input-label">American Odds</label>
+            <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i})">
+            <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Selection %</label>
+            <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
-    function autofillRightPercents() {
+
+function americanToImplied(odds) {
+  return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+}
+
+function calculateNoVigProb(p1, p2) {
+  const total = p1 + p2;
+  return [p1 / total, p2 / total];
+}
+
+function updateOddsDisplay(gameIndex) {
+  const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+  const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+
+  const impL = americanToImplied(lOdds);
+  const impR = americanToImplied(rOdds);
+  const [probL, probR] = calculateNoVigProb(impL, impR);
+
+  document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML =
+    `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+  document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML =
+    `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+}
+
+for (let i = 0; i < 4; i++) updateOddsDisplay(i);
+
+function autofillRightPercents() {
   for (let i = 0; i < 4; i++) {
     const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
-    const rightInput = document.getElementById(`pickR${i}`);
-    rightInput.value = (100 - leftVal).toFixed(0);
+    document.getElementById(`pickR${i}`).value = (100 - leftVal).toFixed(0);
   }
 }
+
+function calculateEV() {
+  const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
+  const showExtras = document.getElementById('showExtras')?.checked;
+  let pickPercents = [], winProbs = [], extraData = [];
+
+  for (let i = 0; i < 4; i++) {
+    let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
+    let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
+    let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
+    let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
+
+    pickPercents.push([lPick, rPick]);
+
+    const impL = americanToImplied(lOdds);
+    const impR = americanToImplied(rOdds);
+    const [probL, probR] = calculateNoVigProb(impL, impR);
+    winProbs.push([probL, probR]);
+    extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
+  }
+
+  const combos = Array.from({ length: 16 }, (_, i) => i.toString(2).padStart(4, '0'));
+  let counts = {}, results = [];
+
+  combos.forEach(combo => {
+    let prob = 1;
+    for (let i = 0; i < 4; i++) {
+      let pick = +combo[i];
+      prob *= pickPercents[i][pick];
+    }
+    counts[combo] = (totalEntrants - 1) * prob;
+  });
+
+  combos.forEach(userPick => {
+    let EV = 0;
+    let pickProb = 1;
+    for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
+
+    combos.forEach(outcome => {
+      let p = 1;
+      for (let i = 0; i < 4; i++) {
+        let win = +outcome[i];
+        p *= winProbs[i][win];
+      }
+
+      const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
+      const isTier1 = match === 4;
+      const isTier2 = match === 3;
+
+      let w1 = counts[outcome] || 0;
+      if (userPick === outcome) w1++;
+
+      let w2 = 0;
+      combos.forEach(other => {
+        const m = [...other].filter((bit, i) => bit === outcome[i]).length;
+        if (m === 3) w2 += counts[other] || 0;
+      });
+      if (isTier2) w2++;
+
+      const pool = 100 * totalEntrants;
+      const shares = w1 + 0.5 * w2;
+      const shareValue = pool / shares;
+
+      let gain = -100;
+      if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
+      else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+
+      EV += p * gain;
+    });
+
+    results.push({
+      combo: userPick,
+      ev: EV,
+      pickProb: pickProb,
+      estCount: Math.round(pickProb * totalEntrants),
+    });
+  });
+
+  results.sort((a, b) => b.ev - a.ev);
+  console.log(results);
+  window.lastResults = results;
+  window.winProbs = winProbs;
+}
+
 let currentPoolId = null;
 
 async function getPoolById(id) {
@@ -635,29 +541,61 @@ async function getPoolById(id) {
     const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${id}`)}`;
     const response = await axios.get(url);
     return JSON.parse(response.data.contents);
-  } catch (e) {
-    // Just return null silently
+  } catch {
     return null;
   }
 }
 
-
 async function findAndLoadPoolFromSearch(sport, date) {
-  let latestKnownPoolId = 1010; // hardcoded max ID
+  let latestKnownPoolId = 1010;
   let attempts = 50;
 
   for (let i = 0; i < attempts; i++) {
     const data = await getPoolById(latestKnownPoolId);
-    if (data && data.pool && data.pool.sport.toLowerCase() === sport.toLowerCase() && data.pool.day === date) {
+    if (data?.pool?.sport.toLowerCase() === sport.toLowerCase() && data.pool.day === date) {
       currentPoolId = latestKnownPoolId;
       return data.pool;
     }
     latestKnownPoolId--;
   }
 
-  // Alert only once after loop ends with no match
   alert("No matching pool found.");
   return null;
+}
+
+function fillPercentsFromPool(pool) {
+  if (pool.polls.length !== 4) {
+    alert('This calculator only supports pools with 4 games.');
+    return;
+  }
+
+  pool.polls.forEach((wrapper, i) => {
+    const options = wrapper.poll.options;
+    if (options.length < 2) return;
+
+    document.getElementById(`labelL${i}`).textContent = options[0].label;
+    document.getElementById(`labelR${i}`).textContent = options[1].label;
+
+    const totalVotes = options.reduce((sum, o) => sum + o.count, 0);
+    const percentL = totalVotes > 0 ? Math.round((options[0].count / totalVotes) * 100) : 50;
+    const percentR = 100 - percentL;
+    document.getElementById(`pickL${i}`).value = percentL;
+    document.getElementById(`pickR${i}`).value = percentR;
+  });
+}
+
+async function loadPoolPercents() {
+  const sport = document.getElementById('pool-sport').value;
+  const date = document.getElementById('pool-date').value;
+  if (!sport || !date) return alert("Select sport and date.");
+  const pool = await findAndLoadPoolFromSearch(sport, date);
+  if (pool) fillPercentsFromPool(pool);
+}
+
+async function refreshPool() {
+  if (!currentPoolId) return alert("No pool loaded yet.");
+  const data = await getPoolById(currentPoolId);
+  if (data?.pool) fillPercentsFromPool(data.pool);
 }
 
 function injectPoolControls() {
@@ -685,37 +623,8 @@ function injectPoolControls() {
   document.querySelector('.instructions').after(container);
 }
 
-function fillPercentsFromPool(pool) {
-  if (pool.polls.length !== 4) {
-    alert('This calculator only supports pools with 4 games.');
-    return;
-  }
-  pool.polls.forEach((wrapper, i) => {
-    const options = wrapper.poll.options;
-    if (options.length < 2) return;
-    const totalVotes = options.reduce((sum, o) => sum + o.count, 0);
-    const percentL = totalVotes > 0 ? Math.round((options[0].count / totalVotes) * 100) : 50;
-    const percentR = 100 - percentL;
-    document.getElementById(`pickL${i}`).value = percentL;
-    document.getElementById(`pickR${i}`).value = percentR;
-  });
-}
-
-async function loadPoolPercents() {
-  const sport = document.getElementById('pool-sport').value;
-  const date = document.getElementById('pool-date').value;
-  if (!sport || !date) return alert("Select sport and date.");
-  const pool = await findAndLoadPoolFromSearch(sport, date);
-  if (pool) fillPercentsFromPool(pool);
-}
-
-async function refreshPool() {
-  if (!currentPoolId) return alert("No pool loaded yet.");
-  const data = await getPoolById(currentPoolId);
-  if (data && data.pool) fillPercentsFromPool(data.pool);
-}
-
 injectPoolControls();
-  </script>
+</script>
+
 </body>
 </html>
