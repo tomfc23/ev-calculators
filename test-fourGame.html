@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-  <title>Pool EV Calculator 1.3</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <title>Pool EV Calculator 1.0</title>
   <style>
-      * {
+    * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -345,41 +345,15 @@
 </head>
 <body>
   <div class="container">
-
-    <h1>Pool EV Calculator w/ Fetcher</h1>
+    <h1>Pool EV Calculator</h1>
     <h4>Major props to @xpr0gidy, he helped a lot with developement</h4>
-
-    <!-- New Controls for Auto-Fill -->
-    <div class="controls" style="margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-      <div class="control-group" style="flex: none;">
-        <label for="sportSelect">Sport:
-          <select id="sportSelect">
-            <option value="mlb">MLB</option>
-            <option value="nba">NBA</option>
-            <option value="wnba">WNBA</option>
-            <option value="nhl">NHL</option>
-          </select>
-        </label>
-      </div>
-      <div class="control-group" style="flex: none;">
-        <label for="dateSelect">Date:
-          <input type="date" id="dateSelect" />
-        </label>
-      </div>
-      <div class="control-group" style="flex: none; align-self: center;">
-        <button id="fetchPoolBtn" class="calculate-btn" type="button">Fetch Pool & Fill Percents</button>
-      </div>
-    </div>
-
-    <div id="fetchStatus" style="color: #ccc; text-align: center; margin-bottom: 1rem;"></div>
-
     <div class="instructions">
       <h3>Instructions</h3>
       <ol>
         <li>Enter the details for each of the 4 games including odds (American format), and selection percentages.</li>
         <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
         <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
-        <li>To use the calculator mid-game, put like -99999 for winners and +99999 for losers, put in the percentages, and see what the new results are.</li>
+        <li>To use the calculator mid-game, put like -99999 for winners and +99999 for losers, put in the percentages, and see what the new results are</li>
       </ol>
     </div>
 
@@ -409,75 +383,71 @@
     </div>
   </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-<script>
-  // Setup inputs for 4 games
-  const inputContainer = document.getElementById('inputs');
-  for (let i = 0; i < 4; i++) {
-    inputContainer.innerHTML += `
-      <div class="game-card">
-        <div class="game-title">Game ${i + 1}</div>
-        <div class="team-row">
-          <div class="team-section">
-            <div class="team-name">L${i + 1}</div>
-            <div class="input-group">
-              <label class="input-label">American Odds</label>
-              <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
-              <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+  <script>
+    const inputContainer = document.getElementById('inputs');
+    for (let i = 0; i < 4; i++) {
+      inputContainer.innerHTML += `
+        <div class="game-card">
+          <div class="game-title">Game ${i + 1}</div>
+          <div class="team-row">
+            <div class="team-section">
+              <div class="team-name">L${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
+                <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
+              </div>
             </div>
-            <div class="input-group">
-              <label class="input-label">Selection %</label>
-              <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
-            </div>
-          </div>
-          <div class="team-section">
-            <div class="team-name">R${i + 1}</div>
-            <div class="input-group">
-              <label class="input-label">American Odds</label>
-              <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
-              <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
-            </div>
-            <div class="input-group">
-              <label class="input-label">Selection %</label>
-              <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
+            <div class="team-section">
+              <div class="team-name">R${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
+                <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    `;
-  }
-
-  // Odds display & helper functions (unchanged)
-  function americanToImplied(odds) {
-    return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
-  }
-  function calculateNoVigProb(p1, p2) {
-    const total = p1 + p2;
-    return [p1 / total, p2 / total];
-  }
-  function updateOddsDisplay(gameIndex, side) {
-    const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
-    const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
-    const impL = americanToImplied(lOdds);
-    const impR = americanToImplied(rOdds);
-    const [probL, probR] = calculateNoVigProb(impL, impR);
-    document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML =
-      `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
-    document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML =
-      `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
-  }
-  for (let i = 0; i < 4; i++) {
-    updateOddsDisplay(i, 'L');
-  }
-
-  function autofillRightPercents() {
-    for (let i = 0; i < 4; i++) {
-      const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
-      const rightInput = document.getElementById(`pickR${i}`);
-      rightInput.value = (100 - leftVal).toFixed(0);
+      `;
     }
-  }
-  function calculateEV() {
+
+    function americanToImplied(odds) {
+      return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+    }
+
+    function calculateNoVigProb(p1, p2) {
+      const total = p1 + p2;
+      return [p1 / total, p2 / total];
+    }
+
+    function updateOddsDisplay(gameIndex, side) {
+      const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+      const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+      
+      const impL = americanToImplied(lOdds);
+      const impR = americanToImplied(rOdds);
+      const [probL, probR] = calculateNoVigProb(impL, impR);
+      
+      document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+      document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
+        `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+    }
+
+    // Initialize odds displays
+    for (let i = 0; i < 4; i++) {
+      updateOddsDisplay(i, 'L');
+    }
+
+    function calculateEV() {
       const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
       const showExtras = document.getElementById('showExtras').checked;
       let pickPercents = [], winProbs = [], extraData = [];
@@ -616,92 +586,132 @@ document.getElementById('results').innerHTML = table + copyButton;
       // Add this line near the end of calculateEV function, before building the table
 window.lastResults = results;
     }
+  function copyTableData() {
+  const results = window.lastResults;
+  if (!results) return;
+  
+  const copyText = results.map(r => {
+    const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
 
-  // Fetch pool on button click and fill selection % inputs
-  document.getElementById('fetchPoolBtn').addEventListener('click', async () => {
-    const sport = document.getElementById('sportSelect').value.trim().toLowerCase();
-    const date = document.getElementById('dateSelect').value;
-    const fetchStatus = document.getElementById('fetchStatus');
-
-    if (!sport || !date) {
-      fetchStatus.style.color = '#ff6b6b';
-      fetchStatus.textContent = 'Please select both sport and date.';
-      return;
-    }
-
-    fetchStatus.style.color = '#ccc';
-    fetchStatus.textContent = 'Searching for pool...';
-
-    // Calculate max pool ID (increase by 5 per day from base date)
-    const basePoolId = 1000;
-    const baseDate = new Date('2025-07-01');
-    const today = new Date();
-    const diffTime = today.getTime() - baseDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    let latestKnownPoolId = basePoolId + diffDays * 5;
-
-    let foundPool = null;
-    let attempts = 0;
-    const maxAttempts = 50;
-    let currentId = latestKnownPoolId;
-
-    while (attempts < maxAttempts && currentId > 0) {
-      try {
-        // Use allorigins proxy for CORS
-        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${currentId}`)}`;
-        const response = await axios.get(url);
-        const poolData = JSON.parse(response.data.contents);
-        const pool = poolData.pool;
-        if (
-          pool &&
-          pool.sport.toLowerCase() === sport &&
-          pool.day === date
-        ) {
-          foundPool = pool;
-          break;
-        }
-      } catch {
-        // ignore errors and continue searching
+    
+    // Calculate 3/4+ probability for this combo
+    let prob3Plus = 0;
+    const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+    combos.forEach(outcome => {
+      let outcomeProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let win = +outcome[i];
+        outcomeProb *= window.winProbs[i][win];
       }
-      currentId--;
-      attempts++;
-    }
-
-    if (!foundPool) {
-      fetchStatus.style.color = '#ff6b6b';
-      fetchStatus.textContent = `No pool found for ${sport.toUpperCase()} on ${date}.`;
-      return;
-    }
-
-    if (!foundPool.polls || foundPool.polls.length !== 4) {
-      fetchStatus.style.color = '#ff6b6b';
-      fetchStatus.textContent = `Found pool with ${foundPool.polls.length} games, but this calculator supports exactly 4 games only.`;
-      return;
-    }
-
-    fetchStatus.style.color = '#4ade80';
-    fetchStatus.textContent = `Pool found! Filling selection percentages...`;
-
-    // Fill picks from poll data
-    for (let i = 0; i < 4; i++) {
-      const poll = foundPool.polls[i].poll;
-      if (!poll || !poll.options || poll.options.length < 2) continue;
-      
-      const totalVotes = poll.options.reduce((sum, o) => sum + o.count, 0);
-      if (totalVotes === 0) {
-        // no votes, fallback to 50/50
-        document.getElementById(`pickL${i}`).value = 50;
-        document.getElementById(`pickR${i}`).value = 50;
-        continue;
-      }
-      // Assign picks according to options[0] is Left, options[1] is Right by label order
-      const leftPercent = Math.round((poll.options[0].count / totalVotes) * 100);
-      const rightPercent = 100 - leftPercent;
-      document.getElementById(`pickL${i}`).value = leftPercent;
-      document.getElementById(`pickR${i}`).value = rightPercent;
-    }
+      const match = [...r.combo].filter((bit, i) => bit === outcome[i]).length;
+      if (match >= 3) prob3Plus += outcomeProb;
+    });
+    
+    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - (${r.ev.toFixed(2)})`;
+  }).join('\n');
+  
+  navigator.clipboard.writeText(copyText).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+    }, 1500);
   });
-</script>
+}
+    function autofillRightPercents() {
+  for (let i = 0; i < 4; i++) {
+    const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
+    const rightInput = document.getElementById(`pickR${i}`);
+    rightInput.value = (100 - leftVal).toFixed(0);
+  }
+}
+let currentPoolId = null;
 
+async function getPoolById(id) {
+  try {
+    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${id}`)}`;
+    const response = await axios.get(url);
+    return JSON.parse(response.data.contents);
+  } catch (e) {
+    alert(`Failed to fetch pool ID ${id}: ${e.message}`);
+    return null;
+  }
+}
+
+async function findAndLoadPoolFromSearch(sport, date) {
+  let latestKnownPoolId = 1010; // hardcoded max ID
+  let attempts = 50;
+  while (attempts-- > 0) {
+    const data = await getPoolById(latestKnownPoolId);
+    if (data && data.pool && data.pool.sport.toLowerCase() === sport.toLowerCase() && data.pool.day === date) {
+      currentPoolId = latestKnownPoolId;
+      return data.pool;
+    }
+    latestKnownPoolId--;
+  }
+  alert("No matching pool found.");
+  return null;
+}
+
+function injectPoolControls() {
+  const container = document.createElement('div');
+  container.className = 'controls';
+  container.innerHTML = `
+    <div class="control-group">
+      <label for="pool-sport">Sport:
+        <select id="pool-sport">
+          <option value="mlb">MLB</option>
+          <option value="nba">NBA</option>
+          <option value="wnba">WNBA</option>
+          <option value="nhl">NHL</option>
+        </select>
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="pool-date">Date:
+        <input type="date" id="pool-date" />
+      </label>
+    </div>
+    <button class="results-btn" onclick="loadPoolPercents()">Load % From Pool</button>
+    <button class="results-btn" onclick="refreshPool()">Refresh %</button>
+  `;
+  document.querySelector('.instructions').after(container);
+}
+
+function fillPercentsFromPool(pool) {
+  if (pool.polls.length !== 4) {
+    alert('This calculator only supports pools with 4 games.');
+    return;
+  }
+  pool.polls.forEach((wrapper, i) => {
+    const options = wrapper.poll.options;
+    if (options.length < 2) return;
+    const totalVotes = options.reduce((sum, o) => sum + o.count, 0);
+    const percentL = totalVotes > 0 ? Math.round((options[0].count / totalVotes) * 100) : 50;
+    const percentR = 100 - percentL;
+    document.getElementById(`pickL${i}`).value = percentL;
+    document.getElementById(`pickR${i}`).value = percentR;
+  });
+}
+
+async function loadPoolPercents() {
+  const sport = document.getElementById('pool-sport').value;
+  const date = document.getElementById('pool-date').value;
+  if (!sport || !date) return alert("Select sport and date.");
+  const pool = await findAndLoadPoolFromSearch(sport, date);
+  if (pool) fillPercentsFromPool(pool);
+}
+
+async function refreshPool() {
+  if (!currentPoolId) return alert("No pool loaded yet.");
+  const data = await getPoolById(currentPoolId);
+  if (data && data.pool) fillPercentsFromPool(data.pool);
+}
+
+injectPoolControls();
+  </script>
 </body>
 </html>
