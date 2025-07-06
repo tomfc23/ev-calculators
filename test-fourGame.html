@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-  <title>Pool EV Calculator 1.4</title>
+  <title>Pool EV Calculator 1.5</title>
   <style>
     * {
       margin: 0;
@@ -452,84 +452,94 @@ function autofillRightPercents() {
 }
 
 function calculateEV() {
-  const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
-  const showExtras = document.getElementById('showExtras')?.checked;
-  let pickPercents = [], winProbs = [], extraData = [];
+      const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
+      const showExtras = document.getElementById('showExtras').checked;
+      let pickPercents = [], winProbs = [], extraData = [];
 
-  for (let i = 0; i < 4; i++) {
-    let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
-    let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
-    let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
-    let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
-
-    pickPercents.push([lPick, rPick]);
-
-    const impL = americanToImplied(lOdds);
-    const impR = americanToImplied(rOdds);
-    const [probL, probR] = calculateNoVigProb(impL, impR);
-    winProbs.push([probL, probR]);
-    extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
-  }
-
-  const combos = Array.from({ length: 16 }, (_, i) => i.toString(2).padStart(4, '0'));
-  let counts = {}, results = [];
-
-  combos.forEach(combo => {
-    let prob = 1;
-    for (let i = 0; i < 4; i++) {
-      let pick = +combo[i];
-      prob *= pickPercents[i][pick];
-    }
-    counts[combo] = (totalEntrants - 1) * prob;
-  });
-
-  combos.forEach(userPick => {
-    let EV = 0;
-    let pickProb = 1;
-    for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
-
-    combos.forEach(outcome => {
-      let p = 1;
       for (let i = 0; i < 4; i++) {
-        let win = +outcome[i];
-        p *= winProbs[i][win];
+        let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
+        let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
+        let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
+        let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
+
+        pickPercents.push([lPick, rPick]);
+
+        const impL = americanToImplied(lOdds);
+        const impR = americanToImplied(rOdds);
+        const [probL, probR] = calculateNoVigProb(impL, impR);
+        winProbs.push([probL, probR]);
+        extraData.push({ lOdds, rOdds, impL, impR, probL, probR });
+window.winProbs = winProbs;
       }
 
-      const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
-      const isTier1 = match === 4;
-      const isTier2 = match === 3;
+      const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+      let counts = {}, results = [];
 
-      let w1 = counts[outcome] || 0;
-      if (userPick === outcome) w1++;
-
-      let w2 = 0;
-      combos.forEach(other => {
-        const m = [...other].filter((bit, i) => bit === outcome[i]).length;
-        if (m === 3) w2 += counts[other] || 0;
+      combos.forEach(combo => {
+        let prob = 1;
+        for (let i = 0; i < 4; i++) {
+          let pick = +combo[i];
+          prob *= pickPercents[i][pick];
+        }
+        counts[combo] = (totalEntrants - 1) * prob;
       });
-      if (isTier2) w2++;
 
-      const pool = 100 * totalEntrants;
-      const shares = w1 + 0.5 * w2;
-      const shareValue = pool / shares;
+      combos.forEach(userPick => {
+        let EV = 0;
+        let pickProb = 1;
+        for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
 
-      let gain = -100;
-      if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
-      else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+        combos.forEach(outcome => {
+          let p = 1;
+          for (let i = 0; i < 4; i++) {
+            let win = +outcome[i];
+            p *= winProbs[i][win];
+          }
 
-      EV += p * gain;
-    });
+          const match = [...userPick].filter((bit, i) => bit === outcome[i]).length;
+          const isTier1 = match === 4;
+          const isTier2 = match === 3;
 
-    results.push({
-      combo: userPick,
-      ev: EV,
-      pickProb: pickProb,
-      estCount: Math.round(pickProb * totalEntrants),
-    });
-  });
+          let w1 = counts[outcome] || 0;
+          if (userPick === outcome) w1++;
 
-  results.sort((a, b) => b.ev - a.ev);
-    const table = `
+          let w2 = 0;
+          combos.forEach(other => {
+            const m = [...other].filter((bit, i) => bit === outcome[i]).length;
+            if (m === 3) w2 += counts[other] || 0;
+          });
+          if (isTier2) w2++;
+
+          const pool = 100 * totalEntrants;
+          const shares = w1 + 0.5 * w2;
+          const shareValue = pool / shares;
+
+          let gain = -100;
+          if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
+          else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+
+          EV += p * gain;
+        });
+
+        results.push({ 
+          combo: userPick, 
+          ev: EV, 
+          pickProb: pickProb, 
+          estCount: Math.round(pickProb * totalEntrants),
+          tier1Payout: Math.min(Math.floor(100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))), 800),
+          tier2Payout: Math.min(Math.floor((100 * totalEntrants / (counts[userPick] + 0.5 * combos.reduce((sum, c) => {
+            const m = [...c].filter((bit, i) => bit === userPick[i]).length;
+            return sum + (m === 3 ? (counts[c] || 0) : 0);
+          }, 0))) / 2), 600)
+        });
+      });
+
+      results.sort((a, b) => b.ev - a.ev);
+
+      const table = `
   <table>
     <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
     ${results.map((r) => {
@@ -579,7 +589,8 @@ document.getElementById('results').innerHTML = table + copyButton;
       }
       // Add this line near the end of calculateEV function, before building the table
 window.lastResults = results;
-}
+    }
+  
    function copyTableData() {
   const results = window.lastResults;
   if (!results) return;
