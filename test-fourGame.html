@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pool EV Calculator</title>
+  <style>
+      * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h4 {
+      text-align: center;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .instructions h3 {
+      color: #ffffff;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .instructions ol {
+      color: #b3b3b3;
+      padding-left: 1.5rem;
+    }
+
+    .instructions li {
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .game-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .team-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .team-section {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .team-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .input-group {
+      margin-bottom: 0.8rem;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #b3b3b3;
+      margin-bottom: 0.3rem;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #8B5CF6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .odds-display {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.3rem;
+      text-align: center;
+    }
+.copy-btn {
+  background: linear-gradient(45deg, #10b981, #059669);
+  border: none;
+  padding: 0.6rem 1.5rem;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+}
+
+.copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="number"] {
+      width: 80px;
+      padding: 0.4rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .control-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #8B5CF6;
+    }
+
+    .calculate-btn {
+      background: linear-gradient(45deg, #8B5CF6, #06B6D4);
+      border: none;
+      padding: 0.8rem 2rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .calculate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+
+    .results-btn {
+       background: linear-gradient(45deg, #10b981, #059669);
+      border: none;
+      padding: 0.8rem 2rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .results-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+
+    .results-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .results-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .info-note {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .info-note p {
+      color: #b3b3b3;
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      padding: 1rem 0.8rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+      padding: 0.8rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .ev-positive {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .ev-negative {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    .extras-table {
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .team-row {
+        flex-direction: column;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>Pool EV Calculator w/ Fetcher</h1>
+    <h4>Major props to @xpr0gidy, he helped a lot with developement</h4>
+
+    <!-- New Controls for Auto-Fill -->
+    <div class="controls" style="margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+      <div class="control-group" style="flex: none;">
+        <label for="sportSelect">Sport:
+          <select id="sportSelect">
+            <option value="mlb">MLB</option>
+            <option value="nba">NBA</option>
+            <option value="wnba">WNBA</option>
+            <option value="nhl">NHL</option>
+          </select>
+        </label>
+      </div>
+      <div class="control-group" style="flex: none;">
+        <label for="dateSelect">Date:
+          <input type="date" id="dateSelect" />
+        </label>
+      </div>
+      <div class="control-group" style="flex: none; align-self: center;">
+        <button id="fetchPoolBtn" class="calculate-btn" type="button">Fetch Pool & Fill Percents</button>
+      </div>
+    </div>
+
+    <div id="fetchStatus" style="color: #ccc; text-align: center; margin-bottom: 1rem;"></div>
+
+    <div class="instructions">
+      <h3>Instructions</h3>
+      <ol>
+        <li>Enter the details for each of the 4 games including odds (American format), and selection percentages.</li>
+        <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
+        <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
+        <li>To use the calculator mid-game, put like -99999 for winners and +99999 for losers, put in the percentages, and see what the new results are.</li>
+      </ol>
+    </div>
+
+    <div class="games-grid" id="inputs"></div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label>
+      </div>
+      <div class="control-group">
+        <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
+      </div>
+      <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
+    </div>
+
+    <div class="results-section" id="results-container" style="display: none;">
+      <div class="info-note">
+        <p><strong>Win Probabilities Based On:</strong><br>
+        No-vig odds are used for calculations to remove bookmakers' edge.</p>
+      </div>
+      <h3 class="results-title">All Combinations and Payouts</h3>
+      <div id="results"></div>
+    </div>
+
+    <div class="results-section extras-table" id="extras-container" style="display: none;">
+      <div id="extras"></div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script>
+  // Setup inputs for 4 games
+  const inputContainer = document.getElementById('inputs');
+  for (let i = 0; i < 4; i++) {
+    inputContainer.innerHTML += `
+      <div class="game-card">
+        <div class="game-title">Game ${i + 1}</div>
+        <div class="team-row">
+          <div class="team-section">
+            <div class="team-name">L${i + 1}</div>
+            <div class="input-group">
+              <label class="input-label">American Odds</label>
+              <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
+              <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Selection %</label>
+              <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
+            </div>
+          </div>
+          <div class="team-section">
+            <div class="team-name">R${i + 1}</div>
+            <div class="input-group">
+              <label class="input-label">American Odds</label>
+              <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
+              <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Selection %</label>
+              <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Odds display & helper functions (unchanged)
+  function americanToImplied(odds) {
+    return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+  }
+  function calculateNoVigProb(p1, p2) {
+    const total = p1 + p2;
+    return [p1 / total, p2 / total];
+  }
+  function updateOddsDisplay(gameIndex, side) {
+    const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+    const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+    const impL = americanToImplied(lOdds);
+    const impR = americanToImplied(rOdds);
+    const [probL, probR] = calculateNoVigProb(impL, impR);
+    document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML =
+      `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+    document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML =
+      `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+  }
+  for (let i = 0; i < 4; i++) {
+    updateOddsDisplay(i, 'L');
+  }
+
+  function autofillRightPercents() {
+    for (let i = 0; i < 4; i++) {
+      const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
+      const rightInput = document.getElementById(`pickR${i}`);
+      rightInput.value = (100 - leftVal).toFixed(0);
+    }
+  }
+
+  // Calculate EV function unchanged (not repeated here for brevity, copy from your code)
+  // ...
+
+  // Fetch pool on button click and fill selection % inputs
+  document.getElementById('fetchPoolBtn').addEventListener('click', async () => {
+    const sport = document.getElementById('sportSelect').value.trim().toLowerCase();
+    const date = document.getElementById('dateSelect').value;
+    const fetchStatus = document.getElementById('fetchStatus');
+
+    if (!sport || !date) {
+      fetchStatus.style.color = '#ff6b6b';
+      fetchStatus.textContent = 'Please select both sport and date.';
+      return;
+    }
+
+    fetchStatus.style.color = '#ccc';
+    fetchStatus.textContent = 'Searching for pool...';
+
+    // Calculate max pool ID (increase by 5 per day from base date)
+    const basePoolId = 1000;
+    const baseDate = new Date('2025-07-01');
+    const today = new Date();
+    const diffTime = today.getTime() - baseDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    let latestKnownPoolId = basePoolId + diffDays * 5;
+
+    let foundPool = null;
+    let attempts = 0;
+    const maxAttempts = 50;
+    let currentId = latestKnownPoolId;
+
+    while (attempts < maxAttempts && currentId > 0) {
+      try {
+        // Use allorigins proxy for CORS
+        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.real.vg/pools/${currentId}`)}`;
+        const response = await axios.get(url);
+        const poolData = JSON.parse(response.data.contents);
+        const pool = poolData.pool;
+        if (
+          pool &&
+          pool.sport.toLowerCase() === sport &&
+          pool.day === date
+        ) {
+          foundPool = pool;
+          break;
+        }
+      } catch {
+        // ignore errors and continue searching
+      }
+      currentId--;
+      attempts++;
+    }
+
+    if (!foundPool) {
+      fetchStatus.style.color = '#ff6b6b';
+      fetchStatus.textContent = `No pool found for ${sport.toUpperCase()} on ${date}.`;
+      return;
+    }
+
+    if (!foundPool.polls || foundPool.polls.length !== 4) {
+      fetchStatus.style.color = '#ff6b6b';
+      fetchStatus.textContent = `Found pool with ${foundPool.polls.length} games, but this calculator supports exactly 4 games only.`;
+      return;
+    }
+
+    fetchStatus.style.color = '#4ade80';
+    fetchStatus.textContent = `Pool found! Filling selection percentages...`;
+
+    // Fill picks from poll data
+    for (let i = 0; i < 4; i++) {
+      const poll = foundPool.polls[i].poll;
+      if (!poll || !poll.options || poll.options.length < 2) continue;
+      
+      const totalVotes = poll.options.reduce((sum, o) => sum + o.count, 0);
+      if (totalVotes === 0) {
+        // no votes, fallback to 50/50
+        document.getElementById(`pickL${i}`).value = 50;
+        document.getElementById(`pickR${i}`).value = 50;
+        continue;
+      }
+      // Assign picks according to options[0] is Left, options[1] is Right by label order
+      const leftPercent = Math.round((poll.options[0].count / totalVotes) * 100);
+      const rightPercent = 100 - leftPercent;
+      document.getElementById(`pickL${i}`).value = leftPercent;
+      document.getElementById(`pickR${i}`).value = rightPercent;
+    }
+  });
+</script>
+
+</body>
+</html>
