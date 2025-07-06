@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-  <title>Pool EV Calculator 1.3</title>
+  <title>Pool EV Calculator 1.4</title>
   <style>
     * {
       margin: 0;
@@ -529,9 +529,91 @@ function calculateEV() {
   });
 
   results.sort((a, b) => b.ev - a.ev);
-  console.log(results);
-  window.lastResults = results;
-  window.winProbs = winProbs;
+    const table = `
+  <table>
+    <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
+    ${results.map((r) => {
+      const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
+      const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
+      
+      // Calculate actual win probability for this combo
+      let winProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let pick = +r.combo[i];
+        winProb *= winProbs[i][pick];
+      }
+      
+      return `<tr>
+        <td>${readable}</td>
+        <td>${(winProb * 100).toFixed(2)}%</td>
+        <td>${r.estCount}</td>
+        <td>${r.tier2Payout}</td>
+        <td>${r.tier1Payout}</td>
+        <td class="${evClass}">${r.ev.toFixed(2)}</td>
+      </tr>`;
+    }).join('')}
+  </table>
+`;
+      document.getElementById('results').innerHTML = table;
+      document.getElementById('results-container').style.display = 'block';
+
+      // Add this after the table variable is created, before setting innerHTML
+const copyButton = `<button class="copy-btn" onclick="copyTableData()">Copy Results</button>`;
+document.getElementById('results').innerHTML = table + copyButton;
+      
+      if (showExtras) {
+        const extraTable = `
+          <table>
+            <tr><th>Game</th><th>Odds L</th><th>Odds R</th><th>Imp. L</th><th>Imp. R</th><th>No-Vig L</th><th>No-Vig R</th></tr>
+            ${extraData.map((row, i) => `
+              <tr><td>${i + 1}</td><td>${row.lOdds}</td><td>${row.rOdds}</td>
+              <td>${(row.impL * 100).toFixed(1)}%</td><td>${(row.impR * 100).toFixed(1)}%</td>
+              <td>${(row.probL * 100).toFixed(1)}%</td><td>${(row.probR * 100).toFixed(1)}%</td></tr>
+            `).join('')}
+          </table>
+        `;
+        document.getElementById('extras').innerHTML = extraTable;
+        document.getElementById('extras-container').style.display = 'block';
+      } else {
+        document.getElementById('extras-container').style.display = 'none';
+      }
+      // Add this line near the end of calculateEV function, before building the table
+window.lastResults = results;
+}
+   function copyTableData() {
+  const results = window.lastResults;
+  if (!results) return;
+  
+  const copyText = results.map(r => {
+    const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
+
+    
+    // Calculate 3/4+ probability for this combo
+    let prob3Plus = 0;
+    const combos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+    combos.forEach(outcome => {
+      let outcomeProb = 1;
+      for (let i = 0; i < 4; i++) {
+        let win = +outcome[i];
+        outcomeProb *= window.winProbs[i][win];
+      }
+      const match = [...r.combo].filter((bit, i) => bit === outcome[i]).length;
+      if (match >= 3) prob3Plus += outcomeProb;
+    });
+    
+    return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - (${r.ev.toFixed(2)})`;
+  }).join('\n');
+  
+  navigator.clipboard.writeText(copyText).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+    }, 1500);
+  });
 }
 
 let currentPoolId = null;
