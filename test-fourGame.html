@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-  <title>Pool EV Calculator 1.0</title>
+  <title>Pool EV Calculator 1.1</title>
   <style>
     * {
       margin: 0;
@@ -636,15 +636,17 @@ async function getPoolById(id) {
     const response = await axios.get(url);
     return JSON.parse(response.data.contents);
   } catch (e) {
-    alert(`Failed to fetch pool ID ${id}: ${e.message}`);
+    // Just return null silently
     return null;
   }
 }
 
+
 async function findAndLoadPoolFromSearch(sport, date) {
   let latestKnownPoolId = 1010; // hardcoded max ID
   let attempts = 50;
-  while (attempts-- > 0) {
+
+  for (let i = 0; i < attempts; i++) {
     const data = await getPoolById(latestKnownPoolId);
     if (data && data.pool && data.pool.sport.toLowerCase() === sport.toLowerCase() && data.pool.day === date) {
       currentPoolId = latestKnownPoolId;
@@ -652,6 +654,8 @@ async function findAndLoadPoolFromSearch(sport, date) {
     }
     latestKnownPoolId--;
   }
+
+  // Alert only once after loop ends with no match
   alert("No matching pool found.");
   return null;
 }
