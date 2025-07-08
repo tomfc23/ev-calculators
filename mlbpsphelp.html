@@ -1,47 +1,268 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Mlb PSP Help</title>
-   <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <style>
-    body {
-      font-family: sans-serif;
-      margin: 20px;
-      background-color: black;
-      color: lightgray;
-      
-    }
-      h1 {
+  <head>
+    <title>MLB PSP Calc</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: black;
+        color: lightgray;
         text-align: center;
       }
-      button {
-      cursor: pointer;
-      background-color: #6f42c1;
-      color: white;
-      border: none;
+      a {
+        color: #858bf0;
+      }
+      input,
+      button,
+      select,
+      textarea {
         margin: 5px;
-      padding: 15px;
-      font-size: 16px;
-      border-radius: 25px;
-      border: 2px solid #ccc;
-      transition: border-color 0.3s;
-    }
-
-    button:hover {
-      background-color: #5a32a3;
-    }
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 25px;
+        border: 2px solid #ccc;
+        transition: border-color 0.3s;
+      }
+      input,
+      select,
+      textarea {
+        background-color: #333;
+        color: lightgray;
+        border: 2px solid #555;
+      }
+      input:focus,
+      button:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #007bff;
+        outline: none;
+      }
+      button {
+        cursor: pointer;
+        background-color: #6f42c1;
+        color: white;
+        border: none;
+      }
+      button:hover {
+        background-color: #5a32a3;
+      }
+      #clearButton {
+        background-color: red;
+        margin-left: 10px;
+      }
+      #playersInput {
+        width: 400px;
+        height: 200px;
+        resize: vertical;
+      }
+      .results-table {
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #222;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .results-table th,
+      .results-table td {
+        padding: 10px 15px;
+        text-align: left;
+        border-bottom: 1px solid #444;
+      }
+      .results-table th {
+        background-color: #6f42c1;
+        color: white;
+      }
+      .results-table tr:hover {
+        background-color: #333;
+      }
+      .mode-toggle {
+        margin-bottom: 20px;
+      }
+      .mode-section {
+        display: none;
+      }
+      .mode-section.active {
+        display: block;
+      }
     </style>
-</head>
+  </head>
   <body>
-    <h1>MLB PSP help</h1>
-    <ol>
-      <li>Go to safari then sportsbook.fanduel.com</li>
-      <li>Go to desired game and expand the box for "To record an  RBI"</li>
-      <li>Screenshot then hit the full page button near the top. </li>
-      <li>Safe that to your photos then crop the full page screenshot to just be the rbi odds.</li>
-      <li>Use the built in text-recognition to copy and paste similar to DOTD.</li>
-      <li>If on android, look up how to take a "scrolling screenshot" or "full-page screenshot" then have chatgpt or some other ai convert the rbi odds section to text in the following format: "Enter players and odds (one per line, alternating name and odds)" </li>
-    </ol>
+    <h1>MLB PSP Calc</h1>
+    <p>designed by @tomfc on Real</p>
+    <h4><a href="mlbpsphelp.html">How to use</a></h4>
+
+    <div class="mode-toggle">
+      <button onclick="switchMode('multi')" id="multiModeBtn">Multiple Players</button>
+      <button onclick="switchMode('single')" id="singleModeBtn">Single Player</button>
+    </div>
+
+    <!-- Single Player Mode -->
+    <div id="singleMode" class="mode-section active">
+      <input id="estimatedPlacement" type="number" placeholder="Enter Estimated Placement" /><br />
+      <input id="winningOddsInput" type="number" placeholder="Enter American Player Odds" /><br />
+      <label for="pspType">PSP Type:</label>
+      <select id="pspType">
+        <option value="game">Game PSP</option>
+        <option value="day">Day PSP</option>
+      </select>
+      <br />
+      <button id="calculateButton" type="button" onclick="calculateEV()">Calculate</button>
+      <button id="clearButton" type="button" onclick="clearAll()">Clear</button>
+      <br /><br />
+      <p id="evOutput"></p>
+      <p id="payoutOutput"></p>
+      <p id="probOutput"></p>
+    </div>
+
+    <!-- Multiple Players Mode -->
+    <div id="multiMode" class="mode-section">
+      <p>Enter players and odds (one per line, alternating name and odds):</p>
+      <textarea
+        id="playersInput"
+        placeholder="Austin Riley
++115
+Matt Olson
++125
+Ronald Acuna Jr.
++135
+..."
+      ></textarea
+      ><br />
+      <label for="pspType">PSP Type:</label>
+      <select id="pspType">
+        <option value="game">Game PSP</option>
+        <option value="day">Day PSP</option>
+      </select>
+      <br />
+      <button onclick="calculateMultipleEV()">Calculate All</button>
+      <button onclick="clearMultiple()">Clear</button>
+      <div id="multiResults"></div>
+    </div>
+
+    <br />
+    <button onclick="window.location.href='index.html'">Go Home</button>
+
+    <script>
+      let currentMode = "single";
+
+      function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll(".mode-section").forEach((section) => {
+          section.classList.remove("active");
+        });
+        document.getElementById(mode + "Mode").classList.add("active");
+        document.querySelectorAll(".mode-toggle button").forEach((btn) => {
+          btn.style.backgroundColor = "#6f42c1";
+        });
+        document.getElementById(mode + "ModeBtn").style.backgroundColor = "#5a32a3";
+      }
+
+      function calculateEV() {
+        const estPlacement = Number(document.getElementById("estimatedPlacement").value);
+        const winningOdds = Number(document.getElementById("winningOddsInput").value);
+        const pspType = document.getElementById("pspType").value;
+
+        let impliedProb;
+        if (winningOdds > 0) {
+          impliedProb = 100 / (winningOdds + 100);
+        } else {
+          impliedProb = Math.abs(winningOdds) / (Math.abs(winningOdds) + 100);
+        }
+
+        let payout;
+        if (pspType === "game") {
+          payout = Math.min(estPlacement, 10) * 10;
+        } else {
+          payout = estPlacement <= 20 ? estPlacement * 10 : 200 + (estPlacement - 19);
+        }
+
+        const ev = payout * impliedProb;
+        const percProb = impliedProb * 100;
+
+        document.getElementById("evOutput").innerHTML = "Expected Value: " + ev.toFixed(2);
+        document.getElementById("payoutOutput").innerHTML = "Payout: " + payout.toFixed(2) + " karma";
+        document.getElementById("probOutput").innerHTML = "Probability of hitting: " + percProb.toFixed(2) + "%";
+      }
+
+      function clearAll() {
+        document.getElementById("evOutput").innerHTML = "";
+        document.getElementById("payoutOutput").innerHTML = "";
+        document.getElementById("probOutput").innerHTML = "";
+        document.getElementById("estimatedPlacement").value = "";
+        document.getElementById("winningOddsInput").value = "";
+      }
+
+      function calculateMultipleEV() {
+        const input = document.getElementById("playersInput").value.trim();
+        const pspType = document.getElementById("pspType").value;
+        if (!input) {
+          alert("Please enter player data");
+          return;
+        }
+
+        const lines = input.split("\n").map((line) => line.trim()).filter(Boolean);
+        const players = [];
+
+        for (let i = 0; i < lines.length; i += 2) {
+          if (i + 1 < lines.length && /^[+-]?\d+$/.test(lines[i + 1])) {
+            players.push({ name: lines[i], odds: parseInt(lines[i + 1]) });
+          }
+        }
+
+        if (players.length === 0) {
+          alert("No valid player/odds pairs found.");
+          return;
+        }
+
+        players.sort((a, b) => a.odds - b.odds);
+
+        const results = players.map((player, index) => {
+          const placement = index + 1;
+          let impliedProb =
+            player.odds > 0
+              ? 100 / (player.odds + 100)
+              : Math.abs(player.odds) / (Math.abs(player.odds) + 100);
+
+          let payout;
+          if (pspType === "game") {
+            payout = Math.min(placement, 10) * 10;
+          } else {
+            payout = placement <= 20 ? placement * 10 : 200 + (placement - 19);
+          }
+
+          return {
+            name: player.name,
+            placement: placement,
+            odds: player.odds,
+            payout: payout,
+            probability: impliedProb * 100,
+            ev: payout * impliedProb,
+          };
+        });
+
+        results.sort((a, b) => b.ev - a.ev);
+        displayMultipleResults(results);
+      }
+
+      function displayMultipleResults(results) {
+        let html = '<table class="results-table">';
+        html += "<thead><tr><th>Player</th><th>Placement</th><th>Odds</th><th>Payout</th><th>Probability</th><th>Expected Value</th></tr></thead><tbody>";
+        results.forEach((r) => {
+          html += `<tr><td>${r.name}</td><td>${r.placement}</td><td>${r.odds > 0 ? "+" : ""}${r.odds}</td><td>${r.payout.toFixed(2)} karma</td><td>${r.probability.toFixed(2)}%</td><td>${r.ev.toFixed(2)}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        document.getElementById("multiResults").innerHTML = html;
+      }
+
+      function clearMultiple() {
+        document.getElementById("playersInput").value = "";
+        document.getElementById("multiResults").innerHTML = "";
+      }
+
+      switchMode("multi");
+    </script>
   </body>
 </html>
