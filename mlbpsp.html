@@ -103,10 +103,10 @@
     <div id="singleMode" class="mode-section active">
       <input id="estimatedPlacement" type="number" placeholder="Enter Estimated Placement" /><br />
       <input id="winningOddsInput" type="number" placeholder="Enter American Player Odds" /><br />
-      <label for="pspType">PSP Type:</label>
-      <select id="pspType">
-        <option value="day">Day PSP</option>
+      <label for="pspTypeSingle">PSP Type:</label>
+      <select id="pspTypeSingle">
         <option value="game">Game PSP</option>
+        <option value="day">Day PSP</option>
       </select>
       <br />
       <button id="calculateButton" type="button" onclick="calculateEV()">Calculate</button>
@@ -131,10 +131,10 @@ Ronald Acuna Jr.
 ..."
       ></textarea
       ><br />
-      <label for="pspType">PSP Type:</label>
-      <select id="pspType">
-        <option value="day">Day PSP</option>
+      <label for="pspTypeMulti">PSP Type:</label>
+      <select id="pspTypeMulti">
         <option value="game">Game PSP</option>
+        <option value="day">Day PSP</option>
       </select>
       <br />
       <button onclick="calculateMultipleEV()">Calculate All</button>
@@ -163,7 +163,16 @@ Ronald Acuna Jr.
       function calculateEV() {
         const estPlacement = Number(document.getElementById("estimatedPlacement").value);
         const winningOdds = Number(document.getElementById("winningOddsInput").value);
-        const pspType = document.getElementById("pspType").value;
+        const pspType = document.getElementById("pspTypeSingle").value;
+
+        if (estPlacement <= 0 || isNaN(estPlacement)) {
+          alert("Please enter a valid placement (greater than 0).");
+          return;
+        }
+        if (isNaN(winningOdds)) {
+          alert("Please enter valid American odds.");
+          return;
+        }
 
         let impliedProb;
         if (winningOdds > 0) {
@@ -173,7 +182,7 @@ Ronald Acuna Jr.
         }
 
         let payout;
-        if (pspType === "day") {
+        if (pspType === "game") {
           payout = Math.min(estPlacement, 10) * 10;
         } else {
           payout = estPlacement <= 20 ? estPlacement * 10 : 200 + (estPlacement - 20);
@@ -197,9 +206,10 @@ Ronald Acuna Jr.
 
       function calculateMultipleEV() {
         const input = document.getElementById("playersInput").value.trim();
-        const pspType = document.getElementById("pspType").value;
+        const pspType = document.getElementById("pspTypeMulti").value;
+
         if (!input) {
-          alert("Please enter player data");
+          alert("Please enter player data.");
           return;
         }
 
@@ -227,10 +237,10 @@ Ronald Acuna Jr.
               : Math.abs(player.odds) / (Math.abs(player.odds) + 100);
 
           let payout;
-          if (pspType === "day") {
+          if (pspType === "game") {
             payout = Math.min(placement, 10) * 10;
           } else {
-            payout = placement <= 20 ? placement * 10 : 200 + (placement - 19);
+            payout = placement <= 20 ? placement * 10 : 200 + (placement - 20);
           }
 
           return {
@@ -249,9 +259,12 @@ Ronald Acuna Jr.
 
       function displayMultipleResults(results) {
         let html = '<table class="results-table">';
-        html += "<thead><tr><th>Player</th><th>Placement</th><th>Odds</th><th>Payout</th><th>Probability</th><th>Expected Value</th></tr></thead><tbody>";
+        html +=
+          "<thead><tr><th>Player</th><th>Placement</th><th>Odds</th><th>Payout</th><th>Probability</th><th>Expected Value</th></tr></thead><tbody>";
         results.forEach((r) => {
-          html += `<tr><td>${r.name}</td><td>${r.placement}</td><td>${r.odds > 0 ? "+" : ""}${r.odds}</td><td>${r.payout.toFixed(2)} karma</td><td>${r.probability.toFixed(2)}%</td><td>${r.ev.toFixed(2)}</td></tr>`;
+          html += `<tr><td>${r.name}</td><td>${r.placement}</td><td>${r.odds > 0 ? "+" : ""}${r.odds}</td><td>${r.payout.toFixed(
+            2
+          )} karma</td><td>${r.probability.toFixed(2)}%</td><td>${r.ev.toFixed(2)}</td></tr>`;
         });
         html += "</tbody></table>";
         document.getElementById("multiResults").innerHTML = html;
