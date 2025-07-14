@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pool EV Calculator - 2 Matchups</title>
   <style>
-     * {
+  * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -296,26 +296,20 @@ a {
         <label class="form-label">Select Sport</label>
       </div>
 
-      <div class="games-grid" id="games-container">
-        <!-- Games will be dynamically added here -->
-      </div>
+      <div class="games-grid" id="games-container"></div>
 
       <button type="button" class="btn calculate-btn" id="calculate-btn">Calculate Results</button>
     </form>
 
-    <div id="results-container" style="display: none;">
-      <!-- Results will be dynamically added here -->
-    </div>
+    <div id="results-container" style="display: none;"></div>
   </div>
 
   <script>
     function autofillRightPercents(gameId, changedSide) {
       const leftInput = document.getElementById(`game-${gameId}-team1-selection`);
       const rightInput = document.getElementById(`game-${gameId}-team2-selection`);
-
       let val = parseFloat(changedSide === 'left' ? leftInput.value : rightInput.value) || 0;
       val = Math.min(100, Math.max(0, val));
-
       if (changedSide === 'left') {
         rightInput.value = (100 - val).toFixed(0);
       } else {
@@ -431,7 +425,6 @@ a {
 
         calculateSelections(combos) {
           const totals = this.state.games.map(g => g.team1.selectionPercentage + g.team2.selectionPercentage);
-
           return combos.map(combo => {
             let pct = 1;
             combo.teams.forEach((team, i) => {
@@ -477,6 +470,53 @@ a {
           this.renderResults();
         }
 
+        renderResults() {
+          const container = document.getElementById('results-container');
+          const { combinations } = this.state.results;
+
+          if (!combinations || combinations.length === 0) {
+            container.style.display = 'none';
+            return;
+          }
+
+          const sorted = [...combinations].sort((a, b) => {
+            const aVal = this.getSortValue(a);
+            const bVal = this.getSortValue(b);
+            return (this.state.sortDirection === 'asc' ? aVal - bVal : bVal - aVal);
+          });
+
+          const tableHTML = `
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th onclick="sortTable('picks')">Picks ${this.getSortArrow('picks')}</th>
+                    <th onclick="sortTable('winProbability')">Win % ${this.getSortArrow('winProbability')}</th>
+                    <th onclick="sortTable('selections')"># Selections ${this.getSortArrow('selections')}</th>
+                    <th onclick="sortTable('payout')">Payout ${this.getSortArrow('payout')}</th>
+                    <th onclick="sortTable('expectedValue')">EV ${this.getSortArrow('expectedValue')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sorted.map(combo => `
+                    <tr>
+                      <td>${this.formatCombination(combo)}</td>
+                      <td>${combo.winProbability.toFixed(2)}%</td>
+                      <td>${combo.numberOfSelections}</td>
+                      <td>${combo.payout.toFixed(2)}</td>
+                      <td>${combo.expectedValue.toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            <button class="btn btn-default" id="copy-results-btn">Copy Top Results</button>
+          `;
+
+          container.innerHTML = tableHTML;
+          container.style.display = 'block';
+        }
+
         formatCombination(combo) {
           return combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
         }
@@ -487,18 +527,32 @@ a {
           this.renderResults();
         }
 
+        getSortValue(combo) {
+          switch (this.state.sortBy) {
+            case 'picks': return this.formatCombination(combo);
+            case 'winProbability': return combo.winProbability;
+            case 'selections': return combo.numberOfSelections;
+            case 'payout': return combo.payout;
+            default: return combo.expectedValue;
+          }
+        }
+
+        getSortArrow(col) {
+          return this.state.sortBy === col ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '';
+        }
+
         copyTopResults() {
           const { combinations } = this.state.results;
           if (!combinations.length) return alert("No results to copy.");
-
           const text = combinations.map(combo => {
             const letters = combo.teams.map(t => t.name[0]).join('');
             const pct = combo.winProbability.toFixed(2);
             const ev = combo.expectedValue.toFixed(2);
             return `${letters} - ${pct}% - (${ev})`;
           }).join('\n');
-
-          navigator.clipboard.writeText(text).then(() => alert("Results copied to clipboard!")).catch(err => alert("Copy failed."));
+          navigator.clipboard.writeText(text)
+            .then(() => alert("Results copied to clipboard!"))
+            .catch(err => alert("Copy failed."));
         }
 
         renderGames() {
@@ -533,24 +587,6 @@ a {
               </div>`;
             container.appendChild(el);
           });
-        }
-
-        renderResults() {
-          // [Unchanged: render result table]
-        }
-
-        getSortValue(combo) {
-          switch (this.state.sortBy) {
-            case 'picks': return this.formatCombination(combo);
-            case 'winProbability': return combo.winProbability;
-            case 'selections': return combo.numberOfSelections;
-            case 'payout': return combo.payout;
-            default: return combo.expectedValue;
-          }
-        }
-
-        getSortArrow(col) {
-          return this.state.sortBy === col ? (this.state.sortDirection === 'asc' ? '↑' : '↓') : '';
         }
       }
 
