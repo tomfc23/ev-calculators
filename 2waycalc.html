@@ -65,6 +65,62 @@
       color: #4CAF50;
       font-weight: bold;
     }
+
+    .history-section {
+      margin-top: 30px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .history-item {
+      background-color: #222;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      position: relative;
+    }
+
+    .history-timestamp {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background-color: #28a745;
+      border-radius: 15px;
+    }
+
+    .copy-button:hover {
+      background-color: #218838;
+    }
+
+    .history-content {
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .clear-history-btn {
+      background-color: #dc3545;
+      margin-top: 10px;
+    }
+
+    .clear-history-btn:hover {
+      background-color: #c82333;
+    }
+
+    #historySection {
+      display: none;
+    }
   </style>
 </head>
 <body class="light-mode">
@@ -81,6 +137,13 @@
   <label>
     <input type="checkbox" id="toggleOutput">
     Show All Outputs
+  </label>
+  <br>
+
+  <!-- Show History -->
+  <label>
+    <input type="checkbox" id="toggleHistory" onchange="toggleHistorySection()">
+    Show History
   </label>
   <br>
 
@@ -114,12 +177,164 @@
   <!-- Result -->
   <p id="result"></p>
 
+  <!-- History Section -->
+  <div id="historySection" class="history-section">
+    <h2>Calculation History</h2>
+    <button class="clear-history-btn" onclick="clearHistory()">Clear History</button>
+    <div id="historyContainer"></div>
+  </div>
+
   <!-- Home -->
   <button onclick="window.location.href='index.html'">Go Home</button>
   <br><br>
   <p>designed by @tomfc on Real</p>
 
   <script>
+    // History management
+    function saveToHistory(calculation) {
+      let history = getHistory();
+      history.unshift({
+        ...calculation,
+        timestamp: new Date().toLocaleString()
+      });
+      
+      // Keep only last 50 calculations
+      if (history.length > 50) {
+        history = history.slice(0, 50);
+      }
+      
+      // Store in localStorage for persistence across page reloads
+      localStorage.setItem('evCalcHistory', JSON.stringify(history));
+      updateHistoryDisplay();
+    }
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('evCalcHistory') || '[]');
+      } catch (e) {
+        // If localStorage is corrupted, return empty array
+        return [];
+      }
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('evCalcHistory');
+      updateHistoryDisplay();
+    }
+
+    function toggleHistorySection() {
+      const historySection = document.getElementById('historySection');
+      const toggleHistory = document.getElementById('toggleHistory');
+      
+      if (toggleHistory.checked) {
+        historySection.style.display = 'block';
+        updateHistoryDisplay();
+      } else {
+        historySection.style.display = 'none';
+      }
+    }
+
+    function updateHistoryDisplay() {
+      const container = document.getElementById('historyContainer');
+      const history = getHistory();
+      
+      if (history.length === 0) {
+        container.innerHTML = '<p>No calculations yet.</p>';
+        return;
+      }
+      
+      container.innerHTML = history.map((calc, index) => `
+        <div class="history-item">
+          <button class="copy-button" onclick="copyToClipboard(${index})">Copy</button>
+          <div class="history-timestamp">${calc.timestamp}</div>
+          <div class="history-content">${formatCalculationForDisplay(calc)}</div>
+        </div>
+      `).join('');
+    }
+
+    function formatCalculationForHistory(calc) {
+      const lines = [
+        `Sportsbook Odds: ${calc.sportsbookOdds1} vs ${calc.sportsbookOdds2}`,
+        `Real Odds: ${calc.realOdds1} vs ${calc.realOdds2}`,
+        `Max Bet: ${calc.maxBet}`,
+        ``,
+        `No-Vig Probabilities:`,
+        `  Side 1: ${calc.noVigProb1} (${calc.fractionalProb1})`,
+        `  Side 2: ${calc.noVigProb2} (${calc.fractionalProb2})`,
+        ``,
+        `Payouts:`,
+        `  Side 1 (Wager 0): ${calc.winnings1Wager0}`,
+        `  Side 1 (Max Bet): ${calc.winnings1WagerMax}`,
+        `  Side 2 (Wager 0): ${calc.winnings2Wager0}`,
+        `  Side 2 (Max Bet): ${calc.winnings2WagerMax}`,
+        ``,
+        `Expected Values:`,
+        `  Side 1 (Wager 0): ${calc.ev1Wager0}${calc.ev1Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `  Side 1 (Max Bet): ${calc.ev1WagerMax}${calc.ev1WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `  Side 2 (Wager 0): ${calc.ev2Wager0}${calc.ev2Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `  Side 2 (Max Bet): ${calc.ev2WagerMax}${calc.ev2WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`
+      ];
+      return lines.join('\n');
+    }
+
+    function formatCalculationForDisplay(calc) {
+      const lines = [
+        `Sportsbook Odds: ${calc.sportsbookOdds1} vs ${calc.sportsbookOdds2}`,
+        `Real Odds: ${calc.realOdds1} vs ${calc.realOdds2}`,
+        `Max Bet: ${calc.maxBet}`,
+        ``,
+        `No-Vig Probabilities:`,
+        `&nbsp;&nbsp;Side 1: ${calc.noVigProb1} (${calc.fractionalProb1})`,
+        `&nbsp;&nbsp;Side 2: ${calc.noVigProb2} (${calc.fractionalProb2})`,
+        ``,
+        `Payouts:`,
+        `&nbsp;&nbsp;Side 1 (Wager 0): ${calc.winnings1Wager0}`,
+        `&nbsp;&nbsp;Side 1 (Max Bet): ${calc.winnings1WagerMax}`,
+        `&nbsp;&nbsp;Side 2 (Wager 0): ${calc.winnings2Wager0}`,
+        `&nbsp;&nbsp;Side 2 (Max Bet): ${calc.winnings2WagerMax}`,
+        ``,
+        `Expected Values:`,
+        `&nbsp;&nbsp;Side 1 (Wager 0): ${calc.ev1Wager0}${calc.ev1Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `&nbsp;&nbsp;Side 1 (Max Bet): ${calc.ev1WagerMax}${calc.ev1WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `&nbsp;&nbsp;Side 2 (Wager 0): ${calc.ev2Wager0}${calc.ev2Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
+        `&nbsp;&nbsp;Side 2 (Max Bet): ${calc.ev2WagerMax}${calc.ev2WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`
+      ];
+      return lines.join('<br>');
+    }
+
+    function copyToClipboard(index) {
+      const history = getHistory();
+      const calc = history[index];
+      const text = formatCalculationForHistory(calc);
+      
+      navigator.clipboard.writeText(text).then(() => {
+        // Visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.style.backgroundColor = '#28a745';
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.backgroundColor = '';
+        }, 1000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 1000);
+      });
+    }
+
     function toggleRealOddsInputs() {
       const toggleRealOddsCheckbox = document.getElementById('toggleRealOddsCheckbox');
       const realOddsInput1 = document.getElementById('realOddsInput1');
@@ -246,6 +461,30 @@
       const evValues = [ev1Wager0, ev1WagerMax, ev2Wager0, ev2WagerMax];
       const maxEV = Math.max(...evValues);
       
+      // Save to history
+      const calculation = {
+        sportsbookOdds1,
+        sportsbookOdds2,
+        realOdds1,
+        realOdds2,
+        maxBet,
+        noVigProb1: noVigDecimalProb1.toFixed(4),
+        noVigProb2: noVigDecimalProb2.toFixed(4),
+        fractionalProb1,
+        fractionalProb2,
+        winnings1Wager0,
+        winnings1WagerMax,
+        winnings2Wager0,
+        winnings2WagerMax,
+        ev1Wager0,
+        ev1WagerMax,
+        ev2Wager0,
+        ev2WagerMax,
+        maxEV
+      };
+      
+      saveToHistory(calculation);
+      
       const showAllOutputs = document.getElementById('toggleOutput').checked;
 
       let resultHTML = '';
@@ -291,6 +530,8 @@
     // Initialize state on load
     document.addEventListener('DOMContentLoaded', () => {
       toggleRealOddsInputs();
+      // Load existing history if available
+      updateHistoryDisplay();
     });
   </script>
 </body>
