@@ -2,162 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>2-way Ev Calc</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 20px;
-      background-color: black;
-      color: lightgray;
-      text-align: center;
-    }
-
-    input, button, select {
-      margin: 5px;
-      padding: 15px;
-      font-size: 16px;
-      border-radius: 25px;
-      border: 2px solid #ccc;
-      transition: border-color 0.3s;
-    }
-
-    input, select {
-      background-color: #333;
-      color: lightgray;
-      border: 2px solid #555;
-    }
-
-    input:focus, button:focus, select:focus {
-      border-color: #007BFF;
-      outline: none;
-    }
-
-    button {
-      cursor: pointer;
-      background-color: #6f42c1;
-      color: white;
-      border: none;
-    }
-
-    button:hover {
-      background-color: #5a32a3;
-    }
-
-    #clearButton {
-      background-color: red;
-      margin-left: 10px;
-    }
-
-    #modeToggle {
-      margin-top: 20px;
-    }
-
-    .real-odds {
-      display: none;
-    }
-
-    a {
-      color: #858bf0;
-    }
-    
-    .highest-ev {
-      color: #4CAF50;
-      font-weight: bold;
-    }
-
-    .history-section {
-      margin-top: 30px;
-      text-align: left;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .history-item {
-      background-color: #222;
-      border: 1px solid #444;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 10px 0;
-      position: relative;
-    }
-
-    .history-timestamp {
-      color: #888;
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-
-    .copy-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 5px 10px;
-      font-size: 12px;
-      background-color: #28a745;
-      border-radius: 15px;
-    }
-
-    .copy-button:hover {
-      background-color: #218838;
-    }
-
-    .history-content {
-      font-family: monospace;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    .clear-history-btn {
-      background-color: #dc3545;
-      margin-top: 10px;
-    }
-
-    .clear-history-btn:hover {
-      background-color: #c82333;
-    }
-
-    #historySection {
-      display: none;
-    }
+    body{font-family:sans-serif;margin:20px;background:#000;color:#ccc;text-align:center}
+    input,button,select{margin:5px;padding:15px;font-size:16px;border-radius:25px;border:2px solid #ccc;transition:.3s}
+    input,select{background:#333;color:#ccc;border:2px solid #555}
+    input:focus,button:focus,select:focus{border-color:#07f;outline:0}
+    button{cursor:pointer;background:#6f42c1;color:#fff;border:0}
+    button:hover{background:#5a32a3}
+    #clearButton{background:red;margin-left:10px}
+    .real-odds{display:none}
+    a{color:#858bf0}
+    .highest-ev{color:#4CAF50;font-weight:bold}
+    .history-section{margin:30px auto 0;max-width:800px;text-align:left}
+    .history-item{background:#222;border:1px solid #444;border-radius:10px;padding:15px;margin:10px 0;position:relative}
+    .history-timestamp{color:#888;font-size:12px;margin-bottom:10px}
+    .copy-button{position:absolute;top:10px;right:10px;padding:5px 10px;font-size:12px;background:#28a745;border-radius:15px}
+    .copy-button:hover{background:#218838}
+    .history-content{font-family:monospace;font-size:14px;line-height:1.4}
+    .clear-history-btn{background:#dc3545;margin-top:10px}
+    .clear-history-btn:hover{background:#c82333}
+    #historySection{display:none}
   </style>
 </head>
-<body class="light-mode">
+<body>
   <h1>EV Calc</h1>
-
-  <!-- Real Odds Toggle -->
-  <label>
-    <input type="checkbox" id="toggleRealOddsCheckbox" onchange="toggleRealOddsInputs()">
-    Show Real Odds Inputs
-  </label>
-  <br>
-
-  <!-- Show All Outputs -->
-  <label>
-    <input type="checkbox" id="toggleOutput">
-    Show All Outputs
-  </label>
-  <br>
-
-  <!-- Show History -->
-  <label>
-    <input type="checkbox" id="toggleHistory" onchange="toggleHistorySection()">
-    Show History
-  </label>
-  <br>
-
-  <!-- Odds Inputs -->
+  <label><input type="checkbox" id="toggleRealOddsCheckbox">Show Real Odds Inputs</label><br>
+  <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
+  <label><input type="checkbox" id="toggleHistory">Show History</label><br>
   <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
   <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
-
-  <!-- Real Odds Inputs -->
   <div class="real-odds" id="realOddsInputs">
     <input type="text" id="realOddsInput1" placeholder="Enter Team 1 Real Odds" disabled><br>
     <input type="text" id="realOddsInput2" placeholder="Enter Team 2 Real Odds" disabled><br>
   </div>
-
-  <!-- Bet Select -->
   <select id="maxBetInput">
     <option value="50-5">50 (payout 5)</option>
     <option value="50-10">50 (payout 10)</option>
@@ -166,371 +45,177 @@
     <option value="200">200</option>
     <option value="300">300</option>
   </select>
-  <label for="maxBetInput">Max Bet Amount</label>
-  <br>
-
-  <!-- Buttons -->
+  <label for="maxBetInput">Max Bet Amount</label><br>
   <button onclick="calculateNoVigOdds()">Calculate</button>
-  <button id="clearButton" onclick="clearInputs()">Clear</button>
-  <br><br>
-
-  <!-- Result -->
+  <button id="clearButton" onclick="clearInputs()">Clear</button><br><br>
   <p id="result"></p>
-
-  <!-- History Section -->
   <div id="historySection" class="history-section">
     <h2>Calculation History</h2>
     <button class="clear-history-btn" onclick="clearHistory()">Clear History</button>
     <div id="historyContainer"></div>
   </div>
-
-  <!-- Home -->
-  <button onclick="window.location.href='index.html'">Go Home</button>
-  <br><br>
+  <button onclick="window.location.href='index.html'">Go Home</button><br><br>
   <p>designed by @tomfc on Real</p>
-
   <script>
-    // History management
-    function saveToHistory(calculation) {
-      let history = getHistory();
-      history.unshift({
-        ...calculation,
-        timestamp: new Date().toLocaleString()
-      });
-      
-      // Keep only last 50 calculations
-      if (history.length > 50) {
-        history = history.slice(0, 50);
-      }
-      
-      // Store in localStorage for persistence across page reloads
-      localStorage.setItem('evCalcHistory', JSON.stringify(history));
+    const $ = id => document.getElementById(id),
+      q = s => document.querySelector(s),
+      inputs = ['sportsbookOddsInput1','sportsbookOddsInput2','realOddsInput1','realOddsInput2'],
+      round = Math.round,
+      to2 = v => round(v*100)/100,
+      parseOdds = i => (v=parseInt($(i).value))&&v!==0?v:null,
+      imP = o => o>0?100/(100+o):Math.abs(o)/(Math.abs(o)+100),
+      fracP = o => `${round(o>0?100:Math.abs(o))}/${round(o>0?100+o:100-o)}`,
+      amToDec = a => a>0?a/100+1:100/Math.abs(a)+1,
+      realOdds = (i,d=100)=>$(i).value?parseOdds(i)||d:d,
+      payout = (r,w)=>{
+        let m=$('maxBetInput').value;w=+w;
+        let win=(m=="50-5"||m=="100-5")?5:10;
+        if(!w)win=r>0?round(win/100*r):round(100/Math.abs(r)*win);
+        else win=r>0?w/100*r:100/Math.abs(r)*w;
+        return round(win);
+      },
+      expV = (w,pw,wa,pl)=>to2(w*pw-wa*pl);
+
+    function toggleRealOddsInputs(){
+      let show=$('toggleRealOddsCheckbox').checked;
+      ['realOddsInput1','realOddsInput2'].forEach(i=>{ $(i).disabled=!show; });
+      $('realOddsInputs').style.display=show?'block':'none';
+    }
+    function toggleHistorySection(){
+      let show=$('toggleHistory').checked;
+      $('historySection').style.display=show?'block':'none';
+      if(show) updateHistoryDisplay();
+    }
+    function saveToHistory(calc){
+      let h=getHistory();
+      h.unshift({...calc,timestamp:new Date().toLocaleString()});
+      if(h.length>50) h=h.slice(0,50);
+      localStorage.setItem('evCalcHistory',JSON.stringify(h));
       updateHistoryDisplay();
     }
-
-    function getHistory() {
-      try {
-        return JSON.parse(localStorage.getItem('evCalcHistory') || '[]');
-      } catch (e) {
-        // If localStorage is corrupted, return empty array
-        return [];
-      }
+    function getHistory(){
+      try{return JSON.parse(localStorage.getItem('evCalcHistory')||'[]');}catch(e){return [];}
     }
-
-    function clearHistory() {
-      localStorage.removeItem('evCalcHistory');
-      updateHistoryDisplay();
-    }
-
-    function toggleHistorySection() {
-      const historySection = document.getElementById('historySection');
-      const toggleHistory = document.getElementById('toggleHistory');
-      
-      if (toggleHistory.checked) {
-        historySection.style.display = 'block';
-        updateHistoryDisplay();
-      } else {
-        historySection.style.display = 'none';
-      }
-    }
-
-    function updateHistoryDisplay() {
-      const container = document.getElementById('historyContainer');
-      const history = getHistory();
-      
-      if (history.length === 0) {
-        container.innerHTML = '<p>No calculations yet.</p>';
-        return;
-      }
-      
-      container.innerHTML = history.map((calc, index) => `
+    function clearHistory(){localStorage.removeItem('evCalcHistory');updateHistoryDisplay();}
+    function updateHistoryDisplay(){
+      let h=getHistory(),c=$('historyContainer');
+      if(!h.length){ c.innerHTML='<p>No calculations yet.</p>'; return;}
+      c.innerHTML=h.map((calc,i)=>`
         <div class="history-item">
-          <button class="copy-button" onclick="copyToClipboard(${index})">Copy</button>
+          <button class="copy-button" onclick="copyToClipboard(${i})">Copy</button>
           <div class="history-timestamp">${calc.timestamp}</div>
           <div class="history-content">${formatCalculationForDisplay(calc)}</div>
         </div>
       `).join('');
     }
-
-    function formatCalculationForHistory(calc) {
-      const lines = [
-        `Sportsbook Odds: ${calc.sportsbookOdds1} vs ${calc.sportsbookOdds2}`,
-        `Real Odds: ${calc.realOdds1} vs ${calc.realOdds2}`,
-        `Max Bet: ${calc.maxBet}`,
+    function formatCalculationForDisplay(c){
+      return [
+        `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
+        `Real Odds: ${c.realOdds1} vs ${c.realOdds2}`,
+        `Max Bet: ${c.maxBet}`,
         ``,
         `No-Vig Probabilities:`,
-        `  Side 1: ${calc.noVigProb1} (${calc.fractionalProb1})`,
-        `  Side 2: ${calc.noVigProb2} (${calc.fractionalProb2})`,
+        `&nbsp;&nbsp;Side 1: ${c.noVigProb1} (${c.fractionalProb1})`,
+        `&nbsp;&nbsp;Side 2: ${c.noVigProb2} (${c.fractionalProb2})`,
         ``,
         `Payouts:`,
-        `  Side 1 (Wager 0): ${calc.winnings1Wager0}`,
-        `  Side 1 (Max Bet): ${calc.winnings1WagerMax}`,
-        `  Side 2 (Wager 0): ${calc.winnings2Wager0}`,
-        `  Side 2 (Max Bet): ${calc.winnings2WagerMax}`,
+        `&nbsp;&nbsp;Side 1 (Wager 0): ${c.winnings1Wager0}`,
+        `&nbsp;&nbsp;Side 1 (Max Bet): ${c.winnings1WagerMax}`,
+        `&nbsp;&nbsp;Side 2 (Wager 0): ${c.winnings2Wager0}`,
+        `&nbsp;&nbsp;Side 2 (Max Bet): ${c.winnings2WagerMax}`,
         ``,
         `Expected Values:`,
-        `  Side 1 (Wager 0): ${calc.ev1Wager0}${calc.ev1Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `  Side 1 (Max Bet): ${calc.ev1WagerMax}${calc.ev1WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `  Side 2 (Wager 0): ${calc.ev2Wager0}${calc.ev2Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `  Side 2 (Max Bet): ${calc.ev2WagerMax}${calc.ev2WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`
-      ];
-      return lines.join('\n');
+        `&nbsp;&nbsp;Side 1 (Wager 0): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;Side 1 (Max Bet): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;Side 2 (Wager 0): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;Side 2 (Max Bet): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
+      ].join('<br>');
     }
-
-    function formatCalculationForDisplay(calc) {
-      const lines = [
-        `Sportsbook Odds: ${calc.sportsbookOdds1} vs ${calc.sportsbookOdds2}`,
-        `Real Odds: ${calc.realOdds1} vs ${calc.realOdds2}`,
-        `Max Bet: ${calc.maxBet}`,
+    function formatCalculationForHistory(c){
+      return [
+        `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
+        `Real Odds: ${c.realOdds1} vs ${c.realOdds2}`,
+        `Max Bet: ${c.maxBet}`,
         ``,
         `No-Vig Probabilities:`,
-        `&nbsp;&nbsp;Side 1: ${calc.noVigProb1} (${calc.fractionalProb1})`,
-        `&nbsp;&nbsp;Side 2: ${calc.noVigProb2} (${calc.fractionalProb2})`,
+        `  Side 1: ${c.noVigProb1} (${c.fractionalProb1})`,
+        `  Side 2: ${c.noVigProb2} (${c.fractionalProb2})`,
         ``,
         `Payouts:`,
-        `&nbsp;&nbsp;Side 1 (Wager 0): ${calc.winnings1Wager0}`,
-        `&nbsp;&nbsp;Side 1 (Max Bet): ${calc.winnings1WagerMax}`,
-        `&nbsp;&nbsp;Side 2 (Wager 0): ${calc.winnings2Wager0}`,
-        `&nbsp;&nbsp;Side 2 (Max Bet): ${calc.winnings2WagerMax}`,
+        `  Side 1 (Wager 0): ${c.winnings1Wager0}`,
+        `  Side 1 (Max Bet): ${c.winnings1WagerMax}`,
+        `  Side 2 (Wager 0): ${c.winnings2Wager0}`,
+        `  Side 2 (Max Bet): ${c.winnings2WagerMax}`,
         ``,
         `Expected Values:`,
-        `&nbsp;&nbsp;Side 1 (Wager 0): ${calc.ev1Wager0}${calc.ev1Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `&nbsp;&nbsp;Side 1 (Max Bet): ${calc.ev1WagerMax}${calc.ev1WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `&nbsp;&nbsp;Side 2 (Wager 0): ${calc.ev2Wager0}${calc.ev2Wager0 === calc.maxEV ? ' ✅ BEST' : ''}`,
-        `&nbsp;&nbsp;Side 2 (Max Bet): ${calc.ev2WagerMax}${calc.ev2WagerMax === calc.maxEV ? ' ✅ BEST' : ''}`
-      ];
-      return lines.join('<br>');
+        `  Side 1 (Wager 0): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
+        `  Side 1 (Max Bet): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
+        `  Side 2 (Wager 0): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
+        `  Side 2 (Max Bet): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
+      ].join('\n');
     }
-
-    function copyToClipboard(index) {
-      const history = getHistory();
-      const calc = history[index];
-      const text = formatCalculationForHistory(calc);
-      
-      navigator.clipboard.writeText(text).then(() => {
-        // Visual feedback
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        button.style.backgroundColor = '#28a745';
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.style.backgroundColor = '';
-        }, 1000);
-      }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        setTimeout(() => {
-          button.textContent = originalText;
-        }, 1000);
+    function copyToClipboard(i){
+      let h=getHistory(),c=h[i],txt=formatCalculationForHistory(c),btn=event.target,old=btn.textContent;
+      navigator.clipboard.writeText(txt).then(()=>{
+        btn.textContent='Copied!';btn.style.background='#28a745';
+        setTimeout(()=>{btn.textContent=old;btn.style.background='';},1e3);
+      }).catch(()=>{
+        let t=document.createElement('textarea');
+        t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+        btn.textContent='Copied!';setTimeout(()=>{btn.textContent=old;},1e3);
       });
     }
-
-    function toggleRealOddsInputs() {
-      const toggleRealOddsCheckbox = document.getElementById('toggleRealOddsCheckbox');
-      const realOddsInput1 = document.getElementById('realOddsInput1');
-      const realOddsInput2 = document.getElementById('realOddsInput2');
-      const realOddsDiv = document.getElementById('realOddsInputs');
-
-      const isChecked = toggleRealOddsCheckbox.checked;
-      realOddsDiv.style.display = isChecked ? 'block' : 'none';
-      realOddsInput1.disabled = !isChecked;
-      realOddsInput2.disabled = !isChecked;
-    }
-
-    function americanToDecimal(american) {
-      if (american > 0) {
-        return (american / 100) + 1;
-      } else {
-        return (100 / Math.abs(american)) + 1;
+    function calculateNoVigOdds(){
+      let sbo1=parseOdds('sportsbookOddsInput1'),sbo2=parseOdds('sportsbookOddsInput2');
+      if(sbo1===null||sbo2===null){alert('Please enter valid American odds for both sides.');return;}
+      let ro1=realOdds('realOddsInput1'),ro2=realOdds('realOddsInput2'),
+        maxBet=+$('maxBetInput').value.split('-')[0],
+        prob1=imP(sbo1),prob2=imP(sbo2),tot=prob1+prob2,
+        nvP1=prob1/tot,nvP2=prob2/tot,
+        nvO1=nvP1<.5?round(100*(1-nvP1)/nvP1):-round(100*nvP1/(1-nvP1)),
+        nvO2=nvP2<.5?round(100*(1-nvP2)/nvP2):-round(100*nvP2/(1-nvP2)),
+        nvDP1=nvO1>0?100/(100+nvO1):Math.abs(nvO1)/(Math.abs(nvO1)+100),
+        nvDP2=nvO2>0?100/(100+nvO2):Math.abs(nvO2)/(Math.abs(nvO2)+100),
+        w1w0=payout(ro1,0),w1wm=payout(ro1,maxBet),
+        w2w0=payout(ro2,0),w2wm=payout(ro2,maxBet),
+        fp1=fracP(nvO1),fp2=fracP(nvO2),
+        ev1w0=expV(w1w0,nvDP1,0,nvDP2),ev1wm=expV(w1wm,nvDP1,maxBet,nvDP2),
+        ev2w0=expV(w2w0,nvDP2,0,nvDP1),ev2wm=expV(w2wm,nvDP2,maxBet,nvDP1),
+        evs=[ev1w0,ev1wm,ev2w0,ev2wm],maxEV=Math.max(...evs),
+        showAll=$('toggleOutput').checked;
+      let calc={sportsbookOdds1:sbo1,sportsbookOdds2:sbo2,realOdds1:ro1,realOdds2:ro2,maxBet,noVigProb1:nvDP1.toFixed(4),noVigProb2:nvDP2.toFixed(4),fractionalProb1:fp1,fractionalProb2:fp2,winnings1Wager0:w1w0,winnings1WagerMax:w1wm,winnings2Wager0:w2w0,winnings2WagerMax:w2wm,ev1Wager0:ev1w0,ev1WagerMax:ev1wm,ev2Wager0:ev2w0,ev2WagerMax:ev2wm,maxEV};
+      saveToHistory(calc);
+      let r='';
+      if(showAll){
+        r+=`Side 1 No-Vig American Odds: ${nvO1} (Decimal: ${amToDec(nvO1).toFixed(2)})<br>
+        Side 2 No-Vig American Odds: ${nvO2} (Decimal: ${amToDec(nvO2).toFixed(2)})<br>
+        Side 1 Winnings (Wager 0): ${w1w0}<br>
+        Side 1 Winnings (Max Bet): ${w1wm}<br>
+        Side 2 Winnings (Wager 0): ${w2w0}<br>
+        Side 2 Winnings (Max Bet): ${w2wm}<br>
+        Side 1 No-Vig Probability: ${nvP1.toFixed(4)}<br>
+        Side 2 No-Vig Probability: ${nvP2.toFixed(4)}<br>
+        Side 1 Fractional Probability: ${fp1}<br>
+        Side 2 Fractional Probability: ${fp2}<br>`;
       }
+      r+=`<strong>Side 1 Expected Value (Wager 0): ${ev1w0}${ev1w0===maxEV?' ✅':''}</strong><br>
+      <strong>Side 1 Expected Value (Max Bet): ${ev1wm}${ev1wm===maxEV?' ✅':''}</strong><br>
+      <strong>Side 2 Expected Value (Wager 0): ${ev2w0}${ev2w0===maxEV?' ✅':''}</strong><br>
+      <strong>Side 2 Expected Value (Max Bet): ${ev2wm}${ev2wm===maxEV?' ✅':''}</strong><br>`;
+      $('result').innerHTML=r;
     }
-
-    function parseOddsInput(input) {
-      const american = parseInt(input);
-      if (isNaN(american) || american === 0) return null;
-      return american;
-    }
-
-    function calculateImpliedProbability(odds) {
-      if (odds > 0) return 100 / (100 + odds);
-      return Math.abs(odds) / (Math.abs(odds) + 100);
-    }
-
-    function roundToWhole(value) {
-      return Math.round(value);
-    }
-
-    function roundToTwoDecimals(value) {
-      return Math.round(value * 100) / 100;
-    }
-
-    function calculatePayout(realOdds, wager) {
-      let winnings;
-      const maxBetValue = document.getElementById('maxBetInput').value;
-      if (maxBetValue === "50-5" || maxBetValue === "100-5") {
-        winnings = 5;
-      } else {
-        winnings = 10;
-      }
-
-      if (wager === 0) {
-        if (realOdds > 0) {
-          winnings = roundToWhole((winnings / 100) * realOdds);
-        } else {
-          winnings = roundToWhole((100 / Math.abs(realOdds)) * winnings);
-        }
-      } else {
-        if (realOdds > 0) {
-          winnings = (wager / 100) * realOdds;
-        } else {
-          winnings = (100 / Math.abs(realOdds)) * wager;
-        }
-      }
-      return roundToWhole(winnings);
-    }
-
-    function calculateFractionalProbability(odds) {
-      const total = odds > 0 ? (100 + odds) : (100 - odds);
-      const numerator = odds > 0 ? 100 : Math.abs(odds);
-      return `${roundToWhole(numerator)}/${roundToWhole(total)}`;
-    }
-
-    function calculateExpectedValue(winnings, noVigProbWin, wager, noVigProbLose) {
-      return roundToTwoDecimals((winnings * noVigProbWin) - (wager * noVigProbLose));
-    }
-
-    function calculateNoVigOdds() {
-      const sportsbookOdds1 = parseOddsInput(document.getElementById('sportsbookOddsInput1').value);
-      const sportsbookOdds2 = parseOddsInput(document.getElementById('sportsbookOddsInput2').value);
-      
-      if (sportsbookOdds1 === null || sportsbookOdds2 === null) {
-        alert('Please enter valid American odds for both sides.');
-        return;
-      }
-
-      const realOdds1Input = document.getElementById('realOddsInput1').value;
-      const realOdds2Input = document.getElementById('realOddsInput2').value;
-      const realOdds1 = realOdds1Input ? parseOddsInput(realOdds1Input) || 100 : 100;
-      const realOdds2 = realOdds2Input ? parseOddsInput(realOdds2Input) || 100 : 100;
-      
-      const maxBet = parseFloat(document.getElementById('maxBetInput').value.split('-')[0]);
-      const prob1 = calculateImpliedProbability(sportsbookOdds1);
-      const prob2 = calculateImpliedProbability(sportsbookOdds2);
-      const totalProb = prob1 + prob2;
-      const noVigProb1 = prob1 / totalProb;
-      const noVigProb2 = prob2 / totalProb;
-
-      const noVigOdds1 = noVigProb1 < 0.5
-        ? roundToWhole(100 * (1 - noVigProb1) / noVigProb1)
-        : roundToWhole(-100 * noVigProb1 / (1 - noVigProb1));
-      const noVigOdds2 = noVigProb2 < 0.5
-        ? roundToWhole(100 * (1 - noVigProb2) / noVigProb2)
-        : roundToWhole(-100 * noVigProb2 / (1 - noVigProb2));
-
-      const noVigDecimalProb1 = noVigOdds1 > 0
-        ? 100 / (100 + noVigOdds1)
-        : Math.abs(noVigOdds1) / (Math.abs(noVigOdds1) + 100);
-      const noVigDecimalProb2 = noVigOdds2 > 0
-        ? 100 / (100 + noVigOdds2)
-        : Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
-
-      const winnings1Wager0 = calculatePayout(realOdds1, 0);
-      const winnings1WagerMax = calculatePayout(realOdds1, maxBet);
-      const winnings2Wager0 = calculatePayout(realOdds2, 0);
-      const winnings2WagerMax = calculatePayout(realOdds2, maxBet);
-
-      const fractionalProb1 = calculateFractionalProbability(noVigOdds1);
-      const fractionalProb2 = calculateFractionalProbability(noVigOdds2);
-
-      const ev1Wager0 = calculateExpectedValue(winnings1Wager0, noVigDecimalProb1, 0, noVigDecimalProb2);
-      const ev1WagerMax = calculateExpectedValue(winnings1WagerMax, noVigDecimalProb1, maxBet, noVigDecimalProb2);
-      const ev2Wager0 = calculateExpectedValue(winnings2Wager0, noVigDecimalProb2, 0, noVigDecimalProb1);
-      const ev2WagerMax = calculateExpectedValue(winnings2WagerMax, noVigDecimalProb2, maxBet, noVigDecimalProb1);
-
-      // Find highest EV
-      const evValues = [ev1Wager0, ev1WagerMax, ev2Wager0, ev2WagerMax];
-      const maxEV = Math.max(...evValues);
-      
-      // Save to history
-      const calculation = {
-        sportsbookOdds1,
-        sportsbookOdds2,
-        realOdds1,
-        realOdds2,
-        maxBet,
-        noVigProb1: noVigDecimalProb1.toFixed(4),
-        noVigProb2: noVigDecimalProb2.toFixed(4),
-        fractionalProb1,
-        fractionalProb2,
-        winnings1Wager0,
-        winnings1WagerMax,
-        winnings2Wager0,
-        winnings2WagerMax,
-        ev1Wager0,
-        ev1WagerMax,
-        ev2Wager0,
-        ev2WagerMax,
-        maxEV
-      };
-      
-      saveToHistory(calculation);
-      
-      const showAllOutputs = document.getElementById('toggleOutput').checked;
-
-      let resultHTML = '';
-      if (showAllOutputs) {
-        // Display odds in both formats for output
-        const noVigDecimal1 = americanToDecimal(noVigOdds1).toFixed(2);
-        const noVigDecimal2 = americanToDecimal(noVigOdds2).toFixed(2);
-        
-        resultHTML += `
-          Side 1 No-Vig American Odds: ${noVigOdds1} (Decimal: ${noVigDecimal1})<br>
-          Side 2 No-Vig American Odds: ${noVigOdds2} (Decimal: ${noVigDecimal2})<br>
-          Side 1 Winnings (Wager 0): ${winnings1Wager0}<br>
-          Side 1 Winnings (Max Bet): ${winnings1WagerMax}<br>
-          Side 2 Winnings (Wager 0): ${winnings2Wager0}<br>
-          Side 2 Winnings (Max Bet): ${winnings2WagerMax}<br>
-          Side 1 No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
-          Side 2 No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
-          Side 1 Fractional Probability: ${fractionalProb1}<br>
-          Side 2 Fractional Probability: ${fractionalProb2}<br>`;
-      }
-
-      resultHTML += `
-        <strong>Side 1 Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>Side 1 Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>Side 2 Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-        <strong>Side 2 Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
-
-      document.getElementById('result').innerHTML = resultHTML;
-    }
-
-    function clearInputs() {
-      document.getElementById('sportsbookOddsInput1').value = '';
-      document.getElementById('sportsbookOddsInput2').value = '';
-      document.getElementById('realOddsInput1').value = '';
-      document.getElementById('realOddsInput2').value = '';
-      document.getElementById('maxBetInput').value = '100-10';
-      document.getElementById('toggleOutput').checked = false;
-      document.getElementById('toggleRealOddsCheckbox').checked = false;
-      document.getElementById('result').innerHTML = '';
+    function clearInputs(){
+      inputs.forEach(i=>$(i).value='');
+      $('maxBetInput').value='100-10';
+      $('toggleOutput').checked=false;
+      $('toggleRealOddsCheckbox').checked=false;
+      $('result').innerHTML='';
       toggleRealOddsInputs();
     }
-
-    // Initialize state on load
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded',()=>{
       toggleRealOddsInputs();
-      // Load existing history if available
+      $('toggleRealOddsCheckbox').onchange=toggleRealOddsInputs;
+      $('toggleHistory').onchange=toggleHistorySection;
       updateHistoryDisplay();
     });
   </script>
