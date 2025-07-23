@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSV User Mapper</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #222;
+    }
+    tr:nth-child(even) {
+      background-color: #1e1e1e;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSV User ID Table</h1>
+  <div id="table-container">Loading...</div>
+
+  <script>
+    const USER_MAP = {
+      "@fourr": 1, "@pcaisthegoat": 2, "@maluach10": 3, "@tralelerotralala": 4,
+      "@alp": 5, "@bucksmuse": 6, "@fabri0897": 7, "@pauly16": 8, "@gmoneytb": 9,
+      "@therealabe": 10, "@stars": 11, "@michael.busch": 12, "@okorolover355": 13,
+      "@holliday": 14, "@seansty": 15, "@spursgooner": 16, "@whereis905": 17,
+      "@balt": 18, "@stars10": 19, "@pit": 20, "@joeyfrenchfry": 21,
+      "@sean_03": 22, "@alessia_russo": 23, "@bixz": 24, "@samuelskol": 25,
+      "@bronnyjamesunc": 26, "@cadeottonlover": 27, "@jackjohnsonmonk": 28,
+      "@r0dmanx": 29, "@jpanger": 30, "@winger": 31, "@boombeast": 32,
+      "@coil16": 33, "@gio": 34, "@jramdingers": 35, "@vortexed": 36
+    };
+
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTGHDjjEj3qAldT9MrGbVnAm-5Hvyx4lYNIGuOugswjy7AL6S4mQk1z8cnYoTEDkSEqsD43fDeVIIfS/pub?output=csv";
+
+    async function loadCSV() {
+      const response = await fetch(CSV_URL);
+      const text = await response.text();
+      return text.split("\n").map(line => line.trim()).filter(Boolean);
+    }
+
+    function parseCSV(data) {
+      const result = [];
+      for (let i = 1; i < data.length; i++) {
+        const [username, score, team, date] = data[i].split(",");
+        result.push({
+          username,
+          userId: USER_MAP[username] ?? "Not Found",
+          score,
+          team,
+          date
+        });
+      }
+      return result;
+    }
+
+    function createTable(data) {
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      thead.innerHTML = `<tr>
+        <th>Username</th>
+        <th>User ID</th>
+        <th>Score</th>
+        <th>Team</th>
+        <th>Date</th>
+      </tr>`;
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.username}</td>
+          <td>${row.userId}</td>
+          <td>${row.score}</td>
+          <td>${row.team}</td>
+          <td>${row.date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      return table;
+    }
+
+    async function init() {
+      try {
+        const rawCSV = await loadCSV();
+        const data = parseCSV(rawCSV);
+        const table = createTable(data);
+        const container = document.getElementById("table-container");
+        container.innerHTML = "";
+        container.appendChild(table);
+      } catch (error) {
+        document.getElementById("table-container").textContent = "Failed to load data.";
+        console.error(error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
