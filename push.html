@@ -437,22 +437,18 @@
       const impL = americanToImplied(oddsL);
       const impR = americanToImplied(oddsR);
       
-      // The key insight: for .0 spreads, these are odds for adjusted lines (e.g., -7.5/+8.5 for -8.0)
-      // The sum of these probabilities after removing vig should be less than 1
-      // The remainder is the push probability
+      // Calculate push probability as the excess probability above 1
+      const totalImplied = impL + impR;
+      const pushProb = Math.max(0, totalImplied - 1);
       
-      // Calculate total implied probability including vig
-      const totalWithVig = impL + impR;
+      // Normalize all probabilities to sum to 1 (same as main calculation)
+      const totalProb = impL + impR + pushProb;
+      const normalizedPushProb = pushProb / totalProb;
       
-      // Simple approach: push probability = the "vig amount" redistributed to push
-      // Typical vig is around 4-5%, so if total implied is ~1.045, then push ≈ 4.5%
-      let pushProb = Math.max(0, totalWithVig - 1);
+      // Cap at reasonable levels after normalization
+      const finalPushProb = Math.min(Math.max(normalizedPushProb, 0.01), 0.15);
       
-      // For very unbalanced lines, cap the push probability at reasonable levels
-      if (pushProb > 0.15) pushProb = 0.15; // Max 15%
-      if (pushProb < 0.01) pushProb = 0.01; // Min 1%
-      
-      document.getElementById(`pushProb${gameIndex}`).textContent = `${(pushProb * 100).toFixed(1)}%`;
+      document.getElementById(`pushProb${gameIndex}`).textContent = `${(finalPushProb * 100).toFixed(1)}%`;
       
       // Also update the odds displays to show the live values
       updateOddsDisplay(gameIndex, 'L');
