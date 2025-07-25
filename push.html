@@ -355,6 +355,7 @@
         <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
         <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
         <li>To use the calculator mid-game, put like -99999 for winners and +99999 for losers, put in the percentages, and see what the new results are</li>
+        <li><strong>Push Logic:</strong> When a push occurs, BOTH sides are awarded a win for that leg (increases winner counts and lowers payouts).</li>
       </ol>
     </div>
 
@@ -373,7 +374,8 @@
     <div class="results-section" id="results-container" style="display: none;">
       <div class="info-note">
         <p><strong>Win Probabilities Based On:</strong><br>
-        No-vig odds are used for calculations to remove bookmakers' edge. Push probabilities are calculated for .0 spreads.</p>
+        No-vig odds are used for calculations to remove bookmakers' edge. Push probabilities are calculated for .0 spreads.<br>
+        <strong>Push Rule:</strong> When a push occurs, both L and R picks are considered correct for that game.</p>
       </div>
       <h3 class="results-title">All Combinations and Payouts</h3>
       <div id="results"></div>
@@ -575,10 +577,10 @@
         const gameOutcome = outcome[i];
         
         if (gameOutcome === 'P') {
-          // Push - both sides count as correct
+          // Push - BOTH sides are considered correct (user gets this pick right regardless of what they picked)
           matches++;
         } else if (userChoice === gameOutcome) {
-          // Exact match
+          // Exact match - user picked the correct side
           matches++;
         }
       }
