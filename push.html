@@ -1,131 +1,784 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Pool EV Calculator (No-Vig + Push)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pool EV Calculator</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      background: #000;
-      color: #0f0;
-      font-family: monospace;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
       padding: 20px;
     }
-    input, select {
-      margin: 2px;
-      width: 60px;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
-    .game {
+
+    h1 {
+      text-align: center;
+      color: #4a5568;
       margin-bottom: 10px;
+      font-size: 2.5em;
+      font-weight: 700;
     }
-    button {
+
+    h4 {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 30px;
+      font-weight: 400;
+    }
+
+    .instructions {
+      background: #f7fafc;
+      border-left: 4px solid #4299e1;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+    }
+
+    .instructions h3 {
+      color: #2d3748;
+      margin-bottom: 15px;
+    }
+
+    .instructions ol {
+      color: #4a5568;
+      line-height: 1.6;
+      padding-left: 20px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .game-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+      border: 1px solid #e2e8f0;
+    }
+
+    .game-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .spread-selector {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .spread-selector select {
+      padding: 8px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+      color: #4a5568;
+    }
+
+    .team-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .team-section {
+      flex: 1;
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .team-name {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.9em;
+      color: #4a5568;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #4299e1;
+    }
+
+    .odds-display {
+      font-size: 0.8em;
+      color: #718096;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    .push-inputs {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 6px;
       margin-top: 10px;
-      background: #0f0;
-      color: #000;
-      font-weight: bold;
-      padding: 5px 10px;
+      border: 1px solid #ffeaa7;
+    }
+
+    .push-inputs .input-label {
+      color: #856404;
+      font-size: 0.85em;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f7fafc;
+      border-radius: 10px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+    }
+
+    .control-group label {
+      color: #4a5568;
+      font-weight: 500;
+    }
+
+    .control-group input[type="number"] {
+      margin-left: 10px;
+      padding: 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      width: 80px;
+    }
+
+    .calculate-btn {
+      background: linear-gradient(45deg, #4299e1, #3182ce);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      font-weight: 600;
       cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .calculate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 15px rgba(66, 153, 225, 0.3);
+    }
+
+    .results-section {
+      margin-top: 30px;
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .results-title {
+      color: #2d3748;
+      margin-bottom: 20px;
+      font-size: 1.4em;
+    }
+
+    .info-note {
+      background: #edf2f7;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #4299e1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.9em;
+    }
+
+    th, td {
+      padding: 12px 8px;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background: #f7fafc;
+      font-weight: 600;
+      color: #2d3748;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover {
+      background: #f8fafc;
+    }
+
+    .ev-positive {
+      color: #38a169;
+      font-weight: 600;
+    }
+
+    .ev-negative {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+
+    .copy-btn {
+      background: linear-gradient(45deg, #10b981, #059669);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .extras-table {
+      background: #f8fafc;
+    }
+
+    .push-annotation {
+      color: #d69e2e;
+      font-weight: 500;
+      font-size: 0.8em;
     }
   </style>
 </head>
 <body>
-  <h2>Pool EV Calculator</h2>
-  <div id="games"></div>
-  <button onclick="calculateEV()">Calculate EV</button>
-  <pre id="output"></pre>
+  <div class="container">
+    <h1>Pool EV Calculator</h1>
+    <h4>Major props to @xpr0gidy, he helped a lot with developement</h4>
+    <div class="instructions">
+      <h3>Instructions</h3>
+      <ol>
+        <li>Enter the details for each of the 4 games including odds (American format), and selection percentages.</li>
+        <li>For each game, select .5 Spread (no push) or .0 Spread (push possible).</li>
+        <li>For .0 spreads, enter the win probabilities for the adjusted lines (e.g., -7.5 and +8.5 for a -8.0 spread).</li>
+        <li>Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</li>
+        <li>Total pool entrants is set to 4600. Payouts are capped at 800 karma for 4/4 and 600 karma for 3/4.</li>
+        <li>To use the calculator mid-game, put like -99999 for winners and +99999 for losers, put in the percentages, and see what the new results are</li>
+      </ol>
+    </div>
+
+    <div class="games-grid" id="inputs"></div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Total Entrants: <input type="number" id="totalEntrants" value="4600" /></label>
+      </div>
+      <div class="control-group">
+        <label><input type="checkbox" id="showExtras"> Show odds, probabilities, payouts</label>
+      </div>
+      <button class="calculate-btn" onclick="calculateEV()">Calculate Results</button>
+    </div>
+
+    <div class="results-section" id="results-container" style="display: none;">
+      <div class="info-note">
+        <p><strong>Win Probabilities Based On:</strong><br>
+        No-vig odds are used for calculations to remove bookmakers' edge. Push probabilities are calculated for .0 spreads.</p>
+      </div>
+      <h3 class="results-title">All Combinations and Payouts</h3>
+      <div id="results"></div>
+    </div>
+
+    <div class="results-section extras-table" id="extras-container" style="display: none;">
+      <div id="extras"></div>
+    </div>
+  </div>
 
   <script>
-    const games = 4;
-    const container = document.getElementById('games');
-
-    for (let i = 0; i < games; i++) {
-      const div = document.createElement('div');
-      div.className = 'game';
-      div.innerHTML = `
-        <b>Game ${i + 1}</b><br>
-        Spread: 
-        <select id="spread${i}">
-          <option value="0.5">.5</option>
-          <option value="0.0">.0</option>
-        </select><br>
-        Left Win %: <input type="number" id="left${i}" value="50">
-        Right Win %: <input type="number" id="right${i}" value="50"><br>
-        % Picking Right Side: <input type="number" id="picked${i}" value="50">
+    const inputContainer = document.getElementById('inputs');
+    for (let i = 0; i < 4; i++) {
+      inputContainer.innerHTML += `
+        <div class="game-card">
+          <div class="game-title">Game ${i + 1}</div>
+          <div class="spread-selector">
+            <label>Spread Type: </label>
+            <select id="spreadType${i}" onchange="togglePushInputs(${i})">
+              <option value="0.5">.5 Spread (No Push)</option>
+              <option value="0.0">.0 Spread (Push Possible)</option>
+            </select>
+          </div>
+          <div class="team-row">
+            <div class="team-section">
+              <div class="team-name">L${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsL${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'L')">
+                <div class="odds-display" id="oddsDisplayL${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickL${i}" type="number" value="50" oninput="autofillRightPercents()">
+              </div>
+              <div class="push-inputs" id="pushInputsL${i}" style="display: none;">
+                <div class="input-group">
+                  <label class="input-label">Win Prob (e.g., -7.5) %</label>
+                  <input class="input-field" id="pushWinL${i}" type="number" value="50" oninput="updatePushDisplay(${i})">
+                </div>
+              </div>
+            </div>
+            <div class="team-section">
+              <div class="team-name">R${i + 1}</div>
+              <div class="input-group">
+                <label class="input-label">American Odds</label>
+                <input class="input-field" id="oddsR${i}" type="number" value="-110" oninput="updateOddsDisplay(${i}, 'R')">
+                <div class="odds-display" id="oddsDisplayR${i}">No-Vig Odds: -110<br>No-Vig Probability: 50.0%</div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Selection %</label>
+                <input class="input-field" id="pickR${i}" type="number" value="50" oninput="autofillRightPercents()">
+              </div>
+              <div class="push-inputs" id="pushInputsR${i}" style="display: none;">
+                <div class="input-group">
+                  <label class="input-label">Win Prob (e.g., +8.5) %</label>
+                  <input class="input-field" id="pushWinR${i}" type="number" value="50" oninput="updatePushDisplay(${i})">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="push-inputs" id="pushDisplay${i}" style="display: none;">
+            <div style="text-align: center; font-weight: 600; color: #856404;">
+              Push Probability: <span id="pushProb${i}">0.0%</span>
+            </div>
+          </div>
+        </div>
       `;
-      container.appendChild(div);
+    }
+
+    function americanToImplied(odds) {
+      return odds < 0 ? (-odds) / (-odds + 100) : 100 / (odds + 100);
+    }
+
+    function calculateNoVigProb(p1, p2) {
+      const total = p1 + p2;
+      return [p1 / total, p2 / total];
+    }
+
+    function togglePushInputs(gameIndex) {
+      const spreadType = document.getElementById(`spreadType${gameIndex}`).value;
+      const pushInputsL = document.getElementById(`pushInputsL${gameIndex}`);
+      const pushInputsR = document.getElementById(`pushInputsR${gameIndex}`);
+      const pushDisplay = document.getElementById(`pushDisplay${gameIndex}`);
+      
+      if (spreadType === '0.0') {
+        pushInputsL.style.display = 'block';
+        pushInputsR.style.display = 'block';
+        pushDisplay.style.display = 'block';
+        updatePushDisplay(gameIndex);
+      } else {
+        pushInputsL.style.display = 'none';
+        pushInputsR.style.display = 'none';
+        pushDisplay.style.display = 'none';
+      }
+      updateOddsDisplay(gameIndex, 'L');
+    }
+
+    function updatePushDisplay(gameIndex) {
+      const winL = parseFloat(document.getElementById(`pushWinL${gameIndex}`).value) || 0;
+      const winR = parseFloat(document.getElementById(`pushWinR${gameIndex}`).value) || 0;
+      const pushProb = Math.max(0, 100 - winL - winR);
+      document.getElementById(`pushProb${gameIndex}`).textContent = `${pushProb.toFixed(1)}%`;
+    }
+
+    function updateOddsDisplay(gameIndex, side) {
+      const spreadType = document.getElementById(`spreadType${gameIndex}`).value;
+      
+      if (spreadType === '0.0') {
+        // For .0 spreads, show the push probabilities
+        const winL = parseFloat(document.getElementById(`pushWinL${gameIndex}`).value) || 0;
+        const winR = parseFloat(document.getElementById(`pushWinR${gameIndex}`).value) || 0;
+        const pushProb = Math.max(0, 100 - winL - winR);
+        
+        document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
+          `Win Probability: ${winL.toFixed(1)}%<br>Push Probability: ${pushProb.toFixed(1)}%`;
+        document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
+          `Win Probability: ${winR.toFixed(1)}%<br>Push Probability: ${pushProb.toFixed(1)}%`;
+      } else {
+        // Regular .5 spread logic
+        const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
+        const rOdds = parseFloat(document.getElementById(`oddsR${gameIndex}`).value) || -110;
+        
+        const impL = americanToImplied(lOdds);
+        const impR = americanToImplied(rOdds);
+        const [probL, probR] = calculateNoVigProb(impL, impR);
+        
+        document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
+          `No-Vig Odds: ${lOdds}<br>No-Vig Probability: ${(probL * 100).toFixed(1)}%`;
+        document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
+          `No-Vig Odds: ${rOdds}<br>No-Vig Probability: ${(probR * 100).toFixed(1)}%`;
+      }
+    }
+
+    // Initialize odds displays
+    for (let i = 0; i < 4; i++) {
+      updateOddsDisplay(i, 'L');
+    }
+
+    function generateAllOutcomes(gameTypes) {
+      // Generate all possible outcomes considering push possibilities
+      let outcomes = [''];
+      
+      for (let i = 0; i < 4; i++) {
+        const newOutcomes = [];
+        if (gameTypes[i] === '0.0') {
+          // .0 spread: L, R, P (push)
+          outcomes.forEach(outcome => {
+            newOutcomes.push(outcome + '0'); // L
+            newOutcomes.push(outcome + '1'); // R  
+            newOutcomes.push(outcome + 'P'); // Push
+          });
+        } else {
+          // .5 spread: L, R only
+          outcomes.forEach(outcome => {
+            newOutcomes.push(outcome + '0'); // L
+            newOutcomes.push(outcome + '1'); // R
+          });
+        }
+        outcomes = newOutcomes;
+      }
+      
+      return outcomes;
+    }
+
+    function calculateMatches(userPick, outcome) {
+      let matches = 0;
+      for (let i = 0; i < 4; i++) {
+        const userChoice = userPick[i];
+        const gameOutcome = outcome[i];
+        
+        if (gameOutcome === 'P') {
+          // Push - both sides count as correct
+          matches++;
+        } else if (userChoice === gameOutcome) {
+          // Exact match
+          matches++;
+        }
+      }
+      return matches;
     }
 
     function calculateEV() {
-      const gameData = [];
+      const totalEntrants = parseInt(document.getElementById('totalEntrants').value);
+      const showExtras = document.getElementById('showExtras').checked;
+      let pickPercents = [], winProbs = [], gameTypes = [], extraData = [];
 
-      for (let i = 0; i < games; i++) {
-        const spreadType = document.getElementById(`spread${i}`).value;
-        const leftRaw = parseFloat(document.getElementById(`left${i}`).value);
-        const rightRaw = parseFloat(document.getElementById(`right${i}`).value);
-        const pickedRight = parseFloat(document.getElementById(`picked${i}`).value) / 100;
+      for (let i = 0; i < 4; i++) {
+        let lPick = parseFloat(document.getElementById(`pickL${i}`).value) / 100;
+        let rPick = parseFloat(document.getElementById(`pickR${i}`).value) / 100;
+        const spreadType = document.getElementById(`spreadType${i}`).value;
+        
+        pickPercents.push([lPick, rPick]);
+        gameTypes.push(spreadType);
 
-        const total = leftRaw + rightRaw;
-        if (total === 0) {
-          alert(`Game ${i + 1}: Left + Right win probabilities must be greater than 0`);
-          return;
+        if (spreadType === '0.0') {
+          // .0 spread - use push probabilities
+          const winL = parseFloat(document.getElementById(`pushWinL${i}`).value) / 100;
+          const winR = parseFloat(document.getElementById(`pushWinR${i}`).value) / 100;
+          const pushProb = Math.max(0, 1 - winL - winR);
+          winProbs.push([winL, winR, pushProb]);
+          extraData.push({ 
+            type: '0.0', 
+            winL: winL * 100, 
+            winR: winR * 100, 
+            pushProb: pushProb * 100 
+          });
+        } else {
+          // .5 spread - regular no-vig calculation
+          let lOdds = parseFloat(document.getElementById(`oddsL${i}`).value);
+          let rOdds = parseFloat(document.getElementById(`oddsR${i}`).value);
+          
+          const impL = americanToImplied(lOdds);
+          const impR = americanToImplied(rOdds);
+          const [probL, probR] = calculateNoVigProb(impL, impR);
+          winProbs.push([probL, probR]);
+          extraData.push({ 
+            type: '0.5', 
+            lOdds, 
+            rOdds, 
+            impL, 
+            impR, 
+            probL, 
+            probR 
+          });
         }
-
-        const leftProb = leftRaw / total;
-        const rightProb = rightRaw / total;
-        const pushProb = (spreadType === "0.0") ? 1 - (leftProb + rightProb) : 0;
-
-        gameData.push({ spreadType, leftProb, rightProb, pushProb, pickedRight });
       }
 
-      const outcomes = generateOutcomes(gameData.map(g => g.spreadType));
-      let ev = 0;
-
-      for (const outcome of outcomes) {
+      // Generate all possible outcomes (including pushes)
+      const allOutcomes = generateAllOutcomes(gameTypes);
+      
+      // Generate all user pick combinations (still 16 for 4 games)
+      const userCombos = Array.from({length: 16}, (_, i) => i.toString(2).padStart(4, '0'));
+      
+      // Calculate selection counts for each user combo
+      let counts = {};
+      userCombos.forEach(combo => {
         let prob = 1;
-        let correctPicks = 0;
+        for (let i = 0; i < 4; i++) {
+          let pick = +combo[i];
+          prob *= pickPercents[i][pick];
+        }
+        counts[combo] = (totalEntrants - 1) * prob;
+      });
 
-        for (let i = 0; i < games; i++) {
-          const game = gameData[i];
-          const result = outcome[i];
+      let results = [];
+      window.winProbs = winProbs;
+      window.gameTypes = gameTypes;
 
-          if (result === 'L') {
-            prob *= game.leftProb;
-            correctPicks += 1 - game.pickedRight; // Left pickers correct
-          } else if (result === 'R') {
-            prob *= game.rightProb;
-            correctPicks += game.pickedRight; // Right pickers correct
-          } else if (result === 'P') {
-            prob *= game.pushProb;
-            correctPicks += 1; // Everyone correct on push
+      userCombos.forEach(userPick => {
+        let EV = 0;
+        let pickProb = 1;
+        for (let i = 0; i < 4; i++) pickProb *= pickPercents[i][+userPick[i]];
+
+        allOutcomes.forEach(outcome => {
+          // Calculate outcome probability
+          let p = 1;
+          for (let i = 0; i < 4; i++) {
+            const gameOutcome = outcome[i];
+            if (gameOutcome === 'P') {
+              p *= winProbs[i][2]; // Push probability
+            } else {
+              p *= winProbs[i][+gameOutcome];
+            }
           }
+
+          // Calculate matches for this user pick vs outcome
+          const matches = calculateMatches(userPick, outcome);
+          const isTier1 = matches === 4;
+          const isTier2 = matches === 3;
+
+          // Count winners in each tier for this outcome
+          let w1 = 0; // 4/4 winners
+          let w2 = 0; // 3/4 winners
+
+          userCombos.forEach(otherCombo => {
+            const otherMatches = calculateMatches(otherCombo, outcome);
+            const comboCount = counts[otherCombo] || 0;
+            
+            if (otherMatches === 4) {
+              w1 += comboCount;
+            } else if (otherMatches === 3) {
+              w2 += comboCount;
+            }
+          });
+
+          // Add current user if they qualify
+          if (userPick === userPick) { // Always true, but keeping structure
+            const userMatches = calculateMatches(userPick, outcome);
+            if (userMatches === 4) w1++;
+            if (userMatches === 3) w2++;
+          }
+
+          // Calculate payout
+          const pool = 100 * totalEntrants;
+          const shares = w1 + 0.5 * w2;
+          const shareValue = shares > 0 ? pool / shares : 0;
+
+          let gain = -100;
+          if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
+          else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+
+          EV += p * gain;
+        });
+
+        // Calculate win probability and estimated payouts for display
+        let winProb = 0;
+        let tier1Payout = 0;
+        let tier2Payout = 0;
+
+        allOutcomes.forEach(outcome => {
+          let p = 1;
+          for (let i = 0; i < 4; i++) {
+            const gameOutcome = outcome[i];
+            if (gameOutcome === 'P') {
+              p *= winProbs[i][2];
+            } else {
+              p *= winProbs[i][+gameOutcome];
+            }
+          }
+
+          const matches = calculateMatches(userPick, outcome);
+          if (matches === 4) {
+            winProb += p;
+          }
+        });
+
+        // Calculate average payouts (simplified for display)
+        const avgShares = counts[userPick] + 0.5 * userCombos.reduce((sum, c) => {
+          return sum + (calculateMatches(c, userPick) === 3 ? (counts[c] || 0) : 0);
+        }, 0);
+        
+        if (avgShares > 0) {
+          const avgShareValue = (100 * totalEntrants) / avgShares;
+          tier1Payout = Math.min(Math.floor(avgShareValue), 800);
+          tier2Payout = Math.min(Math.floor(avgShareValue / 2), 600);
         }
 
-        ev += prob * correctPicks;
+        results.push({ 
+          combo: userPick, 
+          ev: EV, 
+          pickProb: pickProb, 
+          estCount: Math.round(pickProb * totalEntrants),
+          tier1Payout: tier1Payout,
+          tier2Payout: tier2Payout,
+          winProb: winProb
+        });
+      });
+
+      results.sort((a, b) => b.ev - a.ev);
+
+      const table = `
+        <table>
+          <tr><th>Picks</th><th>Win Probability</th><th>Selections</th><th>3/4 Payout (karma)</th><th>4/4 Payout (karma)</th><th>Expected Value (karma) ↓</th></tr>
+          ${results.map((r) => {
+            const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
+            const evClass = r.ev > 0 ? 'ev-positive' : 'ev-negative';
+            
+            return `<tr>
+              <td>${readable}</td>
+              <td>${(r.winProb * 100).toFixed(2)}%</td>
+              <td>${r.estCount}</td>
+              <td>${r.tier2Payout}</td>
+              <td>${r.tier1Payout}</td>
+              <td class="${evClass}">${r.ev.toFixed(2)}</td>
+            </tr>`;
+          }).join('')}
+        </table>
+      `;
+
+      const copyButton = `<button class="copy-btn" onclick="copyTableData()">Copy Results</button>`;
+      document.getElementById('results').innerHTML = table + copyButton;
+      document.getElementById('results-container').style.display = 'block';
+      
+      if (showExtras) {
+        const extraTable = `
+          <table>
+            <tr><th>Game</th><th>Type</th><th>L Win %</th><th>R Win %</th><th>Push %</th><th>L Odds</th><th>R Odds</th></tr>
+            ${extraData.map((row, i) => {
+              if (row.type === '0.0') {
+                return `<tr><td>${i + 1}</td><td>.0 Spread</td>
+                        <td>${row.winL.toFixed(1)}%</td><td>${row.winR.toFixed(1)}%</td>
+                        <td>${row.pushProb.toFixed(1)}%</td><td>-</td><td>-</td></tr>`;
+              } else {
+                return `<tr><td>${i + 1}</td><td>.5 Spread</td>
+                        <td>${(row.probL * 100).toFixed(1)}%</td><td>${(row.probR * 100).toFixed(1)}%</td>
+                        <td>0.0%</td><td>${row.lOdds}</td><td>${row.rOdds}</td></tr>`;
+              }
+            }).join('')}
+          </table>
+        `;
+        document.getElementById('extras').innerHTML = extraTable;
+        document.getElementById('extras-container').style.display = 'block';
+      } else {
+        document.getElementById('extras-container').style.display = 'none';
       }
 
-      const avgEV = (ev).toFixed(2);
-      document.getElementById('output').textContent = `Expected Correct Picks: ${avgEV}`;
+      window.lastResults = results;
     }
 
-    function generateOutcomes(spreadTypes) {
-      const results = [];
+    function copyTableData() {
+      const results = window.lastResults;
+      if (!results) return;
+      
+      const copyText = results.map(r => {
+        const readable = r.combo.split('').map(v => v === '0' ? 'L' : 'R').join('');
+        
+        // Calculate 3/4+ probability for this combo
+        let prob3Plus = 0;
+        const allOutcomes = generateAllOutcomes(window.gameTypes || ['0.5', '0.5', '0.5', '0.5']);
+        
+        allOutcomes.forEach(outcome => {
+          let outcomeProb = 1;
+          for (let i = 0; i < 4; i++) {
+            const gameOutcome = outcome[i];
+            if (gameOutcome === 'P') {
+              outcomeProb *= window.winProbs[i][2]; // Push probability
+            } else {
+              outcomeProb *= window.winProbs[i][+gameOutcome];
+            }
+          }
+          const match = calculateMatches(r.combo, outcome);
+          if (match >= 3) prob3Plus += outcomeProb;
+        });
+        
+        return `${readable} - ${(prob3Plus * 100).toFixed(2)}% - (${r.ev.toFixed(2)})`;
+      }).join('\n');
+      
+      navigator.clipboard.writeText(copyText).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = 'linear-gradient(45deg, #059669, #047857)';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+        }, 1500);
+      });
+    }
 
-      function backtrack(path, index) {
-        if (index === spreadTypes.length) {
-          results.push([...path]);
-          return;
-        }
-        const spread = spreadTypes[index];
-        const options = spread === "0.0" ? ['L', 'R', 'P'] : ['L', 'R'];
-        for (const opt of options) {
-          path.push(opt);
-          backtrack(path, index + 1);
-          path.pop();
-        }
+    function autofillRightPercents() {
+      for (let i = 0; i < 4; i++) {
+        const leftVal = parseFloat(document.getElementById(`pickL${i}`).value) || 0;
+        const rightInput = document.getElementById(`pickR${i}`);
+        rightInput.value = (100 - leftVal).toFixed(0);
       }
-
-      backtrack([], 0);
-      return results;
     }
+
   </script>
 </body>
 </html>
