@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           <div class="form-control">
             <label class="form-label">Spread Type</label>
-            <select class="form-select" id="game-${game.id}-spread-type" onchange="app.togglePushInputs(${game.id})">
+            <select class="form-select" id="game-${game.id}-spread-type">
               <option value="0.5">.5 Spread (No Push)</option>
               <option value="0.0">.0 Spread (Push Possible)</option>
             </select>
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="push-inputs" id="game-${game.id}-push-inputs-team1" style="display: none;">
                 <div class="form-control">
                   <label class="form-label">American Odds (e.g., -115 for -7.5)</label>
-                  <input type="number" class="form-input" id="game-${game.id}-team1-push-odds" value="${game.team1.pushOdds}" oninput="app.updatePushDisplay(${game.id})" />
+                  <input type="number" class="form-input" id="game-${game.id}-team1-push-odds" value="${game.team1.pushOdds}" />
                 </div>
               </div>
               <div class="form-control">
@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="push-inputs" id="game-${game.id}-push-inputs-team2" style="display: none;">
                 <div class="form-control">
                   <label class="form-label">American Odds (e.g., -105 for +8.5)</label>
-                  <input type="number" class="form-input" id="game-${game.id}-team2-push-odds" value="${game.team2.pushOdds}" oninput="app.updatePushDisplay(${game.id})" />
+                  <input type="number" class="form-input" id="game-${game.id}-team2-push-odds" value="${game.team2.pushOdds}" />
                 </div>
               </div>
               <div class="form-control">
@@ -505,6 +505,21 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         container.appendChild(div);
+
+        // Add event listeners after adding to DOM
+        const spreadSelect = document.getElementById(`game-${game.id}-spread-type`);
+        spreadSelect.value = game.spreadType;
+        spreadSelect.addEventListener('change', () => this.togglePushInputs(game.id));
+
+        const pushOddsL = document.getElementById(`game-${game.id}-team1-push-odds`);
+        const pushOddsR = document.getElementById(`game-${game.id}-team2-push-odds`);
+        pushOddsL.addEventListener('input', () => this.updatePushDisplay(game.id));
+        pushOddsR.addEventListener('input', () => this.updatePushDisplay(game.id));
+
+        // Initialize push inputs visibility
+        if (game.spreadType === '0.0') {
+          this.togglePushInputs(game.id);
+        }
       });
     }
 
