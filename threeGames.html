@@ -433,9 +433,38 @@ document.addEventListener('DOMContentLoaded', () => {
       
       game.pushProbability = finalPushProb;
       
-      document.getElementById(`game-${gameId}-push-prob`).textContent = `${(finalPushProb * 100).toFixed(1)}%`;
+      // Update just the push probability display
+      const pushProbSpan = document.getElementById(`game-${gameId}-push-prob`);
+      if (pushProbSpan) {
+        pushProbSpan.textContent = `${(finalPushProb * 100).toFixed(1)}%`;
+      }
       
-      this.calculateNoVigOddsForAllGames();
+      // Update the no-vig calculations for this specific game
+      const probL = impL / totalProb;
+      const probR = impR / totalProb;
+      
+      game.team1.noVigProbability = probL;
+      game.team2.noVigProbability = probR;
+      game.team1.noVigOdds = Math.round(this.probabilityToAmericanOdds(probL));
+      game.team2.noVigOdds = Math.round(this.probabilityToAmericanOdds(probR));
+      
+      // Update odds displays for just this game
+      this.updateSingleGameOddsDisplay(gameId);
+    }
+
+    updateSingleGameOddsDisplay(gameId) {
+      const game = this.state.games.find(g => g.id === gameId);
+      const team1OddsLabel = document.querySelector(`#games-container .game-card:nth-child(${gameId}) .team-card:nth-child(1) .form-control:last-child .form-label`);
+      const team1OddsNote = document.querySelector(`#games-container .game-card:nth-child(${gameId}) .team-card:nth-child(1) .form-control:last-child .text-note`);
+      const team2OddsLabel = document.querySelector(`#games-container .game-card:nth-child(${gameId}) .team-card:nth-child(2) .form-control:last-child .form-label`);
+      const team2OddsNote = document.querySelector(`#games-container .game-card:nth-child(${gameId}) .team-card:nth-child(2) .form-control:last-child .text-note`);
+
+      if (team1OddsLabel && team1OddsNote && team2OddsLabel && team2OddsNote) {
+        team1OddsLabel.textContent = `No-Vig Odds: ${game.team1.noVigOdds}`;
+        team1OddsNote.textContent = `No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%`;
+        team2OddsLabel.textContent = `No-Vig Odds: ${game.team2.noVigOdds}`;
+        team2OddsNote.textContent = `No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%`;
+      }
     }
 
     renderGames() {
@@ -593,7 +622,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      this.renderGames();
+      this.updateOddsDisplays();
+    }
+
+    updateOddsDisplays() {
+      // Update odds displays without re-rendering entire games
+      this.state.games.forEach(game => {
+        const team1OddsLabel = document.querySelector(`#games-container .game-card:nth-child(${game.id}) .team-card:nth-child(1) .form-control:last-child .form-label`);
+        const team1OddsNote = document.querySelector(`#games-container .game-card:nth-child(${game.id}) .team-card:nth-child(1) .form-control:last-child .text-note`);
+        const team2OddsLabel = document.querySelector(`#games-container .game-card:nth-child(${game.id}) .team-card:nth-child(2) .form-control:last-child .form-label`);
+        const team2OddsNote = document.querySelector(`#games-container .game-card:nth-child(${game.id}) .team-card:nth-child(2) .form-control:last-child .text-note`);
+
+        if (team1OddsLabel && team1OddsNote && team2OddsLabel && team2OddsNote) {
+          team1OddsLabel.textContent = `No-Vig Odds: ${game.team1.noVigOdds}`;
+          team1OddsNote.textContent = `No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%`;
+          team2OddsLabel.textContent = `No-Vig Odds: ${game.team2.noVigOdds}`;
+          team2OddsNote.textContent = `No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%`;
+        }
+      });
     }
 
     generateAllOutcomes() {
