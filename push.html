@@ -462,19 +462,26 @@
       const spreadType = document.getElementById(`spreadType${gameIndex}`).value;
       
       if (spreadType === '0.0') {
-        // For .0 spreads, show the push probabilities from odds
+        // For .0 spreads, show the raw probabilities (don't remove vig)
         const oddsL = parseFloat(document.getElementById(`pushOddsL${gameIndex}`).value) || -110;
         const oddsR = parseFloat(document.getElementById(`pushOddsR${gameIndex}`).value) || -110;
         
         const impL = americanToImplied(oddsL);
         const impR = americanToImplied(oddsR);
-        const [probL, probR] = calculateNoVigProb(impL, impR);
-        const pushProb = Math.max(0, 1 - probL - probR);
+        
+        // Calculate push probability and normalize all probabilities
+        const totalImplied = impL + impR;
+        const pushProb = Math.max(0, totalImplied - 1);
+        const totalProb = impL + impR + pushProb;
+        
+        const probL = impL / totalProb;
+        const probR = impR / totalProb;
+        const normalizedPushProb = pushProb / totalProb;
         
         document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
-          `Odds: ${oddsL}<br>No-Vig Prob: ${(probL * 100).toFixed(1)}%<br>Push Prob: ${(pushProb * 100).toFixed(1)}%`;
+          `Odds: ${oddsL}<br>Win Prob: ${(probL * 100).toFixed(1)}%<br>Push Prob: ${(normalizedPushProb * 100).toFixed(1)}%`;
         document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
-          `Odds: ${oddsR}<br>No-Vig Prob: ${(probR * 100).toFixed(1)}%<br>Push Prob: ${(pushProb * 100).toFixed(1)}%`;
+          `Odds: ${oddsR}<br>Win Prob: ${(probR * 100).toFixed(1)}%<br>Push Prob: ${(normalizedPushProb * 100).toFixed(1)}%`;
       } else {
         // Regular .5 spread logic
         const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
@@ -553,23 +560,32 @@
         gameTypes.push(spreadType);
 
         if (spreadType === '0.0') {
-          // .0 spread - use push probabilities from odds
+          // .0 spread - use raw implied probabilities (don't remove vig)
           const oddsL = parseFloat(document.getElementById(`pushOddsL${i}`).value);
           const oddsR = parseFloat(document.getElementById(`pushOddsR${i}`).value);
           
           const impL = americanToImplied(oddsL);
           const impR = americanToImplied(oddsR);
-          const [probL, probR] = calculateNoVigProb(impL, impR);
-          const pushProb = Math.max(0, 1 - probL - probR);
           
-          winProbs.push([probL, probR, pushProb]);
+          // Don't use no-vig calculation - use raw implied probabilities
+          // The push probability is the excess probability above 1
+          const totalImplied = impL + impR;
+          const pushProb = Math.max(0, totalImplied - 1);
+          
+          // Normalize so all probabilities sum to 1
+          const totalProb = impL + impR + pushProb;
+          const probL = impL / totalProb;
+          const probR = impR / totalProb;
+          const normalizedPushProb = pushProb / totalProb;
+          
+          winProbs.push([probL, probR, normalizedPushProb]);
           extraData.push({ 
             type: '0.0', 
             oddsL: oddsL,
             oddsR: oddsR,
             winL: probL * 100, 
             winR: probR * 100, 
-            pushProb: pushProb * 100 
+            pushProb: normalizedPushProb * 100 
           });
         } else {
           // .5 spread - regular no-vig calculation
