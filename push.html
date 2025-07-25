@@ -369,7 +369,7 @@
               <div class="push-inputs" id="pushInputsL${i}" style="display: none;">
                 <div class="input-group">
                   <label class="input-label">American Odds (e.g., -115 for -7.5)</label>
-                  <input class="input-field" id="pushOddsL${i}" type="number" value="-110" oninput="updatePushDisplay(${i})">
+                  <input class="input-field" id="pushOddsL${i}" type="number" value="-110" oninput="updatePushDisplay(${i})" onkeyup="updatePushDisplay(${i})">
                 </div>
               </div>
             </div>
@@ -387,7 +387,7 @@
               <div class="push-inputs" id="pushInputsR${i}" style="display: none;">
                 <div class="input-group">
                   <label class="input-label">American Odds (e.g., -105 for +8.5)</label>
-                  <input class="input-field" id="pushOddsR${i}" type="number" value="-110" oninput="updatePushDisplay(${i})">
+                  <input class="input-field" id="pushOddsR${i}" type="number" value="-110" oninput="updatePushDisplay(${i})" onkeyup="updatePushDisplay(${i})">
                 </div>
               </div>
             </div>
@@ -439,6 +439,9 @@
       
       const pushProb = Math.max(0, 1 - probL - probR);
       document.getElementById(`pushProb${gameIndex}`).textContent = `${(pushProb * 100).toFixed(1)}%`;
+      
+      // Also update the odds displays to show the live values
+      updateOddsDisplay(gameIndex, 'L');
     }
 
     function updateOddsDisplay(gameIndex, side) {
