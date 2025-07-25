@@ -368,8 +368,8 @@
               </div>
               <div class="push-inputs" id="pushInputsL${i}" style="display: none;">
                 <div class="input-group">
-                  <label class="input-label">Win Prob (e.g., -7.5) %</label>
-                  <input class="input-field" id="pushWinL${i}" type="number" value="50" oninput="updatePushDisplay(${i})">
+                  <label class="input-label">American Odds (e.g., -115 for -7.5)</label>
+                  <input class="input-field" id="pushOddsL${i}" type="number" value="-110" oninput="updatePushDisplay(${i})">
                 </div>
               </div>
             </div>
@@ -386,8 +386,8 @@
               </div>
               <div class="push-inputs" id="pushInputsR${i}" style="display: none;">
                 <div class="input-group">
-                  <label class="input-label">Win Prob (e.g., +8.5) %</label>
-                  <input class="input-field" id="pushWinR${i}" type="number" value="50" oninput="updatePushDisplay(${i})">
+                  <label class="input-label">American Odds (e.g., -105 for +8.5)</label>
+                  <input class="input-field" id="pushOddsR${i}" type="number" value="-110" oninput="updatePushDisplay(${i})">
                 </div>
               </div>
             </div>
@@ -430,25 +430,34 @@
     }
 
     function updatePushDisplay(gameIndex) {
-      const winL = parseFloat(document.getElementById(`pushWinL${gameIndex}`).value) || 0;
-      const winR = parseFloat(document.getElementById(`pushWinR${gameIndex}`).value) || 0;
-      const pushProb = Math.max(0, 100 - winL - winR);
-      document.getElementById(`pushProb${gameIndex}`).textContent = `${pushProb.toFixed(1)}%`;
+      const oddsL = parseFloat(document.getElementById(`pushOddsL${gameIndex}`).value) || -110;
+      const oddsR = parseFloat(document.getElementById(`pushOddsR${gameIndex}`).value) || -110;
+      
+      const impL = americanToImplied(oddsL);
+      const impR = americanToImplied(oddsR);
+      const [probL, probR] = calculateNoVigProb(impL, impR);
+      
+      const pushProb = Math.max(0, 1 - probL - probR);
+      document.getElementById(`pushProb${gameIndex}`).textContent = `${(pushProb * 100).toFixed(1)}%`;
     }
 
     function updateOddsDisplay(gameIndex, side) {
       const spreadType = document.getElementById(`spreadType${gameIndex}`).value;
       
       if (spreadType === '0.0') {
-        // For .0 spreads, show the push probabilities
-        const winL = parseFloat(document.getElementById(`pushWinL${gameIndex}`).value) || 0;
-        const winR = parseFloat(document.getElementById(`pushWinR${gameIndex}`).value) || 0;
-        const pushProb = Math.max(0, 100 - winL - winR);
+        // For .0 spreads, show the push probabilities from odds
+        const oddsL = parseFloat(document.getElementById(`pushOddsL${gameIndex}`).value) || -110;
+        const oddsR = parseFloat(document.getElementById(`pushOddsR${gameIndex}`).value) || -110;
+        
+        const impL = americanToImplied(oddsL);
+        const impR = americanToImplied(oddsR);
+        const [probL, probR] = calculateNoVigProb(impL, impR);
+        const pushProb = Math.max(0, 1 - probL - probR);
         
         document.getElementById(`oddsDisplayL${gameIndex}`).innerHTML = 
-          `Win Probability: ${winL.toFixed(1)}%<br>Push Probability: ${pushProb.toFixed(1)}%`;
+          `Odds: ${oddsL}<br>No-Vig Prob: ${(probL * 100).toFixed(1)}%<br>Push Prob: ${(pushProb * 100).toFixed(1)}%`;
         document.getElementById(`oddsDisplayR${gameIndex}`).innerHTML = 
-          `Win Probability: ${winR.toFixed(1)}%<br>Push Probability: ${pushProb.toFixed(1)}%`;
+          `Odds: ${oddsR}<br>No-Vig Prob: ${(probR * 100).toFixed(1)}%<br>Push Prob: ${(pushProb * 100).toFixed(1)}%`;
       } else {
         // Regular .5 spread logic
         const lOdds = parseFloat(document.getElementById(`oddsL${gameIndex}`).value) || -110;
@@ -527,15 +536,22 @@
         gameTypes.push(spreadType);
 
         if (spreadType === '0.0') {
-          // .0 spread - use push probabilities
-          const winL = parseFloat(document.getElementById(`pushWinL${i}`).value) / 100;
-          const winR = parseFloat(document.getElementById(`pushWinR${i}`).value) / 100;
-          const pushProb = Math.max(0, 1 - winL - winR);
-          winProbs.push([winL, winR, pushProb]);
+          // .0 spread - use push probabilities from odds
+          const oddsL = parseFloat(document.getElementById(`pushOddsL${i}`).value);
+          const oddsR = parseFloat(document.getElementById(`pushOddsR${i}`).value);
+          
+          const impL = americanToImplied(oddsL);
+          const impR = americanToImplied(oddsR);
+          const [probL, probR] = calculateNoVigProb(impL, impR);
+          const pushProb = Math.max(0, 1 - probL - probR);
+          
+          winProbs.push([probL, probR, pushProb]);
           extraData.push({ 
             type: '0.0', 
-            winL: winL * 100, 
-            winR: winR * 100, 
+            oddsL: oddsL,
+            oddsR: oddsR,
+            winL: probL * 100, 
+            winR: probR * 100, 
             pushProb: pushProb * 100 
           });
         } else {
@@ -713,7 +729,7 @@
               if (row.type === '0.0') {
                 return `<tr><td>${i + 1}</td><td>.0 Spread</td>
                         <td>${row.winL.toFixed(1)}%</td><td>${row.winR.toFixed(1)}%</td>
-                        <td>${row.pushProb.toFixed(1)}%</td><td>-</td><td>-</td></tr>`;
+                        <td>${row.pushProb.toFixed(1)}%</td><td>${row.oddsL}</td><td>${row.oddsR}</td></tr>`;
               } else {
                 return `<tr><td>${i + 1}</td><td>.5 Spread</td>
                         <td>${(row.probL * 100).toFixed(1)}%</td><td>${(row.probR * 100).toFixed(1)}%</td>
