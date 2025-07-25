@@ -84,6 +84,22 @@ body {
   outline: none;
 }
 
+.form-select {
+  border: 2px solid #555;
+  border-radius: 25px;
+  padding: 15px;
+  width: 100%;
+  font-size: 16px;
+  background-color: #333;
+  color: lightgray;
+  transition: border-color 0.3s;
+}
+
+.form-select:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
 .games-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -118,6 +134,21 @@ body {
   border-radius: 25px;
   padding: 0.75rem;
   background-color: #333;
+}
+
+.push-inputs {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #2a2a2a;
+  border-radius: 15px;
+  border: 1px solid #555;
+}
+
+.push-display {
+  text-align: center;
+  font-weight: 600;
+  color: #ffa500;
+  margin-top: 0.5rem;
 }
 
 .btn {
@@ -260,9 +291,12 @@ a {
     <div class="instructions">
       <h2 class="section-title">Instructions</h2>
       <p>1. Enter the details for each of the 3 games including odds (American format), and selection percentages.</p>
-      <p>2. Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</p>
-      <p>3. Total pool entrants is set to 9,450. Payouts are only awarded for correctly predicting all 3 matchups.</p>
-      <p>4. Payout formula: Min((Total entrants * 100) / Number of winners, 600) - Maximum payout is capped at 600.</p>
+      <p>2. For each game, select .5 Spread (no push) or .0 Spread (push possible).</p>
+      <p>3. For .0 spreads, enter the win probabilities for the adjusted lines (e.g., -7.5 and +8.5 for a -8.0 spread).</p>
+      <p>4. Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</p>
+      <p>5. Total pool entrants is set to 9,450. Payouts are only awarded for correctly predicting all 3 matchups.</p>
+      <p>6. Payout formula: Min((Total entrants * 100) / Number of winners, 600) - Maximum payout is capped at 600.</p>
+      <p>7. <strong>Push Logic:</strong> When a push occurs, BOTH sides are awarded a win for that leg (increases winner counts and lowers payouts).</p>
     </div>
     
     <form id="calculator-form">
@@ -277,7 +311,6 @@ a {
       <!-- Results will be dynamically added here -->
     </div>
     <button class="btn btn-primary" id="copy-results-btn" style="margin-top: 1rem;">Copy Results</button>
-    <!-- Explanation Section -->
   </div>
 
   <script>
@@ -286,9 +319,27 @@ document.addEventListener('DOMContentLoaded', () => {
     constructor() {
       this.state = {
         games: [
-          { id: 1, team1: { name: 'L1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }, team2: { name: 'R1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }},
-          { id: 2, team1: { name: 'L2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }, team2: { name: 'R2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }},
-          { id: 3, team1: { name: 'L3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }, team2: { name: 'R3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5 }}
+          { 
+            id: 1, 
+            spreadType: '0.5',
+            team1: { name: 'L1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 }, 
+            team2: { name: 'R1', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 },
+            pushProbability: 0
+          },
+          { 
+            id: 2, 
+            spreadType: '0.5',
+            team1: { name: 'L2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 }, 
+            team2: { name: 'R2', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 },
+            pushProbability: 0
+          },
+          { 
+            id: 3, 
+            spreadType: '0.5',
+            team1: { name: 'L3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 }, 
+            team2: { name: 'R3', odds: -110, selectionPercentage: 50, noVigOdds: -100, noVigProbability: 0.5, pushOdds: -110 },
+            pushProbability: 0
+          }
         ],
         totalEntrants: 9450,
         maxPayout: 600,
@@ -333,6 +384,60 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    togglePushInputs(gameId) {
+      const game = this.state.games.find(g => g.id === gameId);
+      const spreadType = document.getElementById(`game-${gameId}-spread-type`).value;
+      
+      game.spreadType = spreadType;
+      
+      const pushInputsL = document.getElementById(`game-${gameId}-push-inputs-team1`);
+      const pushInputsR = document.getElementById(`game-${gameId}-push-inputs-team2`);
+      const pushDisplay = document.getElementById(`game-${gameId}-push-display`);
+      
+      if (spreadType === '0.0') {
+        pushInputsL.style.display = 'block';
+        pushInputsR.style.display = 'block';
+        pushDisplay.style.display = 'block';
+        this.updatePushDisplay(gameId);
+      } else {
+        pushInputsL.style.display = 'none';
+        pushInputsR.style.display = 'none';
+        pushDisplay.style.display = 'none';
+        game.pushProbability = 0;
+      }
+      this.calculateNoVigOddsForAllGames();
+    }
+
+    updatePushDisplay(gameId) {
+      const game = this.state.games.find(g => g.id === gameId);
+      const oddsL = parseFloat(document.getElementById(`game-${gameId}-team1-push-odds`).value) || -110;
+      const oddsR = parseFloat(document.getElementById(`game-${gameId}-team2-push-odds`).value) || -110;
+      
+      game.team1.pushOdds = oddsL;
+      game.team2.pushOdds = oddsR;
+      
+      // Convert American odds to implied probabilities
+      const impL = this.oddsToImpliedProbability(oddsL);
+      const impR = this.oddsToImpliedProbability(oddsR);
+      
+      // Calculate push probability as the excess probability above 1
+      const totalImplied = impL + impR;
+      const pushProb = Math.max(0, totalImplied - 1);
+      
+      // Normalize all probabilities to sum to 1
+      const totalProb = impL + impR + pushProb;
+      const normalizedPushProb = pushProb / totalProb;
+      
+      // Cap at reasonable levels after normalization
+      const finalPushProb = Math.min(Math.max(normalizedPushProb, 0.01), 0.15);
+      
+      game.pushProbability = finalPushProb;
+      
+      document.getElementById(`game-${gameId}-push-prob`).textContent = `${(finalPushProb * 100).toFixed(1)}%`;
+      
+      this.calculateNoVigOddsForAllGames();
+    }
+
     renderGames() {
       const container = document.getElementById('games-container');
       container.innerHTML = '';
@@ -342,6 +447,15 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = 'game-card';
         div.innerHTML = `
           <h3 class="section-title">Game ${game.id}</h3>
+          
+          <div class="form-control">
+            <label class="form-label">Spread Type</label>
+            <select class="form-select" id="game-${game.id}-spread-type" onchange="app.togglePushInputs(${game.id})">
+              <option value="0.5">.5 Spread (No Push)</option>
+              <option value="0.0">.0 Spread (Push Possible)</option>
+            </select>
+          </div>
+          
           <div class="teams-grid">
             <div class="team-card">
               <div class="form-control"><label class="form-label">${game.team1.name}</label></div>
@@ -351,6 +465,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="form-control"><label class="form-label">Selection %</label>
                 <input type="number" class="form-input" id="game-${game.id}-team1-selection" value="${game.team1.selectionPercentage}" min="0" max="100"
                 oninput="app.autofillRightPercents(${game.id}, 'left')" />
+              </div>
+              <div class="push-inputs" id="game-${game.id}-push-inputs-team1" style="display: none;">
+                <div class="form-control">
+                  <label class="form-label">American Odds (e.g., -115 for -7.5)</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team1-push-odds" value="${game.team1.pushOdds}" oninput="app.updatePushDisplay(${game.id})" />
+                </div>
               </div>
               <div class="form-control">
                 <label class="form-label">No-Vig Odds: ${game.team1.noVigOdds}</label>
@@ -367,11 +487,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="number" class="form-input" id="game-${game.id}-team2-selection" value="${game.team2.selectionPercentage}" min="0" max="100"
                 oninput="app.autofillRightPercents(${game.id}, 'right')" />
               </div>
+              <div class="push-inputs" id="game-${game.id}-push-inputs-team2" style="display: none;">
+                <div class="form-control">
+                  <label class="form-label">American Odds (e.g., -105 for +8.5)</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team2-push-odds" value="${game.team2.pushOdds}" oninput="app.updatePushDisplay(${game.id})" />
+                </div>
+              </div>
               <div class="form-control">
                 <label class="form-label">No-Vig Odds: ${game.team2.noVigOdds}</label>
                 <div class="text-note">No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%</div>
               </div>
             </div>
+          </div>
+          
+          <div class="push-display" id="game-${game.id}-push-display" style="display: none;">
+            Push Probability: <span id="game-${game.id}-push-prob">0.0%</span>
           </div>
         `;
         container.appendChild(div);
@@ -384,11 +514,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const t1Sel = document.getElementById(`game-${game.id}-team1-selection`);
         const t2Odds = document.getElementById(`game-${game.id}-team2-odds`);
         const t2Sel = document.getElementById(`game-${game.id}-team2-selection`);
+        const spreadType = document.getElementById(`game-${game.id}-spread-type`);
 
         game.team1.odds = parseInt(t1Odds.value) || 0;
         game.team1.selectionPercentage = parseInt(t1Sel.value) || 0;
         game.team2.odds = parseInt(t2Odds.value) || 0;
         game.team2.selectionPercentage = parseInt(t2Sel.value) || 0;
+        game.spreadType = spreadType.value;
+
+        if (game.spreadType === '0.0') {
+          const t1PushOdds = document.getElementById(`game-${game.id}-team1-push-odds`);
+          const t2PushOdds = document.getElementById(`game-${game.id}-team2-push-odds`);
+          game.team1.pushOdds = parseInt(t1PushOdds.value) || -110;
+          game.team2.pushOdds = parseInt(t2PushOdds.value) || -110;
+        }
       });
     }
 
@@ -403,26 +542,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calculateNoVigOddsForAllGames() {
       this.state.games.forEach(game => {
-        const p1 = this.oddsToImpliedProbability(game.team1.odds);
-        const p2 = this.oddsToImpliedProbability(game.team2.odds);
-        const total = p1 + p2;
+        if (game.spreadType === '0.0') {
+          // For .0 spreads, use push odds and calculate normalized probabilities
+          const impL = this.oddsToImpliedProbability(game.team1.pushOdds);
+          const impR = this.oddsToImpliedProbability(game.team2.pushOdds);
+          
+          const totalImplied = impL + impR;
+          const pushProb = Math.max(0, totalImplied - 1);
+          const totalProb = impL + impR + pushProb;
+          
+          const probL = impL / totalProb;
+          const probR = impR / totalProb;
+          const normalizedPushProb = pushProb / totalProb;
+          
+          game.team1.noVigProbability = probL;
+          game.team2.noVigProbability = probR;
+          game.pushProbability = Math.min(Math.max(normalizedPushProb, 0.01), 0.15);
+          
+          game.team1.noVigOdds = Math.round(this.probabilityToAmericanOdds(probL));
+          game.team2.noVigOdds = Math.round(this.probabilityToAmericanOdds(probR));
+        } else {
+          // Regular .5 spread logic
+          const p1 = this.oddsToImpliedProbability(game.team1.odds);
+          const p2 = this.oddsToImpliedProbability(game.team2.odds);
+          const total = p1 + p2;
 
-        const fairP1 = p1 / total;
-        const fairP2 = p2 / total;
+          const fairP1 = p1 / total;
+          const fairP2 = p2 / total;
 
-        game.team1.noVigProbability = fairP1;
-        game.team2.noVigProbability = fairP2;
-        game.team1.noVigOdds = Math.round(this.probabilityToAmericanOdds(fairP1));
-        game.team2.noVigOdds = Math.round(this.probabilityToAmericanOdds(fairP2));
+          game.team1.noVigProbability = fairP1;
+          game.team2.noVigProbability = fairP2;
+          game.pushProbability = 0;
+          game.team1.noVigOdds = Math.round(this.probabilityToAmericanOdds(fairP1));
+          game.team2.noVigOdds = Math.round(this.probabilityToAmericanOdds(fairP2));
+        }
       });
 
       this.renderGames();
     }
 
+    generateAllOutcomes() {
+      // Generate all possible outcomes considering push possibilities
+      let outcomes = [''];
+      
+      for (let i = 0; i < this.state.games.length; i++) {
+        const game = this.state.games[i];
+        const newOutcomes = [];
+        
+        if (game.spreadType === '0.0') {
+          // .0 spread: L, R, P (push)
+          outcomes.forEach(outcome => {
+            newOutcomes.push(outcome + '0'); // L
+            newOutcomes.push(outcome + '1'); // R  
+            newOutcomes.push(outcome + 'P'); // Push
+          });
+        } else {
+          // .5 spread: L, R only
+          outcomes.forEach(outcome => {
+            newOutcomes.push(outcome + '0'); // L
+            newOutcomes.push(outcome + '1'); // R
+          });
+        }
+        outcomes = newOutcomes;
+      }
+      
+      return outcomes;
+    }
+
+    calculateMatches(userPick, outcome) {
+      let matches = 0;
+      for (let i = 0; i < 3; i++) {
+        const userChoice = userPick[i];
+        const gameOutcome = outcome[i];
+        
+        if (gameOutcome === 'P') {
+          // Push - BOTH sides are considered correct (user gets this pick right regardless of what they picked)
+          matches++;
+        } else if (userChoice === gameOutcome) {
+          // Exact match - user picked the correct side
+          matches++;
+        }
+      }
+      return matches;
+    }
+
     generateCombinations() {
       let combos = [
-        { teams: [this.state.games[0].team1], gameIds: [1], side: ['team1'] },
-        { teams: [this.state.games[0].team2], gameIds: [1], side: ['team2'] }
+        { teams: [this.state.games[0].team1], gameIds: [1], side: ['team1'], pickString: '0' },
+        { teams: [this.state.games[0].team2], gameIds: [1], side: ['team2'], pickString: '1' }
       ];
 
       for (let i = 1; i < this.state.games.length; i++) {
@@ -430,8 +637,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const newCombos = [];
 
         combos.forEach(c => {
-          newCombos.push({ teams: [...c.teams, game.team1], gameIds: [...c.gameIds, i + 1], side: [...c.side, 'team1'] });
-          newCombos.push({ teams: [...c.teams, game.team2], gameIds: [...c.gameIds, i + 1], side: [...c.side, 'team2'] });
+          newCombos.push({ 
+            teams: [...c.teams, game.team1], 
+            gameIds: [...c.gameIds, i + 1], 
+            side: [...c.side, 'team1'],
+            pickString: c.pickString + '0'
+          });
+          newCombos.push({ 
+            teams: [...c.teams, game.team2], 
+            gameIds: [...c.gameIds, i + 1], 
+            side: [...c.side, 'team2'],
+            pickString: c.pickString + '1'
+          });
         });
 
         combos = newCombos;
@@ -465,16 +682,117 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     calculatePayouts(combos) {
+      // Calculate selection counts for each user combo
+      let counts = {};
+      combos.forEach(combo => {
+        let prob = 1;
+        for (let i = 0; i < 3; i++) {
+          let pick = +combo.pickString[i];
+          const game = this.state.games[i];
+          const pickPercents = [
+            game.team1.selectionPercentage / 100, 
+            game.team2.selectionPercentage / 100
+          ];
+          prob *= pickPercents[pick];
+        }
+        counts[combo.pickString] = (this.state.totalEntrants - 1) * prob;
+      });
+
+      // Generate all possible outcomes (including pushes)
+      const allOutcomes = this.generateAllOutcomes();
+
       const results = combos.map(combo => {
-        const winProb = combo.winProbability / 100;
-        const lossProb = 1 - winProb;
-        const winners = combo.numberOfSelections || 1;
-        const payout = Math.min((this.state.totalEntrants * 100) / winners, this.state.maxPayout);
-        const ev = (winProb * payout) - (lossProb * 100);
-        return { ...combo, payout, expectedValue: ev };
+        let EV = 0;
+        let pickProb = 1;
+        
+        // Calculate pick probability
+        for (let i = 0; i < 3; i++) {
+          const game = this.state.games[i];
+          const pick = +combo.pickString[i];
+          const pickPercents = [
+            game.team1.selectionPercentage / 100, 
+            game.team2.selectionPercentage / 100
+          ];
+          pickProb *= pickPercents[pick];
+        }
+
+        // Calculate EV across all possible outcomes
+        allOutcomes.forEach(outcome => {
+          // Calculate outcome probability
+          let p = 1;
+          for (let i = 0; i < 3; i++) {
+            const game = this.state.games[i];
+            const gameOutcome = outcome[i];
+            if (gameOutcome === 'P') {
+              p *= game.pushProbability; // Push probability
+            } else {
+              const probabilities = [game.team1.noVigProbability, game.team2.noVigProbability];
+              p *= probabilities[+gameOutcome];
+            }
+          }
+
+          // Calculate matches for this user pick vs outcome
+          const matches = this.calculateMatches(combo.pickString, outcome);
+          const isWinner = matches === 3;
+
+          // Count winners for this outcome
+          let winners = 0;
+          combos.forEach(otherCombo => {
+            const otherMatches = this.calculateMatches(otherCombo.pickString, outcome);
+            const comboCount = counts[otherCombo.pickString] || 0;
+            
+            if (otherMatches === 3) {
+              winners += comboCount;
+            }
+          });
+
+          // Add current user if they qualify
+          if (isWinner) winners++;
+
+          // Calculate payout
+          let gain = -100;
+          if (isWinner) {
+            const payout = Math.min((this.state.totalEntrants * 100) / winners, this.state.maxPayout);
+            gain = payout;
+          }
+
+          EV += p * gain;
+        });
+
+        return { 
+          ...combo, 
+          expectedValue: EV - 100, // Subtract the initial 100 cost
+          actualWinProbability: this.calculateActualWinProbability(combo.pickString)
+        };
       });
 
       return { combinations: results, payouts: {} };
+    }
+
+    calculateActualWinProbability(pickString) {
+      const allOutcomes = this.generateAllOutcomes();
+      let winProb = 0;
+
+      allOutcomes.forEach(outcome => {
+        let p = 1;
+        for (let i = 0; i < 3; i++) {
+          const game = this.state.games[i];
+          const gameOutcome = outcome[i];
+          if (gameOutcome === 'P') {
+            p *= game.pushProbability;
+          } else {
+            const probabilities = [game.team1.noVigProbability, game.team2.noVigProbability];
+            p *= probabilities[+gameOutcome];
+          }
+        }
+
+        const matches = this.calculateMatches(pickString, outcome);
+        if (matches === 3) {
+          winProb += p;
+        }
+      });
+
+      return winProb * 100;
     }
 
     calculateAllCombinations() {
@@ -504,18 +822,34 @@ document.addEventListener('DOMContentLoaded', () => {
         return this.state.sortDirection === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
       });
 
+      // Calculate average payout for display
+      const avgWinners = this.state.totalEntrants / 8; // Rough estimate
+      const avgPayout = Math.min((this.state.totalEntrants * 100) / avgWinners, this.state.maxPayout);
+
       const html = sorted.map(combo => `
         <tr>
           <td>${this.formatCombination(combo)}</td>
-          <td>${combo.winProbability.toFixed(2)}%</td>
+          <td>${combo.actualWinProbability.toFixed(2)}%</td>
           <td>${combo.numberOfSelections}</td>
-          <td>${Math.round(combo.payout)}</td>
+          <td>${Math.round(avgPayout)}</td>
           <td>${Math.round(combo.expectedValue)}</td>
         </tr>
       `).join('');
 
+      const infoNote = this.state.games.some(g => g.spreadType === '0.0') ? 
+        `<div class="info-box">
+          <p><strong>Win Probabilities Based On:</strong><br>
+          No-vig odds are used for calculations to remove bookmakers' edge. Push probabilities are calculated for .0 spreads.<br>
+          <strong>Push Rule:</strong> When a push occurs, both L and R picks are considered correct for that game.</p>
+        </div>` : 
+        `<div class="info-box">
+          <p><strong>Win Probabilities Based On:</strong><br>
+          No-vig odds are used for calculations to remove bookmakers' edge.</p>
+        </div>`;
+
       const table = `
         <div class="card">
+          ${infoNote}
           <h2 class="subheading">All Combinations and Payouts</h2>
           <div class="table-container">
             <table>
@@ -524,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <th>Picks</th>
                   <th>Win Probability</th>
                   <th>Selections</th>
-                  <th>Payout</th>
+                  <th>Avg Payout</th>
                   <th>Expected Value</th>
                 </tr>
               </thead>
@@ -545,7 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const str = results.map(c => {
         const pick = this.formatCombination(c);
-        return `${pick} - ${c.winProbability.toFixed(2)}% - (${c.expectedValue.toFixed(2)})`;
+        return `${pick} - ${c.actualWinProbability.toFixed(2)}% - (${c.expectedValue.toFixed(2)})`;
       }).join('\n');
 
       navigator.clipboard.writeText(str).then(() => alert("Results copied!"));
@@ -557,7 +891,6 @@ document.addEventListener('DOMContentLoaded', () => {
       this.renderResults();
     }
   }
-
 
   window.app = new PoolCalculator();
 });
