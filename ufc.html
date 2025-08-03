@@ -1,600 +1,573 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>UFC Combined EV & Payout Calculator</title>
-        <style>
-            body {
-                font-family: sans-serif;
-                margin: 0;
-                padding: 20px;
-                background-color: #000;
-                color: #ccc;
-            }
-            
-            h1 {
-                text-align: center;
-                color: #ccc;
-                margin-bottom: 30px;
-                grid-column: 1 / -1;
-            }
-            
-            .main-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 30px;
-                max-width: 1400px;
-                margin: 0 auto;
-            }
-            
-            .calculator-section {
-                background-color: #222;
-                padding: 25px;
-                border-radius: 25px;
-                border: 2px solid #444;
-                transition: 0.3s;
-            }
-            
-            .calculator-section:hover {
-                border-color: #07f;
-            }
-            
-            .section-title {
-                text-align: center;
-                color: #07f;
-                margin-bottom: 20px;
-                font-size: 24px;
-                border-bottom: 2px solid #07f;
-                padding-bottom: 10px;
-            }
-            
-            .input-group {
-                margin: 15px 0;
-                display: flex;
-                flex-direction: column;
-            }
-            
-            label {
-                font-weight: bold;
-                margin-bottom: 5px;
-                color: #ccc;
-            }
-            
-            input[type="text"], input[type="number"] {
-                margin: 5px;
-                padding: 15px;
-                font-size: 16px;
-                border-radius: 25px;
-                border: 2px solid #555;
-                background: #333;
-                color: #ccc;
-                transition: 0.3s;
-            }
-            
-            input[type="text"]:focus, input[type="number"]:focus {
-                border-color: #07f;
-                outline: 0;
-            }
-            
-            button {
-                cursor: pointer;
-                background: #6f42c1;
-                color: #fff;
-                border: 0;
-                margin: 10px 0;
-                padding: 15px 24px;
-                border-radius: 25px;
-                font-size: 16px;
-                transition: 0.3s;
-                width: 100%;
-            }
-            
-            button:hover {
-                background: #5a32a3;
-            }
-            
-            button:focus {
-                border-color: #07f;
-                outline: 0;
-            }
-            
-            .results {
-                background-color: #333;
-                padding: 20px;
-                border-radius: 25px;
-                margin-top: 20px;
-                border: 2px solid #555;
-            }
-            
-            .round-section {
-                margin: 15px 0;
-                padding: 15px;
-                background-color: #444;
-                border-radius: 15px;
-                border-left: 4px solid #07f;
-            }
-            
-            .round-section h4 {
-                color: #ccc;
-                margin-top: 0;
-            }
-            
-            .round-section h3 {
-                color: #ccc;
-                margin-top: 0;
-            }
-            
-            .prob-display {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 10px;
-                margin: 10px 0;
-            }
-            
-            .prob-item {
-                text-align: center;
-                padding: 8px;
-                background-color: #555;
-                border-radius: 15px;
-                border: 1px solid #666;
-            }
-            
-            .prob-label {
-                font-size: 11px;
-                color: #aaa;
-                margin-bottom: 4px;
-            }
-            
-            .prob-value {
-                font-size: 14px;
-                font-weight: bold;
-                color: #ccc;
-            }
-            
-            .vig-value {
-                color: #ff6b6b;
-            }
-            
-            .no-vig-value {
-                color: #4CAF50;
-            }
-            
-            .payout-results p {
-                background-color: #444;
-                padding: 15px;
-                margin: 8px 0;
-                border-radius: 15px;
-                border-left: 4px solid #4CAF50;
-                font-weight: bold;
-                color: #ccc;
-            }
-            
-            .ev-results p {
-                background-color: #444;
-                padding: 15px;
-                margin: 8px 0;
-                border-radius: 15px;
-                border-left: 4px solid #07f;
-                font-weight: bold;
-                color: #ccc;
-            }
-            
-            .positive-ev {
-                border-left-color: #4CAF50 !important;
-                background-color: #1e3a1e !important;
-                color: #4CAF50 !important;
-            }
-            
-            .negative-ev {
-                border-left-color: #ff6b6b !important;
-                background-color: #3a1e1e !important;
-                color: #ff6b6b !important;
-            }
-            
-            @media (max-width: 768px) {
-                .main-container {
-                    grid-template-columns: 1fr;
-                    gap: 20px;
-                }
-                
-                .prob-display {
-                    grid-template-columns: 1fr;
-                    gap: 5px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="main-container">
-            <h1 style="grid-column: 1 / -1;">UFC Combined EV & Payout Calculator</h1>
-            
-            <!-- Left Side - No-Vig Calculator -->
-            <div class="calculator-section">
-                <h2 class="section-title">No-Vig Probability Calculator</h2>
-                
-                <div class="input-group">
-                    <label>Round 2</label>
-                    <input type="text" id="input2yes" placeholder="Odds for fight to reach round 2 (e.g., +150 or -200)">
-                    <input type="text" id="input2no" placeholder="Odds for fight to NOT reach round 2">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 3</label>
-                    <input type="text" id="input3yes" placeholder="Odds for fight to reach round 3">
-                    <input type="text" id="input3no" placeholder="Odds for fight to NOT reach round 3">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 4</label>
-                    <input type="text" id="input4yes" placeholder="Odds for fight to reach round 4">
-                    <input type="text" id="input4no" placeholder="Odds for fight to NOT reach round 4">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 5</label>
-                    <input type="text" id="input5yes" placeholder="Odds for fight to reach round 5">
-                    <input type="text" id="input5no" placeholder="Odds for fight to NOT reach round 5">
-                </div>
-                
-                <button onclick="calculateIP()">Calculate No-Vig Probabilities</button>
-                
-                <div id="novig-results" class="results"></div>
-            </div>
-            
-            <!-- Right Side - Payout Calculator -->
-            <div class="calculator-section">
-                <h2 class="section-title">Round Finish Payout & EV Calculator</h2>
-                
-                <div class="input-group">
-                    <label>Round 1 Finish Odds</label>
-                    <input type="number" id="round1input" placeholder="Odds for Round 1 finish">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 2 Finish Odds</label>
-                    <input type="number" id="round2input" placeholder="Odds for Round 2 finish">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 3 Finish Odds</label>
-                    <input type="number" id="round3input" placeholder="Odds for Round 3 finish">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 4 Finish Odds</label>
-                    <input type="number" id="round4input" placeholder="Odds for Round 4 finish">
-                </div>
-                
-                <div class="input-group">
-                    <label>Round 5 Finish Odds</label>
-                    <input type="number" id="round5input" placeholder="Odds for Round 5 finish">
-                </div>
-                
-                <button onclick="calculatePayout()">Calculate Payouts ($100 Bet)</button>
-                <button onclick="calculateEV()">Calculate Expected Value</button>
-                <button onclick="alertPayouts()">Alert Payouts</button>
-                
-                <div id="payout-results" class="results payout-results"></div>
-            </div>
-        </div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UFC EV Calculator</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+margin: 0;
+padding: 20px;
+background: #0a0a0a;
+min-height: 100vh;
+ }
+h1 {
+text-align: center;
+color: #ffffff;
+margin-bottom: 10px;
+ }
+.subtitle {
+text-align: center;
+color: #888888;
+margin-bottom: 30px;
+font-style: italic;
+ }
+.main-container {
+max-width: 900px;
+margin: 0 auto;
+background: #1a1a1a;
+padding: 30px;
+border-radius: 10px;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+border: 1px solid #333333;
+ }
+.toggle-section {
+text-align: center;
+margin-bottom: 30px;
+padding: 20px;
+background: #222222;
+border-radius: 8px;
+border: 1px solid #333333;
+}
+.toggle-section h3 {
+color: #8a2be2;
+margin-bottom: 15px;
+}
+.toggle-buttons {
+display: flex;
+justify-content: center;
+gap: 10px;
+}
+.toggle-btn {
+background: #333333;
+color: white;
+padding: 10px 20px;
+border: 1px solid #8a2be2;
+border-radius: 5px;
+font-size: 16px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.toggle-btn.active {
+background: #8a2be2;
+}
+.toggle-btn:hover {
+background: #444444;
+}
+.toggle-btn.active:hover {
+background: #9a3bef;
+}
+.section-title {
+text-align: center;
+color: #ffffff;
+margin-bottom: 20px;
+font-size: 24px;
+border-bottom: 2px solid #8a2be2;
+padding-bottom: 10px;
+ }
+.round-section {
+margin: 20px 0;
+padding: 20px;
+background: #222222;
+border-radius: 8px;
+border-left: 4px solid #8a2be2;
+ }
+.round-title {
+font-size: 18px;
+font-weight: bold;
+color: #ffffff;
+margin-bottom: 15px;
+ }
+.input-row {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 15px;
+margin-bottom: 10px;
+ }
+.input-group {
+display: flex;
+flex-direction: column;
+ }
+label {
+font-weight: bold;
+margin-bottom: 5px;
+color: #cccccc;
+font-size: 12px;
+ }
+input[type="text"], input[type="number"] {
+padding: 10px;
+border: 1px solid #333333;
+border-radius: 5px;
+font-size: 16px;
+background: #1a1a1a;
+color: #ffffff;
+ }
+input[type="text"]:focus, input[type="number"]:focus {
+border-color: #8a2be2;
+outline: none;
+ }
+.checkbox-section {
+margin: 20px 0;
+padding: 15px;
+background: #222222;
+border-radius: 5px;
+text-align: center;
+ }
+.checkbox-section label {
+color: #ffffff;
+font-size: 14px;
+ }
+button {
+background: #333333;
+color: white;
+padding: 15px 30px;
+border: 1px solid #8a2be2;
+border-radius: 5px;
+font-size: 18px;
+cursor: pointer;
+margin: 20px auto;
+display: block;
+width: 300px;
+ }
+button:hover {
+background: #444444;
+ }
+.home-btn {
+background: #8a2be2;;
+border: 1px solid #8a2be2;;
+width: 200px;
+margin-top: 30px;
+}
+.home-btn:hover {
+background: #943ae8;;
+}
+.results {
+background: #1a1a1a;
+padding: 20px;
+border-radius: 8px;
+margin-top: 20px;
+border: 1px solid #333333;
+ }
+.ev-results {
+margin-top: 20px;
+ }
+.ev-results h3 {
+color: #8a2be2;
+border-bottom: 2px solid #8a2be2;
+padding-bottom: 10px;
+ }
+.ev-item {
+background-color: #222222;
+padding: 15px;
+margin: 10px 0;
+border-radius: 5px;
+border-left: 4px solid #8a2be2;
+font-weight: bold;
+color: #ffffff;
+display: flex;
+justify-content: space-between;
+align-items: center;
+ }
+.positive-ev {
+border-left-color: #28a745 !important;
+background-color: #1a2e1a !important;
+color: #28a745 !important;
+ }
+.negative-ev {
+border-left-color: #dc3545 !important;
+background-color: #2e1a1a !important;
+color: #dc3545 !important;
+ }
+.prob-section, .payout-section {
+margin-top: 20px;
+padding: 15px;
+background-color: #222222;
+border-radius: 5px;
+border: 1px solid #333333;
+color: #ffffff;
+ }
+.prob-section h4, .payout-section h4 {
+color: #8a2be2;
+margin-bottom: 10px;
+border-bottom: 1px solid #8a2be2;
+padding-bottom: 5px;
+ }
+.prob-grid, .payout-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 10px;
+ }
+.prob-item, .payout-item {
+text-align: center;
+padding: 10px;
+background-color: #1a1a1a;
+border-radius: 4px;
+border: 1px solid #333333;
+ }
+.prob-label, .payout-label {
+font-size: 12px;
+color: #888888;
+margin-bottom: 5px;
+ }
+.prob-value, .payout-value {
+font-size: 14px;
+font-weight: bold;
+color: #ffffff;
+ }
+@media (max-width: 768px) {
+.input-row {
+grid-template-columns: 1fr;
+gap: 10px;
+ }
+.prob-grid, .payout-grid {
+grid-template-columns: 1fr;
+ }
+.toggle-buttons {
+flex-direction: column;
+align-items: center;
+}
+ }
+</style>
+</head>
+<body>
+<div class="main-container">
+<h1>UFC EV Calculator</h1>
+<p class="subtitle">All calculations are done with 100 karma wagers</p>
+
+<div class="toggle-section">
+<h3>Fight Duration</h3>
+<div class="toggle-buttons">
+<button class="toggle-btn" id="toggle3" onclick="toggleRounds(3)">3 Rounds</button>
+<button class="toggle-btn active" id="toggle5" onclick="toggleRounds(5)">5 Rounds</button>
+</div>
+</div>
+
+<div class="round-section">
+<div class="round-title">Round 1</div>
+<div class="input-row">
+<div class="input-group"></div>
+<div class="input-group"></div>
+<div class="input-group">
+<label>Round 1 Real App Odds</label>
+<input type="number" id="r1finish" placeholder="e.g., 250">
+</div>
+</div>
+</div>
+
+<div class="round-section">
+<div class="round-title">Round 2</div>
+<div class="input-row">
+<div class="input-group">
+<label>Sportsbook Odds (Reaches R2)</label>
+<input type="text" id="r2yes" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Sportsbook Odds (Doesn't Reach R2)</label>
+<input type="text" id="r2no" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Round 2 Real App Odds</label>
+<input type="number" id="r2finish" placeholder="e.g., 250">
+</div>
+</div>
+</div>
+
+<div class="round-section">
+<div class="round-title">Round 3</div>
+<div class="input-row">
+<div class="input-group">
+<label>Sportsbook Odds (Reaches R3)</label>
+<input type="text" id="r3yes" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Sportsbook Odds (Doesn't Reach R3)</label>
+<input type="text" id="r3no" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Round 3 Real App Odds</label>
+<input type="number" id="r3finish" placeholder="e.g., 250">
+</div>
+</div>
+</div>
+
+<div class="round-section" id="round4">
+<div class="round-title">Round 4</div>
+<div class="input-row">
+<div class="input-group">
+<label>Sportsbook Odds (Reaches R4)</label>
+<input type="text" id="r4yes" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Sportsbook Odds (Doesn't Reach R4)</label>
+<input type="text" id="r4no" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Round 4 Real App Odds</label>
+<input type="number" id="r4finish" placeholder="e.g., 250">
+</div>
+</div>
+</div>
+
+<div class="round-section" id="round5">
+<div class="round-title">Round 5</div>
+<div class="input-row">
+<div class="input-group">
+<label>Sportsbook Odds (Reaches R5)</label>
+<input type="text" id="r5yes" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Sportsbook Odds (Doesn't Reach R5)</label>
+<input type="text" id="r5no" placeholder="e.g., +150 or -200">
+</div>
+<div class="input-group">
+<label>Round 5 Real App Odds</label>
+<input type="number" id="r5finish" placeholder="e.g., 250">
+</div>
+</div>
+</div>
+
+<div class="checkbox-section">
+<label>
+<input type="checkbox" id="showDetails" style="margin-right: 10px;">
+Show implied probabilities and payout details
+</label>
+</div>
+
+<button onclick="calculateAll()">Calculate Expected Values</button>
+
+<div id="results" class="results" style="display:none;"></div>
+
+<button class="home-btn" onclick="goHome()">🏠 Home</button>
+</div>
+
+<script>
+let currentRounds = 5;
+
+function toggleRounds(rounds) {
+    currentRounds = rounds;
+    
+    // Update toggle button styles
+    document.getElementById('toggle3').classList.remove('active');
+    document.getElementById('toggle5').classList.remove('active');
+    document.getElementById('toggle' + rounds).classList.add('active');
+    
+    // Show/hide round sections
+    if (rounds === 3) {
+        document.getElementById('round4').style.display = 'none';
+        document.getElementById('round5').style.display = 'none';
+    } else {
+        document.getElementById('round4').style.display = 'block';
+        document.getElementById('round5').style.display = 'block';
+    }
+    
+    // Clear results if shown
+    document.getElementById("results").style.display = 'none';
+}
+
+function goHome() {
+    // You can customize this to navigate to your actual home page
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        // If no history, you can redirect to a specific URL
+        // window.location.href = '/';
+        alert('No previous page in history. Add your home page URL in the goHome() function.');
+    }
+}
+
+// Helper functions
+function americanToDecimal(odds) {
+    odds = Number(odds);
+    return odds > 0 ? (odds + 100) / 100 : 100 / Math.abs(odds);
+}
+
+function noVigProbability(yesOdds, noOdds) {
+    const decYes = americanToDecimal(yesOdds);
+    const decNo = americanToDecimal(noOdds);
+    const invYes = 1 / decYes;
+    const invNo = 1 / decNo;
+    const total = invYes + invNo;
+    return invYes / total;
+}
+
+function calculateProfit(odds, bet) {
+    if (odds > 0) {
+        return (odds / 100) * bet;
+    } else {
+        return (100 / Math.abs(odds)) * bet;
+    }
+}
+
+function calculateAll() {
+    const betAmount = 100;
+    const maxRounds = currentRounds;
+    
+    // Get inputs based on current round setting
+    const inputs = {};
+    const finishOdds = {};
+    
+    // Always need R1
+    finishOdds[1] = Number(document.getElementById("r1finish").value);
+    
+    // Get inputs for rounds 2 through maxRounds
+    for (let i = 2; i <= maxRounds; i++) {
+        const yesInput = document.getElementById(`r${i}yes`);
+        const noInput = document.getElementById(`r${i}no`);
+        const finishInput = document.getElementById(`r${i}finish`);
         
-        <script>
-            // No-Vig Calculator Functions
-            function calculateIP(){
-                var odds2yes = parseFloat(document.getElementById("input2yes").value);
-                var odds2no = parseFloat(document.getElementById("input2no").value);
-                var odds3yes = parseFloat(document.getElementById("input3yes").value);
-                var odds3no = parseFloat(document.getElementById("input3no").value);
-                var odds4yes = parseFloat(document.getElementById("input4yes").value);
-                var odds4no = parseFloat(document.getElementById("input4no").value);
-                var odds5yes = parseFloat(document.getElementById("input5yes").value);
-                var odds5no = parseFloat(document.getElementById("input5no").value);
+        if (yesInput && noInput && finishInput) {
+            inputs[`r${i}yes`] = parseFloat(yesInput.value);
+            inputs[`r${i}no`] = parseFloat(noInput.value);
+            finishOdds[i] = Number(finishInput.value);
+        }
+    }
 
-                if (isNaN(odds2yes) || isNaN(odds2no) || isNaN(odds3yes) || isNaN(odds3no) || 
-                    isNaN(odds4yes) || isNaN(odds4no) || isNaN(odds5yes) || isNaN(odds5no)) {
-                    alert("Please enter valid odds for all fields.");
-                    return;
-                }
-                
-                function convertOddsToImpliedProb(odds) {
-                    if (odds > 0) {
-                        return 100 / (odds + 100);
-                    } else {
-                        return Math.abs(odds) / (Math.abs(odds) + 100);
-                    }
-                }
-                
-                function calculateNoVigProbs(probYes, probNo) {
-                    var totalProb = probYes + probNo;
-                    var vig = ((totalProb - 1) * 100);
-                    var noVigYes = probYes / totalProb;
-                    var noVigNo = probNo / totalProb;
-                    
-                    return {
-                        vigYes: probYes,
-                        vigNo: probNo,
-                        noVigYes: noVigYes,
-                        noVigNo: noVigNo,
-                        vig: vig
-                    };
-                }
+    // Validate inputs
+    for (let i = 2; i <= maxRounds; i++) {
+        if (isNaN(inputs[`r${i}yes`]) || isNaN(inputs[`r${i}no`])) {
+            alert(`Please enter valid sportsbook odds for round ${i}.`);
+            return;
+        }
+    }
 
-                // Calculate for each round
-                var round2 = calculateNoVigProbs(
-                    convertOddsToImpliedProb(odds2yes),
-                    convertOddsToImpliedProb(odds2no)
-                );
-                
-                var round3 = calculateNoVigProbs(
-                    convertOddsToImpliedProb(odds3yes),
-                    convertOddsToImpliedProb(odds3no)
-                );
-                
-                var round4 = calculateNoVigProbs(
-                    convertOddsToImpliedProb(odds4yes),
-                    convertOddsToImpliedProb(odds4no)
-                );
-                
-                var round5 = calculateNoVigProbs(
-                    convertOddsToImpliedProb(odds5yes),
-                    convertOddsToImpliedProb(odds5no)
-                );
+    for (let i = 1; i <= maxRounds; i++) {
+        if (isNaN(finishOdds[i])) {
+            alert(`Please enter valid app odds for round ${i} finish.`);
+            return;
+        }
+    }
 
-                // Store data for EV calculation
-                storedNoVigData = {
-                    round2: round2,
-                    round3: round3,
-                    round4: round4,
-                    round5: round5
-                };
+    // Calculate no-vig probabilities for reaching each round
+    const reachProb = { 1: 1 }; // Always reach round 1
+    for (let i = 2; i <= maxRounds; i++) {
+        reachProb[i] = noVigProbability(inputs[`r${i}yes`], inputs[`r${i}no`]);
+    }
 
-                // Display results
-                var resultsHTML = `
-                    <h3>Probability Analysis</h3>
-                    
-                    <div class="round-section">
-                        <h4>Round 2</h4>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R2 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round2.vigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R2 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round2.noVigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Vig</div>
-                                <div class="prob-value">${round2.vig.toFixed(2)}%</div>
-                            </div>
-                        </div>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R1 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round2.vigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R1 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round2.noVigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item"></div>
-                        </div>
+    // Calculate true round finish probabilities
+    const finishProb = {};
+    finishProb[1] = 1 - reachProb[2];
+    
+    for (let i = 2; i < maxRounds; i++) {
+        let prob = 1;
+        for (let j = 2; j <= i; j++) {
+            prob *= reachProb[j];
+        }
+        prob *= (1 - (reachProb[i + 1] || 0));
+        finishProb[i] = prob;
+    }
+    
+    // Last round probability
+    if (maxRounds > 1) {
+        let prob = 1;
+        for (let j = 2; j <= maxRounds; j++) {
+            prob *= reachProb[j];
+        }
+        finishProb[maxRounds] = prob;
+    }
+
+    // Calculate payouts and EVs
+    const payouts = {};
+    const evs = {};
+    
+    for (let i = 1; i <= maxRounds; i++) {
+        payouts[i] = calculateProfit(finishOdds[i], betAmount);
+        evs[i] = (finishProb[i] * payouts[i]) - ((1 - finishProb[i]) * betAmount);
+    }
+
+    // Check if details should be shown
+    const showDetails = document.getElementById("showDetails").checked;
+
+    // Find the best EV
+    const evValues = Object.values(evs);
+    const maxEV = Math.max(...evValues);
+
+    // Helper function to get EV class
+    function getEVClass(ev) {
+        if (ev > 0) return 'positive-ev';
+        if (ev < 0) return 'negative-ev';
+        return '';
+    }
+
+    // Build results HTML
+    let resultsHTML = `
+        <div class="ev-results">
+            <h3>Expected Value Analysis (${maxRounds} Rounds)</h3>
+    `;
+    
+    for (let i = 1; i <= maxRounds; i++) {
+        resultsHTML += `
+            <div class="ev-item ${getEVClass(evs[i])}">
+                <span>Round ${i} Finish ${evs[i] === maxEV ? '✅' : ''}</span>
+                <span>${evs[i].toFixed(2)}</span>
+            </div>
+        `;
+    }
+    
+    resultsHTML += '</div>';
+
+    if (showDetails) {
+        resultsHTML += `
+            <div class="prob-section">
+                <h4>No-Vig Round Finish Probabilities</h4>
+                <div class="prob-grid">
+        `;
+        
+        let totalProb = 0;
+        for (let i = 1; i <= maxRounds; i++) {
+            totalProb += finishProb[i];
+            resultsHTML += `
+                <div class="prob-item">
+                    <div class="prob-label">Round ${i} Finish</div>
+                    <div class="prob-value">${(finishProb[i] * 100).toFixed(2)}%</div>
+                </div>
+            `;
+        }
+        
+        resultsHTML += `
+                    <div class="prob-item">
+                        <div class="prob-label">Total</div>
+                        <div class="prob-value">${(totalProb * 100).toFixed(2)}%</div>
                     </div>
-                    
-                    <div class="round-section">
-                        <h4>Round 3</h4>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R3 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round3.vigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R3 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round3.noVigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Vig</div>
-                                <div class="prob-value">${round3.vig.toFixed(2)}%</div>
-                            </div>
-                        </div>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R2 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round3.vigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R2 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round3.noVigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="round-section">
-                        <h4>Round 4</h4>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R4 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round4.vigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R4 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round4.noVigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Vig</div>
-                                <div class="prob-value">${round4.vig.toFixed(2)}%</div>
-                            </div>
-                        </div>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R3 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round4.vigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R3 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round4.noVigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="round-section">
-                        <h4>Round 5</h4>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R5 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round5.vigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Reaches R5 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round5.noVigYes * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Vig</div>
-                                <div class="prob-value">${round5.vig.toFixed(2)}%</div>
-                            </div>
-                        </div>
-                        <div class="prob-display">
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R4 (With Vig)</div>
-                                <div class="prob-value vig-value">${(round5.vigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item">
-                                <div class="prob-label">Finishes R4 (No Vig)</div>
-                                <div class="prob-value no-vig-value">${(round5.noVigNo * 100).toFixed(2)}%</div>
-                            </div>
-                            <div class="prob-item"></div>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById("novig-results").innerHTML = resultsHTML;
-            }
+                </div>
+            </div>
 
-            // Payout Calculator Functions
-            let round1payout, round2payout, round3payout, round4payout, round5payout;
-            let storedNoVigData = null;
+            <div class="payout-section">
+                <h4>Payout Analysis (100 karma bets)</h4>
+                <div class="payout-grid">
+        `;
+        
+        for (let i = 1; i <= maxRounds; i++) {
+            resultsHTML += `
+                <div class="payout-item">
+                    <div class="payout-label">Round ${i} Finish</div>
+                    <div class="payout-value">${payouts[i].toFixed(2)} karma</div>
+                </div>
+            `;
+        }
+        
+        resultsHTML += `
+                </div>
+            </div>
+        `;
+    }
 
-            function calculateProfit(odds, bet) {
-                if (odds > 0) {
-                    return (odds / 100) * bet;
-                } else {
-                    return (100 / Math.abs(odds)) * bet;
-                }
-            }
+    document.getElementById("results").innerHTML = resultsHTML;
+    document.getElementById("results").style.display = 'block';
+}
 
-            function calculatePayout() {
-                const betAmount = 100;
-                const round1odds = Number(document.getElementById("round1input").value);
-                const round2odds = Number(document.getElementById("round2input").value);
-                const round3odds = Number(document.getElementById("round3input").value);
-                const round4odds = Number(document.getElementById("round4input").value);
-                const round5odds = Number(document.getElementById("round5input").value);
-
-                if (isNaN(round1odds) || isNaN(round2odds) || isNaN(round3odds) || 
-                    isNaN(round4odds) || isNaN(round5odds)) {
-                    alert("Please enter valid odds for all rounds.");
-                    return;
-                }
-
-                round1payout = calculateProfit(round1odds, betAmount);
-                round2payout = calculateProfit(round2odds, betAmount);
-                round3payout = calculateProfit(round3odds, betAmount);
-                round4payout = calculateProfit(round4odds, betAmount);
-                round5payout = calculateProfit(round5odds, betAmount);
-
-                const resultsHTML = `
-                    <h3>Payout Analysis ($100 Bet)</h3>
-                    <p>Round 1 Finish Profit: ${round1payout.toFixed(2)}</p>
-                    <p>Round 2 Finish Profit: ${round2payout.toFixed(2)}</p>
-                    <p>Round 3 Finish Profit: ${round3payout.toFixed(2)}</p>
-                    <p>Round 4 Finish Profit: ${round4payout.toFixed(2)}</p>
-                    <p>Round 5 Finish Profit: ${round5payout.toFixed(2)}</p>
-                `;
-                
-                document.getElementById("payout-results").innerHTML = resultsHTML;
-            }
-
-            function calculateEV() {
-                // Check if we have payout data
-                if (typeof round1payout === 'undefined') {
-                    alert("Please calculate payouts first.");
-                    return;
-                }
-
-                // Check if we have no-vig probability data
-                if (!storedNoVigData) {
-                    alert("Please calculate no-vig probabilities first.");
-                    return;
-                }
-
-                const betAmount = 100;
-
-                // Calculate round finish probabilities from no-vig data
-                // Each round finish probability comes directly from the "NOT reach next round" no-vig probability
-                // Round 1 finish = probability of NOT reaching round 2
-                const round1FinishProb = storedNoVigData.round2.noVigNo;
-                
-                // Round 2 finish = probability of NOT reaching round 3  
-                const round2FinishProb = storedNoVigData.round3.noVigNo;
-                
-                // Round 3 finish = probability of NOT reaching round 4
-                const round3FinishProb = storedNoVigData.round4.noVigNo;
-                
-                // Round 4 finish = probability of NOT reaching round 5
-                const round4FinishProb = storedNoVigData.round5.noVigNo;
-                
-                // Round 5 finish = probability of reaching round 5 (if it reaches R5, it finishes in R5)
-                const round5FinishProb = storedNoVigData.round5.noVigYes;
-
-                // Calculate EV for each round using: (prob of win * win amount) - (prob of loss * loss amount)
-                const round1EV = (round1FinishProb * round1payout) - ((1 - round1FinishProb) * betAmount);
-                const round2EV = (round2FinishProb * round2payout) - ((1 - round2FinishProb) * betAmount);
-                const round3EV = (round3FinishProb * round3payout) - ((1 - round3FinishProb) * betAmount);
-                const round4EV = (round4FinishProb * round4payout) - ((1 - round4FinishProb) * betAmount);
-                const round5EV = (round5FinishProb * round5payout) - ((1 - round5FinishProb) * betAmount);
-
-                // Display results with color coding
-                const resultsHTML = `
-                    <h3>Expected Value Analysis ($100 Bet)</h3>
-                    <div class="ev-results">
-                        <p class="${round1EV >= 0 ? 'positive-ev' : 'negative-ev'}">
-                            Round 1 Finish EV: ${round1EV.toFixed(2)} (${(round1FinishProb * 100).toFixed(1)}% prob)
-                        </p>
-                        <p class="${round2EV >= 0 ? 'positive-ev' : 'negative-ev'}">
-                            Round 2 Finish EV: ${round2EV.toFixed(2)} (${(round2FinishProb * 100).toFixed(1)}% prob)
-                        </p>
-                        <p class="${round3EV >= 0 ? 'positive-ev' : 'negative-ev'}">
-                            Round 3 Finish EV: ${round3EV.toFixed(2)} (${(round3FinishProb * 100).toFixed(1)}% prob)
-                        </p>
-                        <p class="${round4EV >= 0 ? 'positive-ev' : 'negative-ev'}">
-                            Round 4 Finish EV: ${round4EV.toFixed(2)} (${(round4FinishProb * 100).toFixed(1)}% prob)
-                        </p>
-                        <p class="${round5EV >= 0 ? 'positive-ev' : 'negative-ev'}">
-                            Round 5 Finish EV: ${round5EV.toFixed(2)} (${(round5FinishProb * 100).toFixed(1)}% prob)
-                        </p>
-                    </div>
-                `;
-                
-                document.getElementById("payout-results").innerHTML = resultsHTML;
-            }
-
-            function alertPayouts() {
-                if (typeof round1payout === 'undefined' || typeof round2payout === 'undefined') {
-                    alert("Please click 'Calculate Payouts' first.");
-                    return;
-                }
-                
-                alert(
-                    `Round 1 Finish Profit: $${round1payout.toFixed(2)}\n` +
-                    `Round 2 Finish Profit: $${round2payout.toFixed(2)}\n` +
-                    `Round 3 Finish Profit: $${round3payout.toFixed(2)}\n` +
-                    `Round 4 Finish Profit: $${round4payout.toFixed(2)}\n` +
-                    `Round 5 Finish Profit: $${round5payout.toFixed(2)}`
-                );
-            }
-        </script>
-    </body>
+// Initialize with 5 rounds
+toggleRounds(5);
+</script>
+</body>
 </html>
