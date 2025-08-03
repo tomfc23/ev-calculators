@@ -346,10 +346,13 @@ Show implied probabilities and payout details
 
 <button onclick="calculateAll()">Calculate Expected Values</button>
 
+<button onclick="clearAll()" style="background: #dc3545; border: 1px solid #dc3545; width: 200px; margin-top: 10px;">Clear</button>
+
 <div id="results" class="results" style="display:none;"></div>
 
-<button class="home-btn" onclick="goHome()">🏠 Home</button>
+
 </div>
+<button class="home-btn" onclick="goHome()">🏠 Home</button>
 
 <script>
 let currentRounds = 5;
@@ -373,6 +376,7 @@ function toggleRounds(rounds) {
     
     // Clear results if shown
     document.getElementById("results").style.display = 'none';
+    autoSetOdds()
 }
 
 function goHome() {
@@ -386,19 +390,19 @@ function goHome() {
     }
 }
 
-// Helper functions
-function americanToDecimal(odds) {
-    odds = Number(odds);
-    return odds > 0 ? (odds + 100) / 100 : 100 / Math.abs(odds);
+// Improved implied probability calculations from the first file
+function convertToImpliedProbability(odds) {
+    if (odds >= 0) {
+        return 100 / (odds + 100);
+    } else {
+        return Math.abs(odds) / (Math.abs(odds) + 100);
+    }
 }
 
-function noVigProbability(yesOdds, noOdds) {
-    const decYes = americanToDecimal(yesOdds);
-    const decNo = americanToDecimal(noOdds);
-    const invYes = 1 / decYes;
-    const invNo = 1 / decNo;
-    const total = invYes + invNo;
-    return invYes / total;
+function calculateNoVigProbability(yesOdds, noOdds) {
+    const yesIP = convertToImpliedProbability(yesOdds);
+    const noIP = convertToImpliedProbability(noOdds);
+    return yesIP / (yesIP + noIP);
 }
 
 function calculateProfit(odds, bet) {
@@ -448,32 +452,33 @@ function calculateAll() {
         }
     }
 
-    // Calculate no-vig probabilities for reaching each round
-    const reachProb = { 1: 1 }; // Always reach round 1
+    // Calculate no-vig probabilities for reaching each round using improved method
+    const novigReachProb = {};
     for (let i = 2; i <= maxRounds; i++) {
-        reachProb[i] = noVigProbability(inputs[`r${i}yes`], inputs[`r${i}no`]);
+        novigReachProb[i] = calculateNoVigProbability(inputs[`r${i}yes`], inputs[`r${i}no`]);
     }
 
-    // Calculate true round finish probabilities
+    // Calculate round finish probabilities using the same logic as the implied probability calculator
     const finishProb = {};
-    finishProb[1] = 1 - reachProb[2];
     
-    for (let i = 2; i < maxRounds; i++) {
-        let prob = 1;
-        for (let j = 2; j <= i; j++) {
-            prob *= reachProb[j];
-        }
-        prob *= (1 - (reachProb[i + 1] || 0));
-        finishProb[i] = prob;
+    if (maxRounds === 3) {
+        finishProb[1] = 1 - novigReachProb[2];
+        finishProb[2] = novigReachProb[2] - novigReachProb[3];
+        finishProb[3] = novigReachProb[3];
+    } else {
+        finishProb[1] = 1 - novigReachProb[2];
+        finishProb[2] = novigReachProb[2] - novigReachProb[3];
+        finishProb[3] = novigReachProb[3] - novigReachProb[4];
+        finishProb[4] = novigReachProb[4] - novigReachProb[5];
+        finishProb[5] = novigReachProb[5];
     }
-    
-    // Last round probability
-    if (maxRounds > 1) {
-        let prob = 1;
-        for (let j = 2; j <= maxRounds; j++) {
-            prob *= reachProb[j];
+
+    // Validate that all finish probabilities are non-negative
+    for (let i = 1; i <= maxRounds; i++) {
+        if (finishProb[i] < 0) {
+            alert(`Error: Negative probability calculated for Round ${i}. Please check your input odds for consistency.`);
+            return;
         }
-        finishProb[maxRounds] = prob;
     }
 
     // Calculate payouts and EVs
@@ -506,9 +511,11 @@ function calculateAll() {
     `;
     
     for (let i = 1; i <= maxRounds; i++) {
+        const isLastRound = i === maxRounds;
+        const roundLabel = isLastRound ? `Round ${i}+ / Decision` : `Round ${i} Finish`;
         resultsHTML += `
             <div class="ev-item ${getEVClass(evs[i])}">
-                <span>Round ${i} Finish ${evs[i] === maxEV ? '✅' : ''}</span>
+                <span>${roundLabel} ${evs[i] === maxEV ? '✅' : ''}</span>
                 <span>${evs[i].toFixed(2)}</span>
             </div>
         `;
@@ -526,9 +533,11 @@ function calculateAll() {
         let totalProb = 0;
         for (let i = 1; i <= maxRounds; i++) {
             totalProb += finishProb[i];
+            const isLastRound = i === maxRounds;
+            const roundLabel = isLastRound ? `Round ${i}+ / Decision` : `Round ${i} Finish`;
             resultsHTML += `
                 <div class="prob-item">
-                    <div class="prob-label">Round ${i} Finish</div>
+                    <div class="prob-label">${roundLabel}</div>
                     <div class="prob-value">${(finishProb[i] * 100).toFixed(2)}%</div>
                 </div>
             `;
@@ -548,9 +557,11 @@ function calculateAll() {
         `;
         
         for (let i = 1; i <= maxRounds; i++) {
+            const isLastRound = i === maxRounds;
+            const roundLabel = isLastRound ? `Round ${i}+ / Decision` : `Round ${i} Finish`;
             resultsHTML += `
                 <div class="payout-item">
-                    <div class="payout-label">Round ${i} Finish</div>
+                    <div class="payout-label">${roundLabel}</div>
                     <div class="payout-value">${payouts[i].toFixed(2)} karma</div>
                 </div>
             `;
@@ -566,8 +577,48 @@ function calculateAll() {
     document.getElementById("results").style.display = 'block';
 }
 
+function clearAll() {
+    // Clear all input fields
+    document.getElementById('r1finish').value = '';
+    document.getElementById('r2yes').value = '';
+    document.getElementById('r2no').value = '';
+    document.getElementById('r2finish').value = '';
+    document.getElementById('r3yes').value = '';
+    document.getElementById('r3no').value = '';
+    document.getElementById('r3finish').value = '';
+    document.getElementById('r4yes').value = '';
+    document.getElementById('r4no').value = '';
+    document.getElementById('r4finish').value = '';
+    document.getElementById('r5yes').value = '';
+    document.getElementById('r5no').value = '';
+    document.getElementById('r5finish').value = '';
+    
+    // Hide results
+    document.getElementById("results").style.display = 'none';
+    
+    // Uncheck the details checkbox
+    document.getElementById("showDetails").checked = false;
+}
+
+function autoSetOdds(){
+    if (currentRounds == 5) {
+        document.getElementById('r1finish').value = '350';
+        document.getElementById('r2finish').value = '300';
+        document.getElementById('r3finish').value = '250';
+        document.getElementById('r4finish').value = '200';
+        document.getElementById('r5finish').value = '150';
+    }else if (currentRounds == 3){
+        document.getElementById('r1finish').value = '250';
+        document.getElementById('r2finish').value = '200';
+        document.getElementById('r3finish').value = '150';
+    }else{
+        alert("error")
+    }
+}
+
 // Initialize with 5 rounds
 toggleRounds(5);
+autoSetOdds()
 </script>
 </body>
 </html>
