@@ -117,10 +117,6 @@
             border-color: var(--primary);
         }
         
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
-        
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -369,7 +365,6 @@
 
     <script>
         // Constants
-   // Constants
 const TOTAL_ENTRANTS = 4600;
 const ENTRY_COST = 100;
 const PAYOUT_CAP_4_OF_4 = 800;
@@ -584,25 +579,6 @@ function handleInputChange(event) {
         updateNoVigOdds(parseInt(game));
     } else if (field === 'selectionPct') {
         games[game].teams[team].selectionPct = parseFloat(value);
-        
-        // Validate that percentages sum to 100
-        validateSelectionPercentages(parseInt(game));
-    }
-}
-
-// Validate that selection percentages sum to 100
-function validateSelectionPercentages(gameIndex) {
-    const teams = games[gameIndex].teams;
-    const sum = teams.reduce((acc, team) => acc + parseFloat(team.selectionPct || 0), 0);
-    
-    // Adjust if necessary to ensure sum is 100
-    if (Math.abs(sum - 100) > 0.1) {
-        // Distribute the difference
-        const diff = (100 - sum) / teams.length;
-        teams.forEach((team, i) => {
-            team.selectionPct = parseFloat((parseFloat(team.selectionPct) + diff).toFixed(2));
-            document.getElementById(`pct-${gameIndex}-${i}`).value = team.selectionPct;
-        });
     }
 }
 
@@ -990,6 +966,6 @@ function handleTableSort(event) {
 
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', initApp);
-    </script>
+</script>
 </body>
 </html>
