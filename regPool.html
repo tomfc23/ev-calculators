@@ -436,11 +436,9 @@
 
     <div class="instructions" id="instructions-container">
       <h2 class="section-title">Instructions</h2>
-      <p>1. Enter the details for each of the 2 games including odds (American format), and selection percentages.</p>
-      <p>2. Mark games as "Decided" to set actual winners and see updated EVs for remaining games.</p>
-      <p>3. Click "Calculate" to see all combinations with their expected values, probabilities, and potential payouts.</p>
-      <p>4. Payouts are only awarded for correctly predicting both matchups.</p>
-      <p>5. Payout formula: Min((Total entrants * 100) / Number of winners, 400) - Maximum payout is capped at 400.</p>
+      <p>1. Enter odds (American format) and selection percentages for each game.</p>
+      <p>2. Mark games as "Decided" to set actual winners and see updated EVs.</p>
+      <p>3. Click "Calculate" to see expected values for all combinations.</p>
     </div>
 
     <form id="calculator-form">
@@ -715,15 +713,19 @@
         
         if (game.decided) {
           if (game.team1Winner && game.team2Winner) {
+            // PUSH: Both sides win, everyone gets this pick correct
             game.team1.noVigProbability = 1.0;
             game.team2.noVigProbability = 1.0;
           } else if (game.team1Winner) {
+            // Team1 wins, Team2 loses
             game.team1.noVigProbability = 1.0;
             game.team2.noVigProbability = 0.0;
           } else if (game.team2Winner) {
+            // Team2 wins, Team1 loses
             game.team1.noVigProbability = 0.0;
             game.team2.noVigProbability = 1.0;
           } else {
+            // No winner selected (shouldn't happen but fallback)
             game.team1.noVigProbability = 0.0;
             game.team2.noVigProbability = 0.0;
           }
@@ -744,10 +746,19 @@
         const team2ProbDisplay = document.getElementById(`game-${gameId}-team2-prob-display`);
 
         if (game.decided) {
-          team1OddsDisplay.textContent = `Result: ${game.team1Winner ? 'WON' : 'LOST'}`;
-          team1ProbDisplay.textContent = `Probability: ${(game.team1.noVigProbability * 100).toFixed(0)}%`;
-          team2OddsDisplay.textContent = `Result: ${game.team2Winner ? 'WON' : 'LOST'}`;
-          team2ProbDisplay.textContent = `Probability: ${(game.team2.noVigProbability * 100).toFixed(0)}%`;
+          if (game.team1Winner && game.team2Winner) {
+            // Push scenario
+            team1OddsDisplay.textContent = `Result: PUSH`;
+            team1ProbDisplay.textContent = `Probability: 100% (Push)`;
+            team2OddsDisplay.textContent = `Result: PUSH`;
+            team2ProbDisplay.textContent = `Probability: 100% (Push)`;
+          } else {
+            // Regular win/loss
+            team1OddsDisplay.textContent = `Result: ${game.team1Winner ? 'WON' : 'LOST'}`;
+            team1ProbDisplay.textContent = `Probability: ${(game.team1.noVigProbability * 100).toFixed(0)}%`;
+            team2OddsDisplay.textContent = `Result: ${game.team2Winner ? 'WON' : 'LOST'}`;
+            team2ProbDisplay.textContent = `Probability: ${(game.team2.noVigProbability * 100).toFixed(0)}%`;
+          }
         } else {
           team1OddsDisplay.textContent = `No-Vig Odds: ${this.probabilityToAmericanOdds(game.team1.noVigProbability)}`;
           team1ProbDisplay.textContent = `No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%`;
@@ -811,14 +822,25 @@
       }
 
       calculateSelections(combos) {
-        const totals = this.state.games.map(g => g.team1.selectionPercentage + g.team2.selectionPercentage);
         return combos.map(combo => {
           let pct = 1;
+          
           combo.teams.forEach((team, i) => {
+            const game = this.state.games[i];
             const side = combo.side[i];
-            const total = totals[i];
-            pct *= total ? (this.state.games[i][side].selectionPercentage / total) : 0.5;
+            
+            if (game.decided && game.team1Winner && game.team2Winner) {
+              // Push: Everyone who bet on this game gets it right
+              // So this combination gets the full percentage of people who bet on either side
+              const totalGameSelections = game.team1.selectionPercentage + game.team2.selectionPercentage;
+              pct *= (totalGameSelections / 100);
+            } else {
+              // Normal game: only the people who picked this specific side
+              const total = game.team1.selectionPercentage + game.team2.selectionPercentage;
+              pct *= total ? (game[side].selectionPercentage / total) : 0.5;
+            }
           });
+          
           return {
             ...combo,
             selectionPercentage: pct * 100,
