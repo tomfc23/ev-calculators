@@ -24,10 +24,12 @@
     .clear-history-btn{background:#dc3545;margin-top:10px}
     .clear-history-btn:hover{background:#c82333}
     #historySection{display:none}
+    .cfb-checkbox{color:#ff6b35;font-weight:bold}
   </style>
 </head>
 <body>
   <h1>EV Calc</h1>
+  <label class="cfb-checkbox"><input type="checkbox" id="cfbCheckbox">CFB Calculations</label><br>
   <label><input type="checkbox" id="toggleRealOddsCheckbox">Show Real Odds Inputs</label><br>
   <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
   <label><input type="checkbox" id="toggleHistory">Show History</label><br>
@@ -73,6 +75,7 @@
       fracP = o => `${round(o>0?100:Math.abs(o))}/${round(o>0?100+o:100-o)}`,
       amToDec = a => a>0?a/100+1:100/Math.abs(a)+1,
       realOdds = (i,d=100)=>$(i).value?parseOdds(i)||d:d,
+      isCFB = () => $('cfbCheckbox').checked,
       payout = (r,w)=>{
         let m=$('maxBetInput').value;w=+w;
         let win=(m=="50-5"||m=="100-5")?5:10;
@@ -152,8 +155,11 @@
       // Use the labels stored in the calculation, or fallback to generic names
       var label1 = c.label1 || "Side 1";
       var label2 = c.label2 || "Side 2";
+      var wager1Label = c.cfbMode ? "10 Wager" : "Wager 0";
+      var wager2Label = "Max Bet";
       
       return [
+        `${c.cfbMode ? 'CFB ' : ''}Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
         `Real Odds: ${c.realOdds1} vs ${c.realOdds2}`,
         `Max Bet: ${c.maxBet}`,
@@ -163,16 +169,16 @@
         `&nbsp;&nbsp;${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
         ``,
         `Payouts:`,
-        `&nbsp;&nbsp;${label1} (Wager 0): ${c.winnings1Wager0}`,
-        `&nbsp;&nbsp;${label1} (Max Bet): ${c.winnings1WagerMax}`,
-        `&nbsp;&nbsp;${label2} (Wager 0): ${c.winnings2Wager0}`,
-        `&nbsp;&nbsp;${label2} (Max Bet): ${c.winnings2WagerMax}`,
+        `&nbsp;&nbsp;${label1} (${wager1Label}): ${c.winnings1Wager0}`,
+        `&nbsp;&nbsp;${label1} (${wager2Label}): ${c.winnings1WagerMax}`,
+        `&nbsp;&nbsp;${label2} (${wager1Label}): ${c.winnings2Wager0}`,
+        `&nbsp;&nbsp;${label2} (${wager2Label}): ${c.winnings2WagerMax}`,
         ``,
         `Expected Values:`,
-        `&nbsp;&nbsp;${label1} (Wager 0): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
-        `&nbsp;&nbsp;${label1} (Max Bet): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
-        `&nbsp;&nbsp;${label2} (Wager 0): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
-        `&nbsp;&nbsp;${label2} (Max Bet): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
+        `&nbsp;&nbsp;${label1} (${wager1Label}): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;${label1} (${wager2Label}): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;${label2} (${wager1Label}): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
+        `&nbsp;&nbsp;${label2} (${wager2Label}): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
       ].join('<br>');
     }
 
@@ -180,8 +186,11 @@
       // Use the labels stored in the calculation, or fallback to generic names
       var label1 = c.label1 || "Side 1";
       var label2 = c.label2 || "Side 2";
+      var wager1Label = c.cfbMode ? "10 Wager" : "Wager 0";
+      var wager2Label = "Max Bet";
       
       return [
+        `${c.cfbMode ? 'CFB ' : ''}Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
         `Real Odds: ${c.realOdds1} vs ${c.realOdds2}`,
         `Max Bet: ${c.maxBet}`,
@@ -191,16 +200,16 @@
         `  ${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
         ``,
         `Payouts:`,
-        `  ${label1} (Wager 0): ${c.winnings1Wager0}`,
-        `  ${label1} (Max Bet): ${c.winnings1WagerMax}`,
-        `  ${label2} (Wager 0): ${c.winnings2Wager0}`,
-        `  ${label2} (Max Bet): ${c.winnings2WagerMax}`,
+        `  ${label1} (${wager1Label}): ${c.winnings1Wager0}`,
+        `  ${label1} (${wager2Label}): ${c.winnings1WagerMax}`,
+        `  ${label2} (${wager1Label}): ${c.winnings2Wager0}`,
+        `  ${label2} (${wager2Label}): ${c.winnings2WagerMax}`,
         ``,
         `Expected Values:`,
-        `  ${label1} (Wager 0): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
-        `  ${label1} (Max Bet): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
-        `  ${label2} (Wager 0): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
-        `  ${label2} (Max Bet): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
+        `  ${label1} (${wager1Label}): ${c.ev1Wager0}${c.ev1Wager0===c.maxEV?' ✅ BEST':''}`,
+        `  ${label1} (${wager2Label}): ${c.ev1WagerMax}${c.ev1WagerMax===c.maxEV?' ✅ BEST':''}`,
+        `  ${label2} (${wager1Label}): ${c.ev2Wager0}${c.ev2Wager0===c.maxEV?' ✅ BEST':''}`,
+        `  ${label2} (${wager2Label}): ${c.ev2WagerMax}${c.ev2WagerMax===c.maxEV?' ✅ BEST':''}`
       ].join('\n');
     }
     function copyToClipboard(i){
@@ -219,6 +228,7 @@
       if(sbo1===null||sbo2===null){alert('Please enter valid American odds for both sides.');return;}
       
       let labels = getNameLabels();
+      let cfbMode = isCFB();
       let ro1=realOdds('realOddsInput1'),ro2=realOdds('realOddsInput2'),
         maxBet=+$('maxBetInput').value.split('-')[0],
         prob1=imP(sbo1),prob2=imP(sbo2),tot=prob1+prob2,
@@ -227,32 +237,38 @@
         nvO2=nvP2<.5?round(100*(1-nvP2)/nvP2):-round(100*nvP2/(1-nvP2)),
         nvDP1=nvO1>0?100/(100+nvO1):Math.abs(nvO1)/(Math.abs(nvO1)+100),
         nvDP2=nvO2>0?100/(100+nvO2):Math.abs(nvO2)/(Math.abs(nvO2)+100),
-        w1w0=payout(ro1,0),w1wm=payout(ro1,maxBet),
-        w2w0=payout(ro2,0),w2wm=payout(ro2,maxBet),
+        // For CFB mode, use 10 wager instead of 0 wager
+        lowWager = cfbMode ? 10 : 0,
+        w1w0=payout(ro1,lowWager),w1wm=payout(ro1,maxBet),
+        w2w0=payout(ro2,lowWager),w2wm=payout(ro2,maxBet),
         fp1=fracP(nvO1),fp2=fracP(nvO2),
-        ev1w0=expV(w1w0,nvDP1,0,nvDP2),ev1wm=expV(w1wm,nvDP1,maxBet,nvDP2),
-        ev2w0=expV(w2w0,nvDP2,0,nvDP1),ev2wm=expV(w2wm,nvDP2,maxBet,nvDP1),
+        ev1w0=expV(w1w0,nvDP1,lowWager,nvDP2),ev1wm=expV(w1wm,nvDP1,maxBet,nvDP2),
+        ev2w0=expV(w2w0,nvDP2,lowWager,nvDP1),ev2wm=expV(w2wm,nvDP2,maxBet,nvDP1),
         evs=[ev1w0,ev1wm,ev2w0,ev2wm],maxEV=Math.max(...evs),
         showAll=$('toggleOutput').checked;
-      let calc={sportsbookOdds1:sbo1,sportsbookOdds2:sbo2,realOdds1:ro1,realOdds2:ro2,maxBet,noVigProb1:nvDP1.toFixed(4),noVigProb2:nvDP2.toFixed(4),fractionalProb1:fp1,fractionalProb2:fp2,winnings1Wager0:w1w0,winnings1WagerMax:w1wm,winnings2Wager0:w2w0,winnings2WagerMax:w2wm,ev1Wager0:ev1w0,ev1WagerMax:ev1wm,ev2Wager0:ev2w0,ev2WagerMax:ev2wm,maxEV,label1:labels[0],label2:labels[1]};
+      let calc={sportsbookOdds1:sbo1,sportsbookOdds2:sbo2,realOdds1:ro1,realOdds2:ro2,maxBet,noVigProb1:nvDP1.toFixed(4),noVigProb2:nvDP2.toFixed(4),fractionalProb1:fp1,fractionalProb2:fp2,winnings1Wager0:w1w0,winnings1WagerMax:w1wm,winnings2Wager0:w2w0,winnings2WagerMax:w2wm,ev1Wager0:ev1w0,ev1WagerMax:ev1wm,ev2Wager0:ev2w0,ev2WagerMax:ev2wm,maxEV,label1:labels[0],label2:labels[1],cfbMode:cfbMode};
       saveToHistory(calc);
+      
+      let wager1Label = cfbMode ? "10 Wager" : "Wager 0";
+      let wager2Label = "Max Bet";
+      
       let r='';
       if(showAll){
         r+=`${labels[0]} No-Vig American Odds: ${nvO1} (Decimal: ${amToDec(nvO1).toFixed(2)})<br>
         ${labels[1]} No-Vig American Odds: ${nvO2} (Decimal: ${amToDec(nvO2).toFixed(2)})<br>
-        ${labels[0]} Winnings (Wager 0): ${w1w0}<br>
-        ${labels[0]} Winnings (Max Bet): ${w1wm}<br>
-        ${labels[1]} Winnings (Wager 0): ${w2w0}<br>
-        ${labels[1]} Winnings (Max Bet): ${w2wm}<br>
+        ${labels[0]} Winnings (${wager1Label}): ${w1w0}<br>
+        ${labels[0]} Winnings (${wager2Label}): ${w1wm}<br>
+        ${labels[1]} Winnings (${wager1Label}): ${w2w0}<br>
+        ${labels[1]} Winnings (${wager2Label}): ${w2wm}<br>
         ${labels[0]} No-Vig Probability: ${nvP1.toFixed(4)}<br>
         ${labels[1]} No-Vig Probability: ${nvP2.toFixed(4)}<br>
         ${labels[0]} Fractional Probability: ${fp1}<br>
         ${labels[1]} Fractional Probability: ${fp2}<br>`;
       }
-      r+=`<strong>${labels[0]} Expected Value (Wager 0): ${ev1w0}${ev1w0===maxEV?' ✅':''}</strong><br>
-      <strong>${labels[0]} Expected Value (Max Bet): ${ev1wm}${ev1wm===maxEV?' ✅':''}</strong><br>
-      <strong>${labels[1]} Expected Value (Wager 0): ${ev2w0}${ev2w0===maxEV?' ✅':''}</strong><br>
-      <strong>${labels[1]} Expected Value (Max Bet): ${ev2wm}${ev2wm===maxEV?' ✅':''}</strong><br>`;
+      r+=`<strong>${labels[0]} Expected Value (${wager1Label}): ${ev1w0}${ev1w0===maxEV?' ✅':''}</strong><br>
+      <strong>${labels[0]} Expected Value (${wager2Label}): ${ev1wm}${ev1wm===maxEV?' ✅':''}</strong><br>
+      <strong>${labels[1]} Expected Value (${wager1Label}): ${ev2w0}${ev2w0===maxEV?' ✅':''}</strong><br>
+      <strong>${labels[1]} Expected Value (${wager2Label}): ${ev2wm}${ev2wm===maxEV?' ✅':''}</strong><br>`;
       $('result').innerHTML=r;
     }
     function clearInputs(){
@@ -260,6 +276,7 @@
       $('maxBetInput').value='100-10';
       $('toggleOutput').checked=false;
       $('toggleRealOddsCheckbox').checked=false;
+      $('cfbCheckbox').checked=false;
       $('result').innerHTML='';
       toggleRealOddsInputs();
     }
