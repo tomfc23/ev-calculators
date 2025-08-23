@@ -114,6 +114,11 @@ button:hover {
   transform: scale(1.2);
 }
 
+.cfb-checkbox {
+  color: #ff6b35;
+  font-weight: bold;
+}
+
 .custom-names {
   display: none;
   margin: 15px 0;
@@ -241,6 +246,7 @@ a {
             <option value="MLB">MLB</option>
             <option value="WNBA">WNBA</option>
             <option value="NFL">NFL</option>
+            <option value="CFB">CFB</option>
         </select>
     </div>
 
@@ -256,27 +262,31 @@ a {
     <script>
         const sportConfigs = {
             NBA: [
-                { hasRealOdds: false, maxBet: '200', title: 'NBA O/U', side1: 'Over', side2: 'Under' },
-                { hasRealOdds: false, maxBet: '200', title: 'NBA Moneyline', side1: 'Team 1', side2: 'Team 2' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'NBA 1st Quarter ML', side1: 'Team 1', side2: 'Team 2' }
+                { hasRealOdds: false, maxBet: '200', title: 'NBA O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: false, maxBet: '200', title: 'NBA Moneyline', side1: 'Team 1', side2: 'Team 2', isCFB: false },
+                { hasRealOdds: false, maxBet: '100-10', title: 'NBA 1st Quarter ML', side1: 'Team 1', side2: 'Team 2', isCFB: false }
             ],
             NHL: [
-                { hasRealOdds: false, maxBet: '200', title: 'NHL O/U', side1: 'Over', side2: 'Under' },
-                { hasRealOdds: false, maxBet: '200', title: 'NHL Moneyline', side1: 'Team 1', side2: 'Team 2' }
+                { hasRealOdds: false, maxBet: '200', title: 'NHL O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: false, maxBet: '200', title: 'NHL Moneyline', side1: 'Team 1', side2: 'Team 2', isCFB: false }
             ],
             MLB: [
-                { hasRealOdds: true, maxBet: '50-5', title: 'MLB hit streak', side1: 'Yes', side2: 'No' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'MLB O/U', side1: 'Over', side2: 'Under' },
-                { hasRealOdds: true, maxBet: '100-10', title: 'MLB Moneyline', side1: 'Team 1', side2: 'Team 2' },
-                { hasRealOdds: false, maxBet: '50-10', title: 'MLB RFI?', side1: 'Yes', side2: 'No' }
+                { hasRealOdds: true, maxBet: '50-5', title: 'MLB hit streak', side1: 'Yes', side2: 'No', isCFB: false },
+                { hasRealOdds: false, maxBet: '100-10', title: 'MLB O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: true, maxBet: '100-10', title: 'MLB Moneyline', side1: 'Team 1', side2: 'Team 2', isCFB: false },
+                { hasRealOdds: false, maxBet: '50-10', title: 'MLB RFI?', side1: 'Yes', side2: 'No', isCFB: false }
             ],
             WNBA: [
-                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA O/U', side1: 'Over', side2: 'Under' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA Spread', side1: 'Team 1', side2: 'Team 2' }
+                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: false, maxBet: '100-10', title: 'WNBA Spread', side1: 'Team 1', side2: 'Team 2', isCFB: false }
             ],
             NFL: [
-                { hasRealOdds: false, maxBet: '100-10', title: 'NFL O/U', side1: 'Over', side2: 'Under' },
-                { hasRealOdds: false, maxBet: '100-10', title: 'NFL Spread', side1: 'Team 1', side2: 'Team 2' }
+                { hasRealOdds: false, maxBet: '100-10', title: 'NFL O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: false, maxBet: '100-10', title: 'NFL Spread', side1: 'Team 1', side2: 'Team 2', isCFB: false }
+            ],
+            CFB: [
+                { hasRealOdds: false, maxBet: '100', title: 'CFB O/U', side1: 'Over', side2: 'Under', isCFB: true },
+                { hasRealOdds: false, maxBet: '100', title: 'CFB Spread', side1: 'Team 1', side2: 'Team 2', isCFB: true }
             ]
         };
 
@@ -307,6 +317,16 @@ a {
                         }
                     }, 0);
                 }
+
+                // Auto-check CFB checkbox if it's a CFB config
+                if (config.isCFB) {
+                    setTimeout(() => {
+                        const cfbCheckbox = document.getElementById(`${calcId}_cfb`);
+                        if (cfbCheckbox) {
+                            cfbCheckbox.checked = true;
+                        }
+                    }, 0);
+                }
             });
         }
 
@@ -315,8 +335,28 @@ a {
                 '50-5': '<option value="50-5" selected>50 (payout 5)</option>',
                 '50-10': '<option value="50-10" selected>50 (payout 10)</option>',
                 '100-10': '<option value="100-10" selected>100 (payout 10)</option>',
-                '200': '<option value="200" selected>200</option>'
+                '200': '<option value="200" selected>200</option>',
+                '50': '<option value="50" selected>50</option>',
+                '100': '<option value="100" selected>100</option>',
+                '300': '<option value="300">300</option>'
             };
+
+            let maxBetHTML = '';
+            if (config.isCFB) {
+                // CFB simplified options
+                maxBetHTML = `
+                    <option value="50">50</option>
+                    <option value="100" ${config.maxBet === '100' ? 'selected' : ''}>100</option>
+                    <option value="200">200</option>
+                    <option value="300">300</option>
+                `;
+            } else {
+                // Traditional options
+                maxBetHTML = maxBetOptions[config.maxBet] + Object.entries(maxBetOptions)
+                    .filter(([key]) => key !== config.maxBet)
+                    .map(([key, value]) => value.replace('selected', ''))
+                    .join('');
+            }
 
             return `
                 <div class="calculator">
@@ -334,6 +374,15 @@ a {
                         <label>
                             <input type="checkbox" id="${calcId}_realOdds" onchange="toggleRealOdds('${calcId}')">
                             Show Real Odds Inputs
+                        </label>
+                    </div>
+                    ` : ''}
+                    
+                    ${config.isCFB ? `
+                    <div class="checkbox-container">
+                        <label class="cfb-checkbox">
+                            <input type="checkbox" id="${calcId}_cfb">
+                            CFB Calculations
                         </label>
                     </div>
                     ` : ''}
@@ -361,7 +410,7 @@ a {
                     ` : ''}
 
                     <select id="${calcId}_maxBet">
-                        ${maxBetOptions[config.maxBet]}
+                        ${maxBetHTML}
                     </select>
                     <label>Max Bet Amount</label>
 
@@ -393,6 +442,11 @@ a {
             if (realOdds2) realOdds2.disabled = !isChecked;
         }
 
+        function isCFBMode(calcId) {
+            const cfbCheckbox = document.getElementById(`${calcId}_cfb`);
+            return cfbCheckbox && cfbCheckbox.checked;
+        }
+
         function calculateImpliedProbability(odds) {
             if (odds > 0) return 100 / (100 + odds);
             return Math.abs(odds) / (Math.abs(odds) + 100);
@@ -406,27 +460,47 @@ a {
             return Math.round(value * 100) / 100;
         }
 
-        function calculatePayout(realOdds, wager, maxBetValue) {
+        function calculatePayout(realOdds, wager, maxBetValue, cfbMode = false) {
             let winnings;
-            if (maxBetValue === "50-5" || maxBetValue === "100-5") {
-                winnings = 5;
+            
+            if (cfbMode) {
+                // CFB mode - simplified payout calculation
+                if (wager === 0 || wager === 10) {
+                    if (realOdds > 0) {
+                        winnings = roundToWhole((10 / 100) * realOdds);
+                    } else {
+                        winnings = roundToWhole((100 / Math.abs(realOdds)) * 10);
+                    }
+                } else {
+                    if (realOdds > 0) {
+                        winnings = (wager / 100) * realOdds;
+                    } else {
+                        winnings = (100 / Math.abs(realOdds)) * wager;
+                    }
+                }
             } else {
-                winnings = 10;
-            }
+                // Traditional mode
+                if (maxBetValue === "50-5" || maxBetValue === "100-5") {
+                    winnings = 5;
+                } else {
+                    winnings = 10;
+                }
 
-            if (wager === 0) {
-                if (realOdds > 0) {
-                    winnings = roundToWhole((winnings / 100) * realOdds);
+                if (wager === 0) {
+                    if (realOdds > 0) {
+                        winnings = roundToWhole((winnings / 100) * realOdds);
+                    } else {
+                        winnings = roundToWhole((100 / Math.abs(realOdds)) * winnings);
+                    }
                 } else {
-                    winnings = roundToWhole((100 / Math.abs(realOdds)) * winnings);
-                }
-            } else {
-                if (realOdds > 0) {
-                    winnings = (wager / 100) * realOdds;
-                } else {
-                    winnings = (100 / Math.abs(realOdds)) * wager;
+                    if (realOdds > 0) {
+                        winnings = (wager / 100) * realOdds;
+                    } else {
+                        winnings = (100 / Math.abs(realOdds)) * wager;
+                    }
                 }
             }
+            
             return roundToWhole(winnings);
         }
 
@@ -448,6 +522,7 @@ a {
 
         function calculateEV(calcId) {
             const config = getCalculatorConfig(calcId);
+            const cfbMode = isCFBMode(calcId);
             const name1 = document.getElementById(`${calcId}_name1`)?.value || config.side1;
             const name2 = document.getElementById(`${calcId}_name2`)?.value || config.side2;
             const odds1 = parseInt(document.getElementById(`${calcId}_odds1`).value);
@@ -486,34 +561,38 @@ a {
                 ? 100 / (100 + noVigOdds2)
                 : Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
 
-            const winnings1Wager0 = calculatePayout(realOdds1, 0, maxBetValue);
-            const winnings1WagerMax = calculatePayout(realOdds1, maxBet, maxBetValue);
-            const winnings2Wager0 = calculatePayout(realOdds2, 0, maxBetValue);
-            const winnings2WagerMax = calculatePayout(realOdds2, maxBet, maxBetValue);
+            // For CFB mode, use 10 wager instead of 0 wager
+            const lowWager = cfbMode ? 10 : 0;
+
+            const winnings1Wager0 = calculatePayout(realOdds1, lowWager, maxBetValue, cfbMode);
+            const winnings1WagerMax = calculatePayout(realOdds1, maxBet, maxBetValue, cfbMode);
+            const winnings2Wager0 = calculatePayout(realOdds2, lowWager, maxBetValue, cfbMode);
+            const winnings2WagerMax = calculatePayout(realOdds2, maxBet, maxBetValue, cfbMode);
 
             const fractionalProb1 = calculateFractionalProbability(noVigOdds1);
             const fractionalProb2 = calculateFractionalProbability(noVigOdds2);
 
-            const ev1Wager0 = calculateExpectedValue(winnings1Wager0, noVigDecimalProb1, 0, noVigDecimalProb2);
+            const ev1Wager0 = calculateExpectedValue(winnings1Wager0, noVigDecimalProb1, lowWager, noVigDecimalProb2);
             const ev1WagerMax = calculateExpectedValue(winnings1WagerMax, noVigDecimalProb1, maxBet, noVigDecimalProb2);
-            const ev2Wager0 = calculateExpectedValue(winnings2Wager0, noVigDecimalProb2, 0, noVigDecimalProb1);
+            const ev2Wager0 = calculateExpectedValue(winnings2Wager0, noVigDecimalProb2, lowWager, noVigDecimalProb1);
             const ev2WagerMax = calculateExpectedValue(winnings2WagerMax, noVigDecimalProb2, maxBet, noVigDecimalProb1);
 
             const evValues = [ev1Wager0, ev1WagerMax, ev2Wager0, ev2WagerMax];
             const maxEV = Math.max(...evValues);
             
             const showAllOutputs = document.getElementById(`${calcId}_showAll`).checked;
-            const useCustomNames = document.getElementById(`${calcId}_customNames`).checked;
+            const wager1Label = cfbMode ? "10 Wager" : "Wager 0";
+            const wager2Label = "Max Bet";
 
             let resultHTML = '';
             if (showAllOutputs) {
                 resultHTML += `
                     ${name1} No-Vig American Odds: ${noVigOdds1}<br>
                     ${name2} No-Vig American Odds: ${noVigOdds2}<br>
-                    ${name1} Winnings (Wager 0): ${winnings1Wager0}<br>
-                    ${name1} Winnings (Max Bet): ${winnings1WagerMax}<br>
-                    ${name2} Winnings (Wager 0): ${winnings2Wager0}<br>
-                    ${name2} Winnings (Max Bet): ${winnings2WagerMax}<br>
+                    ${name1} Winnings (${wager1Label}): ${winnings1Wager0}<br>
+                    ${name1} Winnings (${wager2Label}): ${winnings1WagerMax}<br>
+                    ${name2} Winnings (${wager1Label}): ${winnings2Wager0}<br>
+                    ${name2} Winnings (${wager2Label}): ${winnings2WagerMax}<br>
                     ${name1} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
                     ${name2} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
                     ${name1} Fractional Probability: ${fractionalProb1}<br>
@@ -521,15 +600,17 @@ a {
             }
 
             resultHTML += `
-                <strong>${name1} Expected Value (Wager 0): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${name1} Expected Value (Max Bet): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${name2} Expected Value (Wager 0): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
-                <strong>${name2} Expected Value (Max Bet): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
+                <strong>${name1} Expected Value (${wager1Label}): ${ev1Wager0}${ev1Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name1} Expected Value (${wager2Label}): ${ev1WagerMax}${ev1WagerMax === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name2} Expected Value (${wager1Label}): ${ev2Wager0}${ev2Wager0 === maxEV ? ' ✅' : ''}</strong><br>
+                <strong>${name2} Expected Value (${wager2Label}): ${ev2WagerMax}${ev2WagerMax === maxEV ? ' ✅' : ''}</strong><br>`;
 
             document.getElementById(`${calcId}_result`).innerHTML = resultHTML;
         }
 
         function clearCalculator(calcId) {
+            const config = getCalculatorConfig(calcId);
+            
             const name1 = document.getElementById(`${calcId}_name1`);
             const name2 = document.getElementById(`${calcId}_name2`);
             if (name1) name1.value = '';
@@ -548,6 +629,11 @@ a {
             
             const realOddsCheckbox = document.getElementById(`${calcId}_realOdds`);
             if (realOddsCheckbox) realOddsCheckbox.checked = false;
+            
+            const cfbCheckbox = document.getElementById(`${calcId}_cfb`);
+            if (cfbCheckbox) {
+                cfbCheckbox.checked = config.isCFB; // Reset to default state
+            }
             
             document.getElementById(`${calcId}_result`).innerHTML = '';
             
