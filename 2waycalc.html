@@ -273,18 +273,58 @@
     }
     function clearInputs(){
       inputs.forEach(i=>$(i).value='');
-      $('maxBetInput').value='100-10';
       $('toggleOutput').checked=false;
       $('toggleRealOddsCheckbox').checked=false;
       $('cfbCheckbox').checked=false;
       $('result').innerHTML='';
       toggleRealOddsInputs();
+      updateMaxBetOptions(); // Update max bet options when clearing
     }
+    function updateMaxBetOptions(){
+      let cfbMode = isCFB();
+      let maxBetSelect = $('maxBetInput');
+      let currentValue = maxBetSelect.value;
+      
+      if(cfbMode){
+        // CFB mode - simplified options
+        maxBetSelect.innerHTML = `
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+          <option value="300">300</option>
+        `;
+        // Set default to 100 or keep current if it's a valid CFB option
+        if(['50','100','200','300'].includes(currentValue.split('-')[0])){
+          maxBetSelect.value = currentValue.split('-')[0];
+        } else {
+          maxBetSelect.value = '100';
+        }
+      } else {
+        // Traditional mode - full options
+        maxBetSelect.innerHTML = `
+          <option value="50-5">50 (payout 5)</option>
+          <option value="50-10">50 (payout 10)</option>
+          <option value="100-10" selected>100</option>
+          <option value="100-5">100 (payout 5)</option>
+          <option value="200">200</option>
+          <option value="300">300</option>
+        `;
+        // Set default back to 100-10 or try to match previous selection
+        if(currentValue && ['50-5','50-10','100-10','100-5','200','300'].includes(currentValue)){
+          maxBetSelect.value = currentValue;
+        } else {
+          maxBetSelect.value = '100-10';
+        }
+      }
+    }
+
     window.addEventListener('DOMContentLoaded',()=>{
       toggleRealOddsInputs();
       $('toggleRealOddsCheckbox').onchange=toggleRealOddsInputs;
       $('toggleHistory').onchange=toggleHistorySection;
+      $('cfbCheckbox').onchange=updateMaxBetOptions;
       updateHistoryDisplay();
+      updateMaxBetOptions();
     });
 
     document.getElementById("namePresetSelect").value = "team"; 
