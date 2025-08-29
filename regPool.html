@@ -412,6 +412,49 @@
     color: #ef4444;
   }
 
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 280px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -140px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    border: 1px solid #555;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
   @media (min-width: 768px) {
     .games-grid.two-games {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -443,13 +486,13 @@
       </div>
       
       <div class="game-selector">
-        <label class="form-label">Entry Fee</label>
+        <label class="form-label">Entry Fee <span class="tooltip">❓<span class="tooltiptext">The cost to enter the pool. This is strictly for CFB pools as you cannot 0 on non-top25 games, adding 10 karma to the entry fee for each of these games</span></span></label>
         <select class="form-select" id="entry-fee-select">
-          <option value="100">$100</option>
-          <option value="110">$110</option>
-          <option value="120">$120</option>
-          <option value="130">$130</option>
-          <option value="140">$140</option>
+          <option value="100">100 karma</option>
+          <option value="110">110 karma</option>
+          <option value="120">120 karma</option>
+          <option value="130">130 karma</option>
+          <option value="140">140 karma</option>
         </select>
       </div>
     </div>
