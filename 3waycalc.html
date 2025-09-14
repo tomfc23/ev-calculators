@@ -93,31 +93,78 @@
         .highest-ev {
             background-color: rgba(76, 175, 80, 0.2);
         }
+        
+        .realOddsInput {
+            display: block; 
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+        
+        .realOddsInput.hidden {
+            display: none;
+        }
+        
+        .toggle-container {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #222;
+            border-radius: 10px;
+        }
+        
+        .toggle-container label {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            margin: 0 15px;
+        }
+        
+        .toggle-container input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+        
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
 <body class="light-mode">
     <h1>3-way EV Calc</h1>
     
-   
-    
-    <label>
-        <input type="checkbox" id="toggleOutput">
-        Show All Outputs
-    </label>
-    <br>
+    <div class="toggle-container">
+        <label for="realOddsToggle">
+            <input type="checkbox" id="realOddsToggle" onchange="toggleRealOdds()" checked>
+            Use Real App Odds
+        </label>
+        <label for="toggleOutput">
+            <input type="checkbox" id="toggleOutput">
+            Show All Outputs
+        </label>
+    </div>
     
     <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 Sportsbook Odds">
     <br>
-    <input type="text" id="realOddsInput1" placeholder="Enter Team 1 Real App Odds">
+    <div class="realOddsInput" id="realOddsContainer1">
+        <input type="text" id="realOddsInput1" placeholder="Enter Team 1 Real App Odds">
+    </div>
     <br>
+    
     <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 Sportsbook Odds">
     <br>
-    <input type="text" id="realOddsInput2" placeholder="Enter Team 2 Real App Odds">
+    <div class="realOddsInput" id="realOddsContainer2">
+        <input type="text" id="realOddsInput2" placeholder="Enter Team 2 Real App Odds">
+    </div>
     <br>
+    
     <input type="text" id="sportsbookOddsInput3" placeholder="Enter Team 3 Sportsbook Odds">
     <br>
-    <input type="text" id="realOddsInput3" placeholder="Enter Team 3 Real App Odds">
+    <div class="realOddsInput" id="realOddsContainer3">
+        <input type="text" id="realOddsInput3" placeholder="Enter Team 3 Real App Odds">
+    </div>
     <br>
     
     <select id="maxBetInput">
@@ -143,6 +190,35 @@
 
     <script>
         let currentOddsFormat = 'american'; // Default to American odds
+
+        function toggleRealOdds() {
+            const realOddsCheckbox = document.getElementById("realOddsToggle");
+            const isChecked = realOddsCheckbox.checked;
+            
+            // Show/hide all real odds input containers
+            for (let i = 1; i <= 3; i++) {
+                const container = document.getElementById(`realOddsContainer${i}`);
+                const input = document.getElementById(`realOddsInput${i}`);
+                
+                if (isChecked) {
+                    container.classList.remove('hidden');
+                    container.style.display = 'block';
+                } else {
+                    container.classList.add('hidden');
+                    container.style.display = 'none';
+                    // Clear the input when hiding
+                    input.value = '';
+                }
+            }
+            
+            // Clear results when toggling
+            document.getElementById('result').innerHTML = '';
+        }
+
+        // Initialize the toggle state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleRealOdds();
+        });
 
         function setOddsFormat(format) {
             currentOddsFormat = format;
@@ -252,15 +328,34 @@
 
         function calculateNoVigOdds() {
             const sportsbookOdds1 = parseOddsInput(document.getElementById('sportsbookOddsInput1').value);
-            const realOdds1 = parseOddsInput(document.getElementById('realOddsInput1').value);
             const sportsbookOdds2 = parseOddsInput(document.getElementById('sportsbookOddsInput2').value);
-            const realOdds2 = parseOddsInput(document.getElementById('realOddsInput2').value);
             const sportsbookOdds3 = parseOddsInput(document.getElementById('sportsbookOddsInput3').value);
-            const realOdds3 = parseOddsInput(document.getElementById('realOddsInput3').value);
+            
+            const realOddsToggle = document.getElementById("realOddsToggle");
+            
+            let realOdds1, realOdds2, realOdds3;
+            
+            if (realOddsToggle.checked) {
+                // Use actual real odds inputs
+                realOdds1 = parseOddsInput(document.getElementById('realOddsInput1').value);
+                realOdds2 = parseOddsInput(document.getElementById('realOddsInput2').value);
+                realOdds3 = parseOddsInput(document.getElementById('realOddsInput3').value);
+                
+                // Check if real odds are provided when toggle is on
+                if (realOdds1 === null || realOdds2 === null || realOdds3 === null) {
+                    document.getElementById('result').innerHTML = 'Please enter valid Real App odds for all teams when Real Odds Toggle is enabled.';
+                    return;
+                }
+            } else {
+                // Use even money odds (+100) when toggle is off
+                realOdds1 = 100;
+                realOdds2 = 100;
+                realOdds3 = 100;
+            }
 
-            // Check if any odds are null (invalid input)
-            if ([sportsbookOdds1, realOdds1, sportsbookOdds2, realOdds2, sportsbookOdds3, realOdds3].some(odds => odds === null)) {
-                document.getElementById('result').innerHTML = 'Please enter valid odds for all teams.';
+            // Check if sportsbook odds are valid
+            if ([sportsbookOdds1, sportsbookOdds2, sportsbookOdds3].some(odds => odds === null)) {
+                document.getElementById('result').innerHTML = 'Please enter valid sportsbook odds for all teams.';
                 return;
             }
 
@@ -415,7 +510,11 @@
             document.getElementById('realOddsInput3').value = '';
             document.getElementById('maxBetInput').value = '100'; // Reset to default 100
             document.getElementById('toggleOutput').checked = false; // Uncheck the checkbox
+            document.getElementById('realOddsToggle').checked = false; // Reset real odds toggle
             document.getElementById('result').innerHTML = ''; // Clear the result display
+            
+            // Reset the real odds visibility
+            toggleRealOdds();
         }
 
         // Light/Dark Mode Toggle
@@ -428,6 +527,7 @@
                 modeToggle.textContent = body.classList.contains('dark-mode') ? 'Switch to Light Mode' : 'Switch to Dark Mode';
             });
         }
+
     </script>
 </body>
 
