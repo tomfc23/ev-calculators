@@ -510,10 +510,6 @@
         <!-- Games will be rendered here -->
       </div>
 
-      <div class="controls" id="controls-container">
-        <!-- Controls will be dynamically added based on game count -->
-      </div>
-
       <button type="button" class="btn calculate-btn" id="calculate-btn">Calculate Results</button>
     </form>
 
@@ -546,8 +542,7 @@
           maxPayout: 400,
           entryFee: 100,
           sortBy: 'expectedValue',
-          sortDirection: 'desc',
-          showExtras: false
+          sortDirection: 'desc'
         };
 
         try {
@@ -573,7 +568,7 @@
         if (entryFeeSelect) {
           entryFeeSelect.addEventListener('change', (e) => {
             this.state.entryFee = parseInt(e.target.value);
-            // No need to reinitialize games, just recalculate if results are showing
+            // Recalculate if results are showing
             if (document.getElementById('results-container').style.display !== 'none') {
               this.calculateAllCombinations();
             }
@@ -643,6 +638,10 @@
 
         container.innerHTML = '';
         console.log('Rendering games:', this.state.games.length);
+
+        // Update grid class
+        container.className = `games-grid ${this.state.gameCount === 2 ? 'two-games' : 
+                                          this.state.gameCount === 3 ? 'three-games' : 'four-games'}`;
 
         this.state.games.forEach(game => {
           const gameCard = document.createElement('div');
@@ -913,7 +912,6 @@
             
             if (game.decided && game.team1Winner && game.team2Winner) {
               // Push: Everyone who bet on this game gets it right
-              // So this combination gets the full percentage of people who bet on either side
               const totalGameSelections = game.team1.selectionPercentage + game.team2.selectionPercentage;
               pct *= (totalGameSelections / 100);
             } else {
@@ -950,7 +948,7 @@
               this.state.maxPayout
             );
             const winP = combo.winProbability / 100;
-            // Updated EV formula: (win_prob * payout) - (loss_prob * entry_fee)
+            // EV formula: (win_prob * payout) - (loss_prob * entry_fee)
             const ev = (winP * payout) - ((1 - winP) * this.state.entryFee);
             return { ...combo, payout, expectedValue: ev };
           });
@@ -958,10 +956,7 @@
       }
 
       calculateFourGamePayouts(combos) {
-        // Generate all possible outcomes for 4 games
-        const allOutcomes = this.generateAllOutcomesFour();
-        
-        // Calculate selection counts for each combo
+        // Calculate selection counts for each user combo
         let counts = {};
         combos.forEach(combo => {
           const pickString = combo.side.map(s => s === 'team1' ? '0' : '1').join('');
@@ -977,14 +972,32 @@
         return combos.map(combo => {
           let EV = 0;
           const pickString = combo.side.map(s => s === 'team1' ? '0' : '1').join('');
+          let pickProb = 1;
+          
+          combo.teams.forEach((team, i) => {
+            const game = this.state.games[i];
+            const total = game.team1.selectionPercentage + game.team2.selectionPercentage || 100;
+            pickProb *= (team.selectionPercentage / total);
+          });
 
-          allOutcomes.forEach(outcome => {
+          let tier1PayoutSum = 0;
+          let tier2PayoutSum = 0;
+          let tier1Count = 0;
+          let tier2Count = 0;
+          let winProb = 0;
+
+          // Generate all possible outcomes (2^4 = 16 outcomes)
+          for (let outcome = 0; outcome < 16; outcome++) {
+            const outcomeArray = [];
+            for (let i = 0; i < 4; i++) {
+              outcomeArray.push((outcome >> i) & 1); // Extract bit i
+            }
+            
             // Calculate outcome probability
             let p = 1;
             for (let i = 0; i < 4; i++) {
               const game = this.state.games[i];
-              const gameOutcome = outcome[i];
-              if (gameOutcome === '0') {
+              if (outcomeArray[i] === 0) {
                 p *= game.team1.noVigProbability;
               } else {
                 p *= game.team2.noVigProbability;
@@ -992,7 +1005,15 @@
             }
 
             // Calculate matches for this user pick vs outcome
-            const matches = this.calculateMatchesFour(pickString, outcome);
+            let matches = 0;
+            for (let i = 0; i < 4; i++) {
+              const userChoice = pickString[i];
+              const gameOutcome = outcomeArray[i].toString();
+              if (userChoice === gameOutcome) {
+                matches++;
+              }
+            }
+            
             const isTier1 = matches === 4;
             const isTier2 = matches === 3;
 
@@ -1002,9 +1023,16 @@
 
             combos.forEach(otherCombo => {
               const otherPickString = otherCombo.side.map(s => s === 'team1' ? '0' : '1').join('');
-              const otherMatches = this.calculateMatchesFour(otherPickString, outcome);
-              const comboCount = counts[otherPickString] || 0;
+              let otherMatches = 0;
+              for (let i = 0; i < 4; i++) {
+                const otherChoice = otherPickString[i];
+                const gameOutcome = outcomeArray[i].toString();
+                if (otherChoice === gameOutcome) {
+                  otherMatches++;
+                }
+              }
               
+              const comboCount = counts[otherPickString] || 0;
               if (otherMatches === 4) {
                 w1 += comboCount;
               } else if (otherMatches === 3) {
@@ -1013,57 +1041,44 @@
             });
 
             // Add current user if they qualify
-            const userMatches = this.calculateMatchesFour(pickString, outcome);
-            if (userMatches === 4) w1++;
-            if (userMatches === 3) w2++;
+            if (matches === 4) w1++;
+            if (matches === 3) w2++;
 
             // Calculate payout
             const pool = 100 * this.state.totalEntrants;
             const shares = w1 + 0.5 * w2;
             const shareValue = shares > 0 ? pool / shares : 0;
 
-            // Updated gain calculation: use entry fee instead of hardcoded 100
-            let gain = -this.state.entryFee;
-            if (isTier1) gain = Math.min(Math.floor(shareValue), 800);
-            else if (isTier2) gain = Math.min(Math.floor(shareValue / 2), 600);
+            let gain = -100; // Entry fee hardcoded to 100 for 4-game mode
+            if (isTier1) {
+              const payout = Math.min(Math.floor(shareValue), 800);
+              gain = payout;
+              tier1PayoutSum += payout * p;
+              tier1Count += p;
+              winProb += p;
+            } else if (isTier2) {
+              const payout = Math.min(Math.floor(shareValue / 2), 600);
+              gain = payout;
+              tier2PayoutSum += payout * p;
+              tier2Count += p;
+            }
 
             EV += p * gain;
-          });
+          }
+
+          // Calculate weighted average payouts
+          const finalTier1Payout = tier1Count > 0 ? Math.round(tier1PayoutSum / tier1Count) : 0;
+          const finalTier2Payout = tier2Count > 0 ? Math.round(tier2PayoutSum / tier2Count) : 0;
 
           return { 
             ...combo, 
             expectedValue: EV,
+            tier1Payout: finalTier1Payout,
+            tier2Payout: finalTier2Payout,
+            winProbability: winProb * 100,
             pickString
           };
         });
-      }
-
-      generateAllOutcomesFour() {
-        let outcomes = [''];
-        
-        for (let i = 0; i < 4; i++) {
-          const newOutcomes = [];
-          outcomes.forEach(outcome => {
-            newOutcomes.push(outcome + '0'); // L
-            newOutcomes.push(outcome + '1'); // R
-          });
-          outcomes = newOutcomes;
-        }
-        
-        return outcomes;
-      }
-
-      calculateMatchesFour(userPick, outcome) {
-        let matches = 0;
-        for (let i = 0; i < 4; i++) {
-          const userChoice = userPick[i];
-          const gameOutcome = outcome[i];
-          
-          if (userChoice === gameOutcome) {
-            matches++;
-          }
-        }
-        return matches;
       }
 
       renderResults() {
@@ -1080,19 +1095,15 @@
         let tableHTML = '';
         
         if (this.state.gameCount === 4) {
-          // For 4 games, show tier payouts
-          const avgShares = this.state.totalEntrants / 16;
-          const avgShareValue = (100 * this.state.totalEntrants) / avgShares;
-          const tier1Payout = Math.min(Math.floor(avgShareValue), 800);
-          const tier2Payout = Math.min(Math.floor(avgShareValue / 2), 600);
-
+          // For 4 games, show actual calculated payouts for both tiers
           tableHTML = `
             <div class="table-container">
               <table>
                 <thead>
                   <tr>
                     <th>Picks</th>
-                    <th>Win %</th>
+                    <th>4/4 Win %</th>
+                    <th>3/4+ Win %</th>
                     <th># Selections</th>
                     <th>3/4 Payout</th>
                     <th>4/4 Payout</th>
@@ -1101,16 +1112,49 @@
                 </thead>
                 <tbody>
                   ${sorted.map(combo => {
-                    const picks = combo.pickString ? combo.pickString.split('').map(v => v === '0' ? 'L' : 'R').join('') : combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
+                    const picks = combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
                     const evClass = combo.expectedValue > 0 ? 'ev-positive' : 'ev-negative';
+                    
+                    // Calculate 3/4+ and 4/4 probabilities
+                    let prob3Plus = 0;
+                    let prob4 = 0;
+                    
+                    for (let outcome = 0; outcome < 16; outcome++) {
+                      const outcomeArray = [];
+                      for (let i = 0; i < 4; i++) {
+                        outcomeArray.push((outcome >> i) & 1);
+                      }
+                      
+                      let outcomeProb = 1;
+                      for (let i = 0; i < 4; i++) {
+                        const game = this.state.games[i];
+                        if (outcomeArray[i] === 0) {
+                          outcomeProb *= game.team1.noVigProbability;
+                        } else {
+                          outcomeProb *= game.team2.noVigProbability;
+                        }
+                      }
+                      
+                      let matches = 0;
+                      for (let i = 0; i < 4; i++) {
+                        const userPick = combo.side[i] === 'team1' ? 0 : 1;
+                        if (userPick === outcomeArray[i]) {
+                          matches++;
+                        }
+                      }
+                      
+                      if (matches >= 3) prob3Plus += outcomeProb;
+                      if (matches === 4) prob4 += outcomeProb;
+                    }
                     
                     return `
                       <tr>
                         <td>${picks}</td>
-                        <td>${combo.winProbability.toFixed(2)}%</td>
+                        <td>${(prob4 * 100).toFixed(2)}%</td>
+                        <td>${(prob3Plus * 100).toFixed(2)}%</td>
                         <td>${combo.numberOfSelections}</td>
-                        <td>${tier2Payout}</td>
-                        <td>${tier1Payout}</td>
+                        <td>${combo.tier2Payout > 0 ? Math.round(combo.tier2Payout) : '-'}</td>
+                        <td>${combo.tier1Payout > 0 ? Math.round(combo.tier1Payout) : '-'}</td>
                         <td class="${evClass}">${combo.expectedValue.toFixed(2)}</td>
                       </tr>
                     `;
@@ -1120,10 +1164,7 @@
             </div>
           `;
         } else {
-          // For 2 and 3 games, show regular format
-          const avgWinners = this.state.gameCount === 2 ? this.state.totalEntrants / 4 : this.state.totalEntrants / 8;
-          const avgPayout = Math.min((this.state.totalEntrants * 100) / avgWinners, this.state.maxPayout);
-
+          // For 2 and 3 games, show regular format with actual calculated payouts
           tableHTML = `
             <div class="table-container">
               <table>
@@ -1132,7 +1173,7 @@
                     <th>Picks</th>
                     <th>Win %</th>
                     <th># Selections</th>
-                    <th>Avg Payout</th>
+                    <th>Payout</th>
                     <th>EV</th>
                   </tr>
                 </thead>
@@ -1146,7 +1187,7 @@
                         <td>${picks}</td>
                         <td>${combo.winProbability.toFixed(2)}%</td>
                         <td>${combo.numberOfSelections}</td>
-                        <td>${Math.round(avgPayout)}</td>
+                        <td>${Math.round(combo.payout)}</td>
                         <td class="${evClass}">${combo.expectedValue.toFixed(2)}</td>
                       </tr>
                     `;
@@ -1159,18 +1200,21 @@
 
         const infoNote = `
           <div class="info-box">
-            <p><strong>Win Probabilities Based On:</strong><br>
-            No-vig odds are used for calculations to remove bookmakers' edge. For decided games, actual results are used (100% for winners, 0% for losers).</p>
-            <p><strong>Entry Fee:</strong> ${this.state.entryFee} (affects EV calculation only)</p>
+            <p><strong>Win Probabilities:</strong> Based on no-vig odds (bookmaker edge removed). For decided games, actual results are used.</p>
+            <p><strong>Entry Fee:</strong> ${this.state.entryFee} karma (affects EV calculation)</p>
+            ${this.state.gameCount === 4 ? 
+              '<p><strong>4-Game Mode:</strong> Payouts based on tier system - 4/4 correct gets full share, 3/4 correct gets half share.</p>' :
+              '<p><strong>Payout:</strong> Total pool divided by number of winners, capped at maximum payout.</p>'
+            }
           </div>
         `;
 
-        const copyButton = `<button class="btn btn-default copy-btn" id="copy-results-btn">Copy Top Results</button>`;
+        const copyButton = `<button class="btn btn-default copy-btn" id="copy-results-btn">Copy Results</button>`;
 
         container.innerHTML = `
           <div class="card">
             ${infoNote}
-            <h2 class="subheading">All Combinations and Payouts</h2>
+            <h2 class="subheading">All Combinations and Expected Values</h2>
             ${tableHTML}
             ${copyButton}
           </div>
@@ -1179,55 +1223,65 @@
         // Add copy button event listener
         const copyBtn = document.getElementById('copy-results-btn');
         if (copyBtn) {
-          copyBtn.addEventListener('click', () => this.copyTopResults());
+          copyBtn.addEventListener('click', () => this.copyResults());
         }
 
         container.style.display = 'block';
       }
 
-      copyTopResults() {
+      copyResults() {
         const { combinations } = this.state.results;
         if (!combinations.length) return alert("No results to copy.");
+        
+        const sorted = [...combinations].sort((a, b) => b.expectedValue - a.expectedValue);
         
         let text = '';
         
         if (this.state.gameCount === 4) {
-          // For 4 games, calculate 3/4+ probability
-          text = combinations.map(combo => {
-            const picks = combo.pickString ? combo.pickString.split('').map(v => v === '0' ? 'L' : 'R').join('') : combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
+          text = sorted.map(combo => {
+            const picks = combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
             
-            // Calculate 3/4+ probability for this combo
+            // Calculate 3/4+ probability
             let prob3Plus = 0;
-            const allOutcomes = this.generateAllOutcomesFour();
-            const pickString = combo.pickString || combo.side.map(s => s === 'team1' ? '0' : '1').join('');
-            
-            allOutcomes.forEach(outcome => {
+            for (let outcome = 0; outcome < 16; outcome++) {
+              const outcomeArray = [];
+              for (let i = 0; i < 4; i++) {
+                outcomeArray.push((outcome >> i) & 1);
+              }
+              
               let outcomeProb = 1;
               for (let i = 0; i < 4; i++) {
                 const game = this.state.games[i];
-                const gameOutcome = outcome[i];
-                if (gameOutcome === '0') {
+                if (outcomeArray[i] === 0) {
                   outcomeProb *= game.team1.noVigProbability;
                 } else {
                   outcomeProb *= game.team2.noVigProbability;
                 }
               }
-              const matches = this.calculateMatchesFour(pickString, outcome);
+              
+              let matches = 0;
+              for (let i = 0; i < 4; i++) {
+                const userPick = combo.side[i] === 'team1' ? 0 : 1;
+                if (userPick === outcomeArray[i]) {
+                  matches++;
+                }
+              }
+              
               if (matches >= 3) prob3Plus += outcomeProb;
-            });
+            }
             
             return `${picks} - ${(prob3Plus * 100).toFixed(2)}% - (${combo.expectedValue.toFixed(2)})`;
           }).join('\n');
         } else {
-          text = combinations.map(combo => {
-            const pick = combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
-            return `${pick} - ${combo.winProbability.toFixed(2)}% - (${combo.expectedValue.toFixed(2)})`;
+          text = sorted.map(combo => {
+            const picks = combo.teams.map(t => t.name.replace(/[0-9]/g, '')).join('');
+            return `${picks} - ${combo.winProbability.toFixed(2)}% - (${combo.expectedValue.toFixed(2)})`;
           }).join('\n');
         }
         
         navigator.clipboard.writeText(text)
           .then(() => alert("Results copied to clipboard!"))
-          .catch(err => alert("Copy failed."));
+          .catch(err => alert("Copy failed: " + err.message));
       }
     }
 
