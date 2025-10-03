@@ -204,7 +204,6 @@ a {
   font-weight: bold;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .calculators-container {
     flex-direction: column;
@@ -241,17 +240,17 @@ a {
         <label for="sportSelect"><strong>Select Sport:</strong></label>
         <select id="sportSelect" onchange="generateCalculators()">
             <option value="">Choose a sport...</option>
-            <option value="NBA">NBA </option>
-            <option value="NHL">NHL </option>
+            <option value="NBA">NBA</option>
+            <option value="NHL">NHL</option>
             <option value="MLB">MLB</option>
             <option value="WNBA">WNBA</option>
             <option value="NFL">NFL</option>
             <option value="CFB">CFB</option>
+            <option value="FC">FC</option>
         </select>
     </div>
 
     <div id="calculatorsContainer" class="calculators-container">
-        <!-- Calculators will be generated here -->
     </div>
 
     <div class="footer">
@@ -285,8 +284,13 @@ a {
                 { hasRealOdds: false, maxBet: '100-10', title: 'NFL Spread', side1: 'Team 1', side2: 'Team 2', isCFB: false }
             ],
             CFB: [
-                { hasRealOdds: false, maxBet: '100', title: 'CFB O/U', side1: 'Over', side2: 'Under', isCFB: true },
-                { hasRealOdds: false, maxBet: '100', title: 'CFB Spread', side1: 'Team 1', side2: 'Team 2', isCFB: true }
+                { hasRealOdds: false, maxBet: '100-10', title: 'CFB O/U', side1: 'Over', side2: 'Under', isCFB: true },
+                { hasRealOdds: false, maxBet: '100-10', title: 'CFB Spread', side1: 'Team 1', side2: 'Team 2', isCFB: true }
+            ],
+            FC: [
+                { hasRealOdds: false, maxBet: '100-10', title: 'FC O/U', side1: 'Over', side2: 'Under', isCFB: false, is3Way: false },
+                { hasRealOdds: true, maxBet: '100', title: 'FC 3-way ML', side1: 'Team 1', side2: 'Team 2', side3: 'Draw', isCFB: false, is3Way: true },
+                { hasRealOdds: true, maxBet: '100-10', title: 'FC BTTS', side1: 'Yes', side2: 'No', isCFB: false, is3Way: false }
             ]
         };
 
@@ -304,21 +308,25 @@ a {
 
             configs.forEach((config, index) => {
                 const calcId = `calc_${sport}_${index}`;
-                const calculatorHTML = createCalculatorHTML(calcId, config);
+                const calculatorHTML = config.is3Way ? 
+                    create3WayCalculatorHTML(calcId, config) : 
+                    createCalculatorHTML(calcId, config);
                 container.innerHTML += calculatorHTML;
                 
-                // Auto-check real odds checkbox if it exists
                 if (config.hasRealOdds) {
                     setTimeout(() => {
                         const realOddsCheckbox = document.getElementById(`${calcId}_realOdds`);
                         if (realOddsCheckbox) {
                             realOddsCheckbox.checked = true;
-                            toggleRealOdds(calcId);
+                            if (config.is3Way) {
+                                toggle3WayRealOdds(calcId);
+                            } else {
+                                toggleRealOdds(calcId);
+                            }
                         }
                     }, 0);
                 }
 
-                // Auto-check CFB checkbox if it's a CFB config
                 if (config.isCFB) {
                     setTimeout(() => {
                         const cfbCheckbox = document.getElementById(`${calcId}_cfb`);
@@ -330,20 +338,74 @@ a {
             });
         }
 
-        function createCalculatorHTML(calcId, config) {
-            const maxBetOptions = {
-                '50-5': '<option value="50-5" selected>50 (payout 5)</option>',
-                '50-10': '<option value="50-10" selected>50 (payout 10)</option>',
-                '100-10': '<option value="100-10" selected>100 (payout 10)</option>',
-                '200': '<option value="200" selected>200</option>',
-                '50': '<option value="50" selected>50</option>',
-                '100': '<option value="100" selected>100</option>',
-                '300': '<option value="300">300</option>'
-            };
+        function create3WayCalculatorHTML(calcId, config) {
+            const maxBetHTML = `
+                <option value="50">50</option>
+                <option value="100" ${config.maxBet === '100' ? 'selected' : ''}>100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+            `;
 
+            return `
+                <div class="calculator">
+                    <h3>${config.title}</h3>
+                    
+                    <div class="checkbox-container">
+                        <label>
+                            <input type="checkbox" id="${calcId}_customNames" onchange="toggle3WayCustomNames('${calcId}')">
+                            Use Custom Team Names
+                        </label>
+                    </div>
+                    
+                    ${config.hasRealOdds ? `
+                    <div class="checkbox-container">
+                        <label>
+                            <input type="checkbox" id="${calcId}_realOdds" onchange="toggle3WayRealOdds('${calcId}')">
+                            Show Real Odds Inputs
+                        </label>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="checkbox-container">
+                        <label>
+                            <input type="checkbox" id="${calcId}_showAll">
+                            Show All Outputs
+                        </label>
+                    </div>
+
+                    <div class="custom-names" id="${calcId}_customNamesInputs">
+                        <input type="text" id="${calcId}_name1" placeholder="Enter ${config.side1} Name">
+                        <input type="text" id="${calcId}_name2" placeholder="Enter ${config.side2} Name">
+                        <input type="text" id="${calcId}_name3" placeholder="Enter ${config.side3} Name">
+                    </div>
+
+                    <input type="text" id="${calcId}_odds1" placeholder="Enter ${config.side1} Sportsbook Odds">
+                    ${config.hasRealOdds ? `<input type="text" id="${calcId}_realOdds1" placeholder="Enter ${config.side1} Real App Odds">` : ''}
+                    
+                    <input type="text" id="${calcId}_odds2" placeholder="Enter ${config.side2} Sportsbook Odds">
+                    ${config.hasRealOdds ? `<input type="text" id="${calcId}_realOdds2" placeholder="Enter ${config.side2} Real App Odds">` : ''}
+                    
+                    <input type="text" id="${calcId}_odds3" placeholder="Enter ${config.side3} Sportsbook Odds">
+                    ${config.hasRealOdds ? `<input type="text" id="${calcId}_realOdds3" placeholder="Enter ${config.side3} Real App Odds">` : ''}
+
+                    <select id="${calcId}_maxBet">
+                        ${maxBetHTML}
+                    </select>
+                    <label>Max Bet Amount</label>
+
+                    <div style="margin-top: 15px;">
+                        <button onclick="calculate3WayEV('${calcId}')">Calculate</button>
+                        <button class="clear-btn" onclick="clear3WayCalculator('${calcId}')">Clear</button>
+                    </div>
+
+                    <div class="result" id="${calcId}_result"></div>
+                </div>
+            `;
+        }
+
+        function createCalculatorHTML(calcId, config) {
             let maxBetHTML = '';
             if (config.isCFB) {
-                // CFB simplified options
                 maxBetHTML = `
                     <option value="50">50</option>
                     <option value="100" ${config.maxBet === '100' ? 'selected' : ''}>100</option>
@@ -351,11 +413,17 @@ a {
                     <option value="300">300</option>
                 `;
             } else {
-                // Traditional options
-                maxBetHTML = maxBetOptions[config.maxBet] + Object.entries(maxBetOptions)
-                    .filter(([key]) => key !== config.maxBet)
-                    .map(([key, value]) => value.replace('selected', ''))
-                    .join('');
+                const opts = {
+                    '50-5': '<option value="50-5">50 (payout 5)</option>',
+                    '50-10': '<option value="50-10">50 (payout 10)</option>',
+                    '100-10': '<option value="100-10">100</option>',
+                    '100-5': '<option value="100-5">100 (payout 5)</option>',
+                    '200': '<option value="200">200</option>',
+                    '300': '<option value="300">300</option>'
+                };
+                maxBetHTML = Object.entries(opts).map(([k,v]) => 
+                    v.replace('>', k === config.maxBet ? ' selected>' : '>')
+                ).join('');
             }
 
             return `
@@ -394,7 +462,7 @@ a {
                         </label>
                     </div>
 
-                    <div class="custom-names" id="${calcId}_customNamesInputs" style="display: none;">
+                    <div class="custom-names" id="${calcId}_customNamesInputs">
                         <input type="text" id="${calcId}_name1" placeholder="Enter ${config.side1} Name">
                         <input type="text" id="${calcId}_name2" placeholder="Enter ${config.side2} Name">
                     </div>
@@ -403,7 +471,7 @@ a {
                     <input type="text" id="${calcId}_odds2" placeholder="Enter ${config.side2} Sportsbook Odds">
 
                     ${config.hasRealOdds ? `
-                    <div class="real-odds" id="${calcId}_realOddsInputs" style="display: none;">
+                    <div class="real-odds" id="${calcId}_realOddsInputs">
                         <input type="text" id="${calcId}_realOdds1" placeholder="Enter ${config.side1} Real App Odds" disabled>
                         <input type="text" id="${calcId}_realOdds2" placeholder="Enter ${config.side2} Real App Odds" disabled>
                     </div>
@@ -430,6 +498,12 @@ a {
             inputs.style.display = checkbox.checked ? 'block' : 'none';
         }
 
+        function toggle3WayCustomNames(calcId) {
+            const checkbox = document.getElementById(`${calcId}_customNames`);
+            const inputs = document.getElementById(`${calcId}_customNamesInputs`);
+            inputs.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
         function toggleRealOdds(calcId) {
             const checkbox = document.getElementById(`${calcId}_realOdds`);
             const inputs = document.getElementById(`${calcId}_realOddsInputs`);
@@ -440,6 +514,9 @@ a {
             inputs.style.display = isChecked ? 'block' : 'none';
             if (realOdds1) realOdds1.disabled = !isChecked;
             if (realOdds2) realOdds2.disabled = !isChecked;
+        }
+
+        function toggle3WayRealOdds(calcId) {
         }
 
         function isCFBMode(calcId) {
@@ -464,50 +541,28 @@ a {
             let winnings;
             
             if (cfbMode) {
-                // CFB mode - simplified payout calculation
                 if (wager === 0 || wager === 10) {
-                    if (realOdds > 0) {
-                        winnings = roundToWhole((10 / 100) * realOdds);
-                    } else {
-                        winnings = roundToWhole((100 / Math.abs(realOdds)) * 10);
-                    }
+                    winnings = realOdds > 0 ? roundToWhole((10 / 100) * realOdds) : roundToWhole((100 / Math.abs(realOdds)) * 10);
                 } else {
-                    if (realOdds > 0) {
-                        winnings = (wager / 100) * realOdds;
-                    } else {
-                        winnings = (100 / Math.abs(realOdds)) * wager;
-                    }
+                    winnings = realOdds > 0 ? (wager / 100) * realOdds : (100 / Math.abs(realOdds)) * wager;
                 }
             } else {
-                // Traditional mode
-                if (maxBetValue === "50-5" || maxBetValue === "100-5") {
-                    winnings = 5;
-                } else {
-                    winnings = 10;
-                }
+                winnings = (maxBetValue === "50-5" || maxBetValue === "100-5") ? 5 : 10;
 
                 if (wager === 0) {
-                    if (realOdds > 0) {
-                        winnings = roundToWhole((winnings / 100) * realOdds);
-                    } else {
-                        winnings = roundToWhole((100 / Math.abs(realOdds)) * winnings);
-                    }
+                    winnings = realOdds > 0 ? roundToWhole((winnings / 100) * realOdds) : roundToWhole((100 / Math.abs(realOdds)) * winnings);
                 } else {
-                    if (realOdds > 0) {
-                        winnings = (wager / 100) * realOdds;
-                    } else {
-                        winnings = (100 / Math.abs(realOdds)) * wager;
-                    }
+                    winnings = realOdds > 0 ? (wager / 100) * realOdds : (100 / Math.abs(realOdds)) * wager;
                 }
             }
             
             return roundToWhole(winnings);
         }
 
-        function calculateFractionalProbability(odds) {
-            const total = odds > 0 ? (100 + odds) : (100 - odds);
-            const numerator = odds > 0 ? 100 : Math.abs(odds);
-            return `${roundToWhole(numerator)}/${roundToWhole(total)}`;
+        function calculate3WayPayout(odds, wager) {
+            let win = wager === 0 ? (odds > 0 ? 10 / 100 * odds : 100 / Math.abs(odds) * 10) : 
+                      (odds > 0 ? wager / 100 * odds : 100 / Math.abs(odds) * wager);
+            return roundToWhole(win);
         }
 
         function calculateExpectedValue(winnings, noVigProbWin, wager, noVigProbLose) {
@@ -518,6 +573,94 @@ a {
             const sport = document.getElementById('sportSelect').value;
             const index = parseInt(calcId.split('_')[2]);
             return sportConfigs[sport][index];
+        }
+
+        function calculate3WayEV(calcId) {
+            const config = getCalculatorConfig(calcId);
+            const name1 = document.getElementById(`${calcId}_name1`)?.value || config.side1;
+            const name2 = document.getElementById(`${calcId}_name2`)?.value || config.side2;
+            const name3 = document.getElementById(`${calcId}_name3`)?.value || config.side3;
+            
+            const odds1 = parseInt(document.getElementById(`${calcId}_odds1`).value);
+            const odds2 = parseInt(document.getElementById(`${calcId}_odds2`).value);
+            const odds3 = parseInt(document.getElementById(`${calcId}_odds3`).value);
+            
+            if (isNaN(odds1) || isNaN(odds2) || isNaN(odds3)) {
+                alert("Please enter valid sportsbook odds for all sides.");
+                return;
+            }
+
+            const realOdds1Element = document.getElementById(`${calcId}_realOdds1`);
+            const realOdds2Element = document.getElementById(`${calcId}_realOdds2`);
+            const realOdds3Element = document.getElementById(`${calcId}_realOdds3`);
+            const realOdds1 = realOdds1Element ? (parseInt(realOdds1Element.value) || 100) : 100;
+            const realOdds2 = realOdds2Element ? (parseInt(realOdds2Element.value) || 100) : 100;
+            const realOdds3 = realOdds3Element ? (parseInt(realOdds3Element.value) || 100) : 100;
+            
+            const maxBet = parseFloat(document.getElementById(`${calcId}_maxBet`).value);
+
+            const prob1 = calculateImpliedProbability(odds1);
+            const prob2 = calculateImpliedProbability(odds2);
+            const prob3 = calculateImpliedProbability(odds3);
+            const totalProb = prob1 + prob2 + prob3;
+            
+            const noVigProb1 = prob1 / totalProb;
+            const noVigProb2 = prob2 / totalProb;
+            const noVigProb3 = prob3 / totalProb;
+
+            const noVigOdds1 = noVigProb1 < 0.5 ? roundToWhole(100 * (1 - noVigProb1) / noVigProb1) : 
+                              roundToWhole(-100 * noVigProb1 / (1 - noVigProb1));
+            const noVigOdds2 = noVigProb2 < 0.5 ? roundToWhole(100 * (1 - noVigProb2) / noVigProb2) : 
+                              roundToWhole(-100 * noVigProb2 / (1 - noVigProb2));
+            const noVigOdds3 = noVigProb3 < 0.5 ? roundToWhole(100 * (1 - noVigProb3) / noVigProb3) : 
+                              roundToWhole(-100 * noVigProb3 / (1 - noVigProb3));
+
+            const noVigDecimalProb1 = noVigOdds1 > 0 ? 100 / (100 + noVigOdds1) : Math.abs(noVigOdds1) / (Math.abs(noVigOdds1) + 100);
+            const noVigDecimalProb2 = noVigOdds2 > 0 ? 100 / (100 + noVigOdds2) : Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
+            const noVigDecimalProb3 = noVigOdds3 > 0 ? 100 / (100 + noVigOdds3) : Math.abs(noVigOdds3) / (Math.abs(noVigOdds3) + 100);
+
+            const w1w0 = calculate3WayPayout(realOdds1, 0);
+            const w1wm = calculate3WayPayout(realOdds1, maxBet);
+            const w2w0 = calculate3WayPayout(realOdds2, 0);
+            const w2wm = calculate3WayPayout(realOdds2, maxBet);
+            const w3w0 = calculate3WayPayout(realOdds3, 0);
+            const w3wm = calculate3WayPayout(realOdds3, maxBet);
+
+            const ev1w0 = calculateExpectedValue(w1w0, noVigDecimalProb1, 0, noVigDecimalProb2 + noVigDecimalProb3);
+            const ev1wm = calculateExpectedValue(w1wm, noVigDecimalProb1, maxBet, noVigDecimalProb2 + noVigDecimalProb3);
+            const ev2w0 = calculateExpectedValue(w2w0, noVigDecimalProb2, 0, noVigDecimalProb1 + noVigDecimalProb3);
+            const ev2wm = calculateExpectedValue(w2wm, noVigDecimalProb2, maxBet, noVigDecimalProb1 + noVigDecimalProb3);
+            const ev3w0 = calculateExpectedValue(w3w0, noVigDecimalProb3, 0, noVigDecimalProb1 + noVigDecimalProb2);
+            const ev3wm = calculateExpectedValue(w3wm, noVigDecimalProb3, maxBet, noVigDecimalProb1 + noVigDecimalProb2);
+
+            const evs = [ev1w0, ev1wm, ev2w0, ev2wm, ev3w0, ev3wm];
+            const maxEV = Math.max(...evs);
+            const showAll = document.getElementById(`${calcId}_showAll`).checked;
+
+            let html = '';
+            if (showAll) {
+                html += `${name1} No-Vig Odds: ${noVigOdds1}<br>
+                ${name2} No-Vig Odds: ${noVigOdds2}<br>
+                ${name3} No-Vig Odds: ${noVigOdds3}<br>
+                ${name1} Winnings (Wager 0): ${w1w0}<br>
+                ${name1} Winnings (Max Bet): ${w1wm}<br>
+                ${name2} Winnings (Wager 0): ${w2w0}<br>
+                ${name2} Winnings (Max Bet): ${w2wm}<br>
+                ${name3} Winnings (Wager 0): ${w3w0}<br>
+                ${name3} Winnings (Max Bet): ${w3wm}<br>
+                ${name1} No-Vig Prob: ${noVigProb1.toFixed(4)}<br>
+                ${name2} No-Vig Prob: ${noVigProb2.toFixed(4)}<br>
+                ${name3} No-Vig Prob: ${noVigProb3.toFixed(4)}<br>`;
+            }
+
+            html += `<strong>${name1} EV (Wager 0): ${ev1w0}${ev1w0 === maxEV ? ' ✅' : ''}</strong><br>
+            <strong>${name1} EV (Max Bet): ${ev1wm}${ev1wm === maxEV ? ' ✅' : ''}</strong><br>
+            <strong>${name2} EV (Wager 0): ${ev2w0}${ev2w0 === maxEV ? ' ✅' : ''}</strong><br>
+            <strong>${name2} EV (Max Bet): ${ev2wm}${ev2wm === maxEV ? ' ✅' : ''}</strong><br>
+            <strong>${name3} EV (Wager 0): ${ev3w0}${ev3w0 === maxEV ? ' ✅' : ''}</strong><br>
+            <strong>${name3} EV (Max Bet): ${ev3wm}${ev3wm === maxEV ? ' ✅' : ''}</strong>`;
+
+            document.getElementById(`${calcId}_result`).innerHTML = html;
         }
 
         function calculateEV(calcId) {
@@ -547,30 +690,22 @@ a {
             const noVigProb1 = prob1 / totalProb;
             const noVigProb2 = prob2 / totalProb;
 
-            const noVigOdds1 = noVigProb1 < 0.5
-                ? roundToWhole(100 * (1 - noVigProb1) / noVigProb1)
-                : roundToWhole(-100 * noVigProb1 / (1 - noVigProb1));
-            const noVigOdds2 = noVigProb2 < 0.5
-                ? roundToWhole(100 * (1 - noVigProb2) / noVigProb2)
-                : roundToWhole(-100 * noVigProb2 / (1 - noVigProb2));
+            const noVigOdds1 = noVigProb1 < 0.5 ? roundToWhole(100 * (1 - noVigProb1) / noVigProb1) : 
+                              roundToWhole(-100 * noVigProb1 / (1 - noVigProb1));
+            const noVigOdds2 = noVigProb2 < 0.5 ? roundToWhole(100 * (1 - noVigProb2) / noVigProb2) : 
+                              roundToWhole(-100 * noVigProb2 / (1 - noVigProb2));
 
-            const noVigDecimalProb1 = noVigOdds1 > 0
-                ? 100 / (100 + noVigOdds1)
-                : Math.abs(noVigOdds1) / (Math.abs(noVigOdds1) + 100);
-            const noVigDecimalProb2 = noVigOdds2 > 0
-                ? 100 / (100 + noVigOdds2)
-                : Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
+            const noVigDecimalProb1 = noVigOdds1 > 0 ? 100 / (100 + noVigOdds1) : 
+                                     Math.abs(noVigOdds1) / (Math.abs(noVigOdds1) + 100);
+            const noVigDecimalProb2 = noVigOdds2 > 0 ? 100 / (100 + noVigOdds2) : 
+                                     Math.abs(noVigOdds2) / (Math.abs(noVigOdds2) + 100);
 
-            // For CFB mode, use 10 wager instead of 0 wager
             const lowWager = cfbMode ? 10 : 0;
 
             const winnings1Wager0 = calculatePayout(realOdds1, lowWager, maxBetValue, cfbMode);
             const winnings1WagerMax = calculatePayout(realOdds1, maxBet, maxBetValue, cfbMode);
             const winnings2Wager0 = calculatePayout(realOdds2, lowWager, maxBetValue, cfbMode);
             const winnings2WagerMax = calculatePayout(realOdds2, maxBet, maxBetValue, cfbMode);
-
-            const fractionalProb1 = calculateFractionalProbability(noVigOdds1);
-            const fractionalProb2 = calculateFractionalProbability(noVigOdds2);
 
             const ev1Wager0 = calculateExpectedValue(winnings1Wager0, noVigDecimalProb1, lowWager, noVigDecimalProb2);
             const ev1WagerMax = calculateExpectedValue(winnings1WagerMax, noVigDecimalProb1, maxBet, noVigDecimalProb2);
@@ -594,9 +729,7 @@ a {
                     ${name2} Winnings (${wager1Label}): ${winnings2Wager0}<br>
                     ${name2} Winnings (${wager2Label}): ${winnings2WagerMax}<br>
                     ${name1} No-Vig Probability: ${noVigProb1.toFixed(4)}<br>
-                    ${name2} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>
-                    ${name1} Fractional Probability: ${fractionalProb1}<br>
-                    ${name2} Fractional Probability: ${fractionalProb2}<br>`;
+                    ${name2} No-Vig Probability: ${noVigProb2.toFixed(4)}<br>`;
             }
 
             resultHTML += `
@@ -632,13 +765,45 @@ a {
             
             const cfbCheckbox = document.getElementById(`${calcId}_cfb`);
             if (cfbCheckbox) {
-                cfbCheckbox.checked = config.isCFB; // Reset to default state
+                cfbCheckbox.checked = config.isCFB;
             }
             
             document.getElementById(`${calcId}_result`).innerHTML = '';
             
             toggleCustomNames(calcId);
             if (realOddsCheckbox) toggleRealOdds(calcId);
+        }
+
+        function clear3WayCalculator(calcId) {
+            const config = getCalculatorConfig(calcId);
+            
+            const name1 = document.getElementById(`${calcId}_name1`);
+            const name2 = document.getElementById(`${calcId}_name2`);
+            const name3 = document.getElementById(`${calcId}_name3`);
+            if (name1) name1.value = '';
+            if (name2) name2.value = '';
+            if (name3) name3.value = '';
+            
+            document.getElementById(`${calcId}_odds1`).value = '';
+            document.getElementById(`${calcId}_odds2`).value = '';
+            document.getElementById(`${calcId}_odds3`).value = '';
+            
+            const realOdds1 = document.getElementById(`${calcId}_realOdds1`);
+            const realOdds2 = document.getElementById(`${calcId}_realOdds2`);
+            const realOdds3 = document.getElementById(`${calcId}_realOdds3`);
+            if (realOdds1) realOdds1.value = '';
+            if (realOdds2) realOdds2.value = '';
+            if (realOdds3) realOdds3.value = '';
+            
+            document.getElementById(`${calcId}_showAll`).checked = false;
+            document.getElementById(`${calcId}_customNames`).checked = false;
+            
+            const realOddsCheckbox = document.getElementById(`${calcId}_realOdds`);
+            if (realOddsCheckbox) realOddsCheckbox.checked = config.hasRealOdds;
+            
+            document.getElementById(`${calcId}_result`).innerHTML = '';
+            
+            toggle3WayCustomNames(calcId);
         }
     </script>
 </body>
