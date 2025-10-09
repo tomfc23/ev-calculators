@@ -975,11 +975,6 @@ BAL +113
         try {
             const pollId = document.getElementById('pollIdInput').value.trim();
             
-            if (!pollId) {
-                alert('Please enter a Poll ID');
-                return;
-            }
-            
             if (!/^\d+$/.test(pollId)) {
                 alert('Poll ID must be a number');
                 return;
