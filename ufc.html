@@ -360,12 +360,10 @@ let currentRounds = 5;
 function toggleRounds(rounds) {
     currentRounds = rounds;
     
-    // Update toggle button styles
     document.getElementById('toggle3').classList.remove('active');
     document.getElementById('toggle5').classList.remove('active');
     document.getElementById('toggle' + rounds).classList.add('active');
     
-    // Show/hide round sections
     if (rounds === 3) {
         document.getElementById('round4').style.display = 'none';
         document.getElementById('round5').style.display = 'none';
@@ -374,23 +372,18 @@ function toggleRounds(rounds) {
         document.getElementById('round5').style.display = 'block';
     }
     
-    // Clear results if shown
     document.getElementById("results").style.display = 'none';
-    autoSetOdds()
+    autoSetOdds();
 }
 
 function goHome() {
-    // You can customize this to navigate to your actual home page
     if (window.history.length > 1) {
         window.history.back();
     } else {
-        // If no history, you can redirect to a specific URL
-        // window.location.href = '/';
         alert('No previous page in history. Add your home page URL in the goHome() function.');
     }
 }
 
-// Improved implied probability calculations from the first file
 function convertToImpliedProbability(odds) {
     if (odds >= 0) {
         return 100 / (odds + 100);
@@ -415,16 +408,14 @@ function calculateProfit(odds, bet) {
 
 function calculateAll() {
     const betAmount = 100;
+    const freePlayAmount = 10;
     const maxRounds = currentRounds;
     
-    // Get inputs based on current round setting
     const inputs = {};
     const finishOdds = {};
     
-    // Always need R1
     finishOdds[1] = Number(document.getElementById("r1finish").value);
     
-    // Get inputs for rounds 2 through maxRounds
     for (let i = 2; i <= maxRounds; i++) {
         const yesInput = document.getElementById(`r${i}yes`);
         const noInput = document.getElementById(`r${i}no`);
@@ -437,7 +428,6 @@ function calculateAll() {
         }
     }
 
-    // Validate inputs
     for (let i = 2; i <= maxRounds; i++) {
         if (isNaN(inputs[`r${i}yes`]) || isNaN(inputs[`r${i}no`])) {
             alert(`Please enter valid sportsbook odds for round ${i}.`);
@@ -452,13 +442,11 @@ function calculateAll() {
         }
     }
 
-    // Calculate no-vig probabilities for reaching each round using improved method
     const novigReachProb = {};
     for (let i = 2; i <= maxRounds; i++) {
         novigReachProb[i] = calculateNoVigProbability(inputs[`r${i}yes`], inputs[`r${i}no`]);
     }
 
-    // Calculate round finish probabilities using the same logic as the implied probability calculator
     const finishProb = {};
     
     if (maxRounds === 3) {
@@ -473,7 +461,6 @@ function calculateAll() {
         finishProb[5] = novigReachProb[5];
     }
 
-    // Validate that all finish probabilities are non-negative
     for (let i = 1; i <= maxRounds; i++) {
         if (finishProb[i] < 0) {
             alert(`Error: Negative probability calculated for Round ${i}. Please check your input odds for consistency.`);
@@ -481,30 +468,32 @@ function calculateAll() {
         }
     }
 
-    // Calculate payouts and EVs
-    const payouts = {};
-    const evs = {};
+    const payouts100 = {};
+    const evs100 = {};
+    const payouts0 = {};
+    const evs0 = {};
     
     for (let i = 1; i <= maxRounds; i++) {
-        payouts[i] = calculateProfit(finishOdds[i], betAmount);
-        evs[i] = (finishProb[i] * payouts[i]) - ((1 - finishProb[i]) * betAmount);
+        payouts100[i] = calculateProfit(finishOdds[i], betAmount);
+        evs100[i] = (finishProb[i] * payouts100[i]) - ((1 - finishProb[i]) * betAmount);
+        
+        payouts0[i] = calculateProfit(finishOdds[i], freePlayAmount);
+        evs0[i] = finishProb[i] * payouts0[i];
     }
 
-    // Check if details should be shown
     const showDetails = document.getElementById("showDetails").checked;
 
-    // Find the best EV
-    const evValues = Object.values(evs);
-    const maxEV = Math.max(...evValues);
+    const evValues100 = Object.values(evs100);
+    const maxEV100 = Math.max(...evValues100);
+    const evValues0 = Object.values(evs0);
+    const maxEV0 = Math.max(...evValues0);
 
-    // Helper function to get EV class
     function getEVClass(ev) {
         if (ev > 0) return 'positive-ev';
         if (ev < 0) return 'negative-ev';
         return '';
     }
 
-    // Build results HTML
     let resultsHTML = `
         <div class="ev-results">
             <h3>Expected Value Analysis (${maxRounds} Rounds)</h3>
@@ -514,9 +503,13 @@ function calculateAll() {
         const isLastRound = i === maxRounds;
         const roundLabel = isLastRound ? `Round ${i}+ / Decision` : `Round ${i} Finish`;
         resultsHTML += `
-            <div class="ev-item ${getEVClass(evs[i])}">
-                <span>${roundLabel} ${evs[i] === maxEV ? '✅' : ''}</span>
-                <span>${evs[i].toFixed(2)}</span>
+            <div class="ev-item ${getEVClass(evs0[i])}">
+                <span>${roundLabel} (0 wager) ${evs0[i] === maxEV0 ? '✅' : ''}</span>
+                <span>${evs0[i].toFixed(2)}</span>
+            </div>
+            <div class="ev-item ${getEVClass(evs100[i])}">
+                <span>${roundLabel} (100 wager) ${evs100[i] === maxEV100 ? '✅' : ''}</span>
+                <span>${evs100[i].toFixed(2)}</span>
             </div>
         `;
     }
@@ -552,7 +545,7 @@ function calculateAll() {
             </div>
 
             <div class="payout-section">
-                <h4>Payout Analysis (100 karma bets)</h4>
+                <h4>Payout Analysis</h4>
                 <div class="payout-grid">
         `;
         
@@ -561,8 +554,12 @@ function calculateAll() {
             const roundLabel = isLastRound ? `Round ${i}+ / Decision` : `Round ${i} Finish`;
             resultsHTML += `
                 <div class="payout-item">
-                    <div class="payout-label">${roundLabel}</div>
-                    <div class="payout-value">${payouts[i].toFixed(2)} karma</div>
+                    <div class="payout-label">${roundLabel} (0 wager)</div>
+                    <div class="payout-value">${payouts0[i].toFixed(2)} karma</div>
+                </div>
+                <div class="payout-item">
+                    <div class="payout-label">${roundLabel} (100 wager)</div>
+                    <div class="payout-value">${payouts100[i].toFixed(2)} karma</div>
                 </div>
             `;
         }
@@ -578,7 +575,6 @@ function calculateAll() {
 }
 
 function clearAll() {
-    // Clear all input fields
     document.getElementById('r1finish').value = '';
     document.getElementById('r2yes').value = '';
     document.getElementById('r2no').value = '';
@@ -593,10 +589,7 @@ function clearAll() {
     document.getElementById('r5no').value = '';
     document.getElementById('r5finish').value = '';
     
-    // Hide results
     document.getElementById("results").style.display = 'none';
-    
-    // Uncheck the details checkbox
     document.getElementById("showDetails").checked = false;
 }
 
@@ -607,18 +600,17 @@ function autoSetOdds(){
         document.getElementById('r3finish').value = '250';
         document.getElementById('r4finish').value = '200';
         document.getElementById('r5finish').value = '150';
-    }else if (currentRounds == 3){
+    } else if (currentRounds == 3){
         document.getElementById('r1finish').value = '250';
         document.getElementById('r2finish').value = '200';
         document.getElementById('r3finish').value = '150';
-    }else{
-        alert("error")
+    } else {
+        alert("error");
     }
 }
 
-// Initialize with 5 rounds
 toggleRounds(5);
-autoSetOdds()
+autoSetOdds();
 </script>
 </body>
 </html>
