@@ -1,1 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pool EV Calculator</title>
+  <style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
+  body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    background-color: black;
+    color: lightgray;
+    text-align: center;
+  }
+
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .heading {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .subheading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .instructions {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 25px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #555;
+  }
+
+  .instructions p {
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: lightgray;
+    margin-bottom: 0.25rem;
+  }
+
+  .form-input {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 15px;
+    width: 100%;
+    font-size: 16px;
+    background-color: #333;
+    color: lightgray;
+    transition: border-color 0.3s;
+  }
+
+  .form-input:focus {
+    border-color: #007BFF;
+    outline: none;
+  }
+
+  .form-input:disabled {
+    background-color: #222;
+    color: #666;
+    border-color: #333;
+    cursor: not-allowed;
+  }
+
+  .form-select {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 15px;
+    width: 100%;
+    font-size: 16px;
+    background-color: #333;
+    color: lightgray;
+    transition: border-color 0.3s;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='lightgray' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 1em;
+  }
+
+  .form-select:focus {
+    border-color: #007BFF;
+    outline: none;
+  }
+
+  .form-select:disabled {
+    background-color: #222;
+    color: #666;
+    border-color: #333;
+    cursor: not-allowed;
+  }
+
+  .game-selector {
+    margin-bottom: 1.5rem;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .card {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 1rem;
+    background-color: #222;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .game-card {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 1rem;
+    background-color: #222;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+
+  .game-card.decided {
+    background-color: #1a1a1a;
+    border-color: #444;
+  }
+
+  .game-card.decided .section-title::after {
+    content: " (DECIDED)";
+    color: #ffa500;
+    font-weight: normal;
+    font-size: 0.9rem;
+  }
+
+  .decided-control {
+    background-color: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .decided-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .decided-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #ffa500;
+  }
+
+  .winner-selection {
+    display: none;
+    background-color: #333;
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .winner-selection.show {
+    display: block;
+  }
+
+  .winner-options {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .winner-option {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: lightgray;
+  }
+
+  .winner-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #10b981;
+  }
+
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .team-card {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 0.75rem;
+    background-color: #333;
+  }
+
+  .real-odds-input {
+    background-color: #2a2a2a;
+    border: 2px solid #6f42c1;
+  }
+
+  .ev-display {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    font-size: 0.85rem;
+  }
+
+  .ev-positive {
+    color: #10b981;
+    font-weight: bold;
+  }
+
+  .ev-negative {
+    color: #ef4444;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 25px;
+    padding: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s;
+  }
+
+  .btn-default {
+    background-color: #444;
+    color: white;
+  }
+
+  .btn-primary {
+    background-color: #6f42c1;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #5a32a3;
+  }
+
+  .calculate-btn {
+    background-color: #6f42c1;
+    color: white;
+    padding: 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    border-radius: 25px;
+  }
+
+  .calculate-btn:hover {
+    background-color: #5a32a3;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .info-box {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 25px;
+    margin-bottom: 1rem;
+    border: 2px solid #555;
+  }
+
+  .table-container {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 25px;
+    max-height: 30rem;
+    overflow-y: auto;
+    border: 2px solid #555;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    color: lightgray;
+  }
+
+  th {
+    text-align: left;
+    padding: 0.5rem;
+    border-bottom: 1px solid #555;
+    position: sticky;
+    top: 0;
+    background-color: #222;
+    color: lightgray;
+    cursor: pointer;
+  }
+
+  td {
+    padding: 0.5rem;
+  }
+
+  tr:nth-child(even) {
+    background-color: #2a2a2a;
+  }
+
+  .text-note {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 0.5rem;
+  }
+
+  .controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .control-group {
+    background-color: #333;
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 1rem;
+  }
+
+  .control-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ffffff;
+    font-size: 0.9rem;
+  }
+
+  .control-group input[type="number"] {
+    width: 80px;
+    padding: 0.4rem;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: lightgray;
+    font-size: 0.9rem;
+  }
+
+  .control-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #6f42c1;
+  }
+
+  .copy-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+    border: none;
+    padding: 0.6rem 1.5rem;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+  }
+
+  .copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 280px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -140px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    border: 1px solid #555;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  @media (min-width: 768px) {
+    .games-grid.two-games {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .games-grid.three-games {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .games-grid.four-games {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .results-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <h1 class="heading">Pool EV Calculator</h1>
+    
+    <div class="settings-grid">
+      <div class="game-selector">
+        <label class="form-label">Number of Games</label>
+        <select class="form-select" id="game-count-select">
+          <option value="2">2 Games</option>
+          <option value="3">3 Games</option>
+          <option value="4">4 Games</option>
+        </select>
+      </div>
+      
+      <div class="game-selector">
+        <label class="form-label">Entry Fee <span class="tooltip">❓<span class="tooltiptext">The cost to enter the pool. This is strictly for CFB pools as you cannot 0 on non-top25 games, adding 10 karma to the entry fee for each of these games</span></span></label>
+        <select class="form-select" id="entry-fee-select">
+          <option value="100">100 karma</option>
+          <option value="110">110 karma</option>
+          <option value="120">120 karma</option>
+          <option value="130">130 karma</option>
+          <option value="140">140 karma</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="instructions" id="instructions-container">
+      <h2 class="section-title">Instructions</h2>
+      <p>1. Select number of games and entry fee.</p>
+      <p>2. Enter odds (American format) and selection percentages for each game.</p>
+      <p>3. Enter "Real App Odds" to calculate individual game EVs (optional).</p>
+      <p>4. Mark games as "Decided" to set actual winners and see updated EVs.</p>
+      <p>5. Click "Calculate" to see combined expected values (Pool EV + Individual Game EVs).</p>
+    </div>
+
+    <form id="calculator-form">
+      <div class="games-grid two-games" id="games-container">
+        <!-- Games will be rendered here -->
+      </div>
+
+      <button type="button" class="btn calculate-btn" id="calculate-btn">Calculate Results</button>
+    </form>
+
+    <div id="results-container" style="display: none;"></div>
+  </div>
+
+  <script>
+    function autofillRightPercents(gameId, changedSide) {
+      const leftInput = document.getElementById(`game-${gameId}-team1-selection`);
+      const rightInput = document.getElementById(`game-${gameId}-team2-selection`);
+      if (!leftInput || !rightInput) return;
+      
+      let val = parseFloat(changedSide === 'left' ? leftInput.value : rightInput.value) || 0;
+      val = Math.min(100, Math.max(0, val));
+      if (changedSide === 'left') {
+        rightInput.value = (100 - val).toFixed(0);
+      } else {
+        leftInput.value = (100 - val).toFixed(0);
+      }
+    }
+
+    class UnifiedPoolCalculator {
+      constructor() {
+        console.log('Calculator initializing...');
+        this.state = {
+          gameCount: 2,
+          games: [],
+          results: { combinations: [], payouts: {} },
+          totalEntrants: 4600,
+          maxPayout: 400,
+          entryFee: 100,
+          sortBy: 'expectedValue',
+          sortDirection: 'desc'
+        };
+
+        try {
+          this.bindEvents();
+          this.initializeGames();
+          this.renderGames();
+          console.log('Calculator initialized successfully');
+        } catch (error) {
+          console.error('Error initializing calculator:', error);
+        }
+      }
+
+      bindEvents() {
+        const gameCountSelect = document.getElementById('game-count-select');
+        if (gameCountSelect) {
+          gameCountSelect.addEventListener('change', (e) => {
+            this.state.gameCount = parseInt(e.target.value);
+            this.updateCalculator();
+          });
+        }
+
+        const entryFeeSelect = document.getElementById('entry-fee-select');
+        if (entryFeeSelect) {
+          entryFeeSelect.addEventListener('change', (e) => {
+            this.state.entryFee = parseInt(e.target.value);
+            if (document.getElementById('results-container').style.display !== 'none') {
+              this.calculateAllCombinations();
+            }
+          });
+        }
+
+        const calculateBtn = document.getElementById('calculate-btn');
+        if (calculateBtn) {
+          calculateBtn.addEventListener('click', () => {
+            this.calculateAllCombinations();
+          });
+        }
+      }
+
+      updateCalculator() {
+        this.initializeGames();
+        this.renderGames();
+        document.getElementById('results-container').style.display = 'none';
+      }
+
+      initializeGames() {
+        this.state.games = [];
+        for (let i = 1; i <= this.state.gameCount; i++) {
+          this.state.games.push({
+            id: i,
+            team1: { 
+              name: `L${i}`, 
+              odds: -110, 
+              selectionPercentage: 50, 
+              noVigOdds: -100, 
+              noVigProbability: 0.5,
+              realOdds: null
+            },
+            team2: { 
+              name: `R${i}`, 
+              odds: -110, 
+              selectionPercentage: 50, 
+              noVigOdds: -100, 
+              noVigProbability: 0.5,
+              realOdds: null
+            },
+            decided: false,
+            team1Winner: false,
+            team2Winner: false
+          });
+        }
+
+        if (this.state.gameCount === 2) {
+          this.state.totalEntrants = 4600;
+          this.state.maxPayout = 400;
+        } else if (this.state.gameCount === 3) {
+          this.state.totalEntrants = 9450;
+          this.state.maxPayout = 600;
+        } else if (this.state.gameCount === 4) {
+          this.state.totalEntrants = 4600;
+          this.state.maxPayout = 800;
+        }
+        
+        console.log('Games initialized:', this.state.games);
+      }
+
+      renderGames() {
+        const container = document.getElementById('games-container');
+        if (!container) {
+          console.error('Games container not found');
+          return;
+        }
+
+        container.innerHTML = '';
+        console.log('Rendering games:', this.state.games.length);
+
+        container.className = `games-grid ${this.state.gameCount === 2 ? 'two-games' : 
+                                          this.state.gameCount === 3 ? 'three-games' : 'four-games'}`;
+
+        this.state.games.forEach(game => {
+          const gameCard = document.createElement('div');
+          gameCard.className = `game-card ${game.decided ? 'decided' : ''}`;
+          
+          gameCard.innerHTML = `
+            <h3 class="section-title">Game ${game.id}</h3>
+            
+            <div class="decided-control">
+              <div class="decided-checkbox">
+                <input type="checkbox" id="game-${game.id}-decided" ${game.decided ? 'checked' : ''}>
+                <label for="game-${game.id}-decided">Game Decided</label>
+              </div>
+              <div class="winner-selection ${game.decided ? 'show' : ''}" id="game-${game.id}-winner-selection">
+                <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #ccc;">Select Winner(s):</div>
+                <div class="winner-options">
+                  <div class="winner-option">
+                    <input type="checkbox" id="game-${game.id}-team1-winner" ${game.team1Winner ? 'checked' : ''}>
+                    <label for="game-${game.id}-team1-winner">${game.team1.name} Wins</label>
+                  </div>
+                  <div class="winner-option">
+                    <input type="checkbox" id="game-${game.id}-team2-winner" ${game.team2Winner ? 'checked' : ''}>
+                    <label for="game-${game.id}-team2-winner">${game.team2.name} Wins</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="teams-grid">
+              <div class="team-card">
+                <div class="form-control">
+                  <label class="form-label">${game.team1.name}</label>
+                </div>
+                <div class="form-control">
+                  <label class="form-label">American Odds</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team1-odds" value="${game.team1.odds}" ${game.decided ? 'disabled' : ''} />
+                </div>
+                <div class="form-control">
+                  <label class="form-label">Selection %</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team1-selection"
+                    value="${game.team1.selectionPercentage}" min="0" max="100"
+                    oninput="autofillRightPercents(${game.id}, 'left')" />
+                </div>
+                <div class="form-control">
+                  <label class="form-label">Real App Odds <span class="tooltip">❓<span class="tooltiptext">Enter the real odds from your betting app to calculate individual game EV</span></span></label>
+                  <input type="number" class="form-input real-odds-input" id="game-${game.id}-team1-real" placeholder="e.g., +150 or -110" />
+                </div>
+                <div class="form-control">
+                  <label class="form-label" id="game-${game.id}-team1-odds-display">${game.decided ? `Result: ${game.team1Winner ? 'WON' : 'LOST'}` : `No-Vig Odds: ${game.team1.noVigOdds}`}</label>
+                  <div class="text-note" id="game-${game.id}-team1-prob-display">${game.decided ? `Probability: ${(game.team1.noVigProbability * 100).toFixed(0)}%` : `No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%`}</div>
+                  <div class="ev-display" id="game-${game.id}-team1-ev-display"></div>
+                </div>
+              </div>
+              <div class="team-card">
+                <div class="form-control">
+                  <label class="form-label">${game.team2.name}</label>
+                </div>
+                <div class="form-control">
+                  <label class="form-label">American Odds</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team2-odds" value="${game.team2.odds}" ${game.decided ? 'disabled' : ''} />
+                </div>
+                <div class="form-control">
+                  <label class="form-label">Selection %</label>
+                  <input type="number" class="form-input" id="game-${game.id}-team2-selection"
+                    value="${game.team2.selectionPercentage}" min="0" max="100"
+                    oninput="autofillRightPercents(${game.id}, 'right')" />
+                </div>
+                <div class="form-control">
+                  <label class="form-label">Real App Odds <span class="tooltip">❓<span class="tooltiptext">Enter the real odds from your betting app to calculate individual game EV</span></span></label>
+                  <input type="number" class="form-input real-odds-input" id="game-${game.id}-team2-real" placeholder="e.g., +150 or -110" />
+                </div>
+                <div class="form-control">
+                  <label class="form-label" id="game-${game.id}-team2-odds-display">${game.decided ? `Result: ${game.team2Winner ? 'WON' : 'LOST'}` : `No-Vig Odds: ${game.team2.noVigOdds}`}</label>
+                  <div class="text-note" id="game-${game.id}-team2-prob-display">${game.decided ? `Probability: ${(game.team2.noVigProbability * 100).toFixed(0)}%` : `No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%`}</div>
+                  <div class="ev-display" id="game-${game.id}-team2-ev-display"></div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          container.appendChild(gameCard);
+          this.attachGameEventListeners(game.id);
+        });
+      }
+
+      attachGameEventListeners(gameId) {
+        const decidedCheckbox = document.getElementById(`game-${gameId}-decided`);
+        if (decidedCheckbox) {
+          decidedCheckbox.addEventListener('change', () => this.toggleGameDecided(gameId));
+        }
+
+        const team1WinnerCheckbox = document.getElementById(`game-${gameId}-team1-winner`);
+        const team2WinnerCheckbox = document.getElementById(`game-${gameId}-team2-winner`);
+        if (team1WinnerCheckbox && team2WinnerCheckbox) {
+          team1WinnerCheckbox.addEventListener('change', () => this.updateWinnerSelection(gameId, 'team1'));
+          team2WinnerCheckbox.addEventListener('change', () => this.updateWinnerSelection(gameId, 'team2'));
+        }
+      }
+
+      toggleGameDecided(gameId) {
+        const game = this.state.games.find(g => g.id === gameId);
+        const decidedCheckbox = document.getElementById(`game-${gameId}-decided`);
+        const winnerSelection = document.getElementById(`game-${gameId}-winner-selection`);
+        const gameCard = decidedCheckbox.closest('.game-card');
+        
+        game.decided = decidedCheckbox.checked;
+        
+        if (game.decided) {
+          winnerSelection.classList.add('show');
+          gameCard.classList.add('decided');
+          this.toggleGameInputs(gameId, true);
+        } else {
+          winnerSelection.classList.remove('show');
+          gameCard.classList.remove('decided');
+          this.toggleGameInputs(gameId, false);
+          game.team1Winner = false;
+          game.team2Winner = false;
+          document.getElementById(`game-${gameId}-team1-winner`).checked = false;
+          document.getElementById(`game-${gameId}-team2-winner`).checked = false;
+        }
+        
+        this.updateGameProbabilities(gameId);
+      }
+
+      toggleGameInputs(gameId, disabled) {
+        const oddsInputs = [
+          document.getElementById(`game-${gameId}-team1-odds`),
+          document.getElementById(`game-${gameId}-team2-odds`)
+        ];
+
+        oddsInputs.forEach(input => {
+          if (input) input.disabled = disabled;
+        });
+      }
+
+      updateWinnerSelection(gameId, team) {
+        const game = this.state.games.find(g => g.id === gameId);
+        const team1Checkbox = document.getElementById(`game-${gameId}-team1-winner`);
+        const team2Checkbox = document.getElementById(`game-${gameId}-team2-winner`);
+        
+        if (team === 'team1') {
+          game.team1Winner = team1Checkbox.checked;
+        } else if (team === 'team2') {
+          game.team2Winner = team2Checkbox.checked;
+        }
+        
+        this.updateGameProbabilities(gameId);
+      }
+
+      updateGameProbabilities(gameId) {
+        const game = this.state.games.find(g => g.id === gameId);
+        
+        if (game.decided) {
+          if (game.team1Winner && game.team2Winner) {
+            game.team1.noVigProbability = 1.0;
+            game.team2.noVigProbability = 1.0;
+          } else if (game.team1Winner) {
+            game.team1.noVigProbability = 1.0;
+            game.team2.noVigProbability = 0.0;
+          } else if (game.team2Winner) {
+            game.team1.noVigProbability = 0.0;
+            game.team2.noVigProbability = 1.0;
+          } else {
+            game.team1.noVigProbability = 0.0;
+            game.team2.noVigProbability = 0.0;
+          }
+        } else {
+          const team1Prob = this.oddsToImpliedProbability(game.team1.odds);
+          const team2Prob = this.oddsToImpliedProbability(game.team2.odds);
+          const overround = team1Prob + team2Prob;
+          
+          game.team1.noVigProbability = team1Prob / overround;
+          game.team2.noVigProbability = team2Prob / overround;
+        }
+
+        const team1OddsDisplay = document.getElementById(`game-${gameId}-team1-odds-display`);
+        const team1ProbDisplay = document.getElementById(`game-${gameId}-team1-prob-display`);
+        const team2OddsDisplay = document.getElementById(`game-${gameId}-team2-odds-display`);
+        const team2ProbDisplay = document.getElementById(`game-${gameId}-team2-prob-display`);
+
+        if (game.decided) {
+          if (game.team1Winner && game.team2Winner) {
+            team1OddsDisplay.textContent = `Result: PUSH`;
+            team1ProbDisplay.textContent = `Probability: 100% (Push)`;
+            team2OddsDisplay.textContent = `Result: PUSH`;
+            team2ProbDisplay.textContent = `Probability: 100% (Push)`;
+          } else {
+            team1OddsDisplay.textContent = `Result: ${game.team1Winner ? 'WON' : 'LOST'}`;
+            team1ProbDisplay.textContent = `Probability: ${(game.team1.noVigProbability * 100).toFixed(0)}%`;
+            team2OddsDisplay.textContent = `Result: ${game.team2Winner ? 'WON' : 'LOST'}`;
+            team2ProbDisplay.textContent = `Probability: ${(game.team2.noVigProbability * 100).toFixed(0)}%`;
+          }
+        } else {
+          team1OddsDisplay.textContent = `No-Vig Odds: ${this.probabilityToAmericanOdds(game.team1.noVigProbability)}`;
+          team1ProbDisplay.textContent = `No-Vig Probability: ${(game.team1.noVigProbability * 100).toFixed(2)}%`;
+          team2OddsDisplay.textContent = `No-Vig Odds: ${this.probabilityToAmericanOdds(game.team2.noVigProbability)}`;
+          team2ProbDisplay.textContent = `No-Vig Probability: ${(game.team2.noVigProbability * 100).toFixed(2)}%`;
+        }
+      }
+
+      calculateIndividualEV(realOdds, noVigProb, wager) {
+        if (!realOdds || realOdds === 0) return 0;
+        
+        let payout;
+        if (wager === 0) {
+          // For 0 wager, use fixed 10 payout
+          payout = realOdds > 0 
+            ? Math.round(10 / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * 10);
+        } else {
+          // For 100 wager, calculate normally
+          payout = realOdds > 0 
+            ? Math.round(wager / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * wager);
+        }
+        
+        const ev = (noVigProb * payout) - ((1 - noVigProb) * wager);
+        return Math.round(ev * 100) / 100;
+      }
+
+      findBestWagerForGame(gameId, team) {
+        const game = this.state.games.find(g => g.id === gameId);
+        const teamData = game[team];
+        const realOddsInput = document.getElementById(`game-${gameId}-${team}-real`);
+        const realOdds = realOddsInput ? parseInt(realOddsInput.value) : null;
+        
+        if (!realOdds || realOdds === 0) {
+          return { wager: 0, ev: 0, label: '0' };
+        }
+
+        const ev0 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 0);
+        const ev100 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 100);
+        
+        if (ev100 > ev0) {
+          return { wager: 100, ev: ev100, label: '100' };
+        } else {
+          return { wager: 0, ev: ev0, label: '0' };
+        }
+      }
+
+      oddsToImpliedProbability(odds) {
+        return odds > 0 ? 100 / (odds + 100) : Math.abs(odds) / (Math.abs(odds) + 100);
+      }
+
+      probabilityToAmericanOdds(prob) {
+        if (prob <= 0 || prob >= 1) return 0;
+        return prob > 0.5 ? Math.round(-100 * prob / (1 - prob)) : Math.round(100 * (1 - prob) / prob);
+      }
+
+      calculateAllCombinations() {
+        console.log('Calculating combinations...');
+        
+        const entryFeeSelect = document.getElementById('entry-fee-select');
+        if (entryFeeSelect) {
+          this.state.entryFee = parseInt(entryFeeSelect.value);
+        }
+        
+        this.state.games.forEach(game => {
+          const team1OddsInput = document.getElementById(`game-${game.id}-team1-odds`);
+          const team1SelectionInput = document.getElementById(`game-${game.id}-team1-selection`);
+          const team2OddsInput = document.getElementById(`game-${game.id}-team2-odds`);
+          const team2SelectionInput = document.getElementById(`game-${game.id}-team2-selection`);
+          const team1RealInput = document.getElementById(`game-${game.id}-team1-real`);
+          const team2RealInput = document.getElementById(`game-${game.id}-team2-real`);
+          
+          if (team1OddsInput) game.team1.odds = parseInt(team1OddsInput.value) || -110;
+          if (team1SelectionInput) game.team1.selectionPercentage = parseInt(team1SelectionInput.value) || 50;
+          if (team2OddsInput) game.team2.odds = parseInt(team2OddsInput.value) || -110;
+          if (team2SelectionInput) game.team2.selectionPercentage = parseInt(team2SelectionInput.value) || 50;
+          if (team1RealInput) game.team1.realOdds = parseInt(team1RealInput.value) || null;
+          if (team2RealInput) game.team2.realOdds = parseInt(team2RealInput.value) || null;
+          
+          this.updateGameProbabilities(game.id);
+        });
+
+        const combinations = this.generateCombinations();
+        const withSelections = this.calculateSelections(combinations);
+        const withProbabilities = this.calculateWinProbabilities(withSelections);
+        const results = this.calculatePayouts(withProbabilities);
+        
+        this.state.results = { combinations: results };
+        this.renderResults();
+      }
+
+      generateCombinations() {
+        let combos = [
+          { teams: [this.state.games[0].team1], side: ['team1'] },
+          { teams: [this.state.games[0].team2], side: ['team2'] }
+        ];
+
+        for (let i = 1; i < this.state.games.length; i++) {
+          const game = this.state.games[i];
+          combos = combos.flatMap(combo => [
+            { teams: [...combo.teams, game.team1], side: [...combo.side, 'team1'] },
+            { teams: [...combo.teams, game.team2], side: [...combo.side, 'team2'] }
+          ]);
+        }
+
+        return combos;
+      }
+
+      calculateSelections(combos) {
+        return combos.map(combo => {
+          let pct = 1;
+          
+          combo.teams.forEach((team, i) => {
+            const game = this.state.games[i];
+            const side = combo.side[i];
+            
+            if (game.decided && game.team1Winner && game.team2Winner) {
+              const totalGameSelections = game.team1.selectionPercentage + game.team2.selectionPercentage;
+              pct *= (totalGameSelections / 100);
+            } else {
+              const total = game.team1.selectionPercentage + game.team2.selectionPercentage;
+              pct *= total ? (game[side].selectionPercentage / total) : 0.5;
+            }
+          });
+          
+          return {
+            ...combo,
+            selectionPercentage: pct * 100,
+            numberOfSelections: Math.round(this.state.totalEntrants * pct)
+          };
+        });
+      }
+
+      calculateWinProbabilities(combos) {
+        return combos.map(combo => {
+          const prob = combo.teams.reduce((acc, t) => acc * t.noVigProbability, 1);
+          return { ...combo, winProbability: prob * 100 };
+        });
+      }
+
+      calculatePayouts(combos) {
+        if (this.state.gameCount === 4) {
+          return this.calculateFourGamePayouts(combos);
+        } else {
+          return combos.map(combo => {
+            const winners = combo.numberOfSelections;
+            const payout = Math.min(
+              winners > 0 ? (this.state.totalEntrants * 100) / winners : 0,
+              this.state.maxPayout
+            );
+            const winP = combo.winProbability / 100;
+            const poolEV = (winP * payout) - ((1 - winP) * this.state.entryFee);
+            
+            let totalIndividualEV = 0;
+            combo.side.forEach((side, i) => {
+              const game = this.state.games[i];
+              const bestWager = this.findBestWagerForGame(game.id, side);
+              totalIndividualEV += bestWager.ev;
+            });
+            
+            const combinedEV = poolEV + totalIndividualEV;
+            
+            return { 
+              ...combo, 
+              payout, 
+              poolEV,
+              individualEV: totalIndividualEV,
+              expectedValue: combinedEV 
+            };
+          });
+        }
+      }
+
+      calculateFourGamePayouts(combos) {
+        let counts = {};
+        combos.forEach(combo => {
+          const pickString = combo.side.map(s => s === 'team1' ? '0' : '1').join('');
+          let prob = 1;
+          combo.teams.forEach((team, i) => {
+            const game = this.state.games[i];
+            const total = game.team1.selectionPercentage + game.team2.selectionPercentage || 100;
+            prob *= (team.selectionPercentage / total);
+          });
+          counts[pickString] = (this.state.totalEntrants - 1) * prob;
+        });
+
+        return combos.map(combo => {
+          let EV = 0;
+          const pickString = combo.side.map(s => s === 'team1' ? '0' : '1').join('');
+          let pickProb = 1;
+          
+          combo.teams.forEach((team, i) => {
+            const game = this.state.games[i];
+            const total = game.team1.selectionPercentage + game.team2.selectionPercentage || 100;
+            pickProb *= (team.selectionPercentage / total);
+          });
+
+          let tier1PayoutSum = 0;
+          let tier2PayoutSum = 0;
+          let tier1Count = 0;
+          let tier2Count = 0;
+          let winProb = 0;
+
+          for (let outcome = 0; outcome < 16; outcome++) {
+            const outcomeArray = [];
+            for (let i = 0; i < 4; i++) {
+              outcomeArray.push((outcome >> i) & 1);
+            }
+            
+            let p = 1;
+            for (let i = 0; i < 4; i++) {
+              const game = this.state.games[i];
+              if (outcomeArray[i] === 0) {
+                p *= game.team1.noVigProbability;
+              } else {
+                p *= game.team2.noVigProbability;
+              }
+            }
+
+            let matches = 0;
+            for (let i = 0; i < 4; i++) {
+              const userChoice = pickString[i];
+              const gameOutcome = outcomeArray[i].toString();
+              if (userChoice === gameOutcome) {
+                matches++;
+              }
+            }
+            
+            const isTier1 = matches === 4;
+            const isTier2 = matches === 3;
+
+            let w1 = 0;
+            let w2 = 0;
+
+            combos.forEach(otherCombo => {
+              const otherPickString = otherCombo.side.map(s => s === 'team1' ? '0' : '1').join('');
+              let otherMatches = 0;
+              for (let i = 0; i < 4; i++) {
+                const otherChoice = otherPickString[i];
+                const gameOutcome = outcomeArray[i].toString();
+                if (otherChoice === gameOutcome) {
+                  otherMatches++;
+                }
+              }
+              
+              const comboCount = counts[otherPickString] || 0;
+              if (otherMatches === 4) {
+                w1 += comboCount;
+              } else if (otherMatches === 3) {
+                w2 += comboCount;
+              }
+            });
+
+            if (matches === 4) w1++;
+            if (matches === 3) w2++;
+
+            const pool = 100 * this.state.totalEntrants;
+            const shares = w1 + 0.5 * w2;
+            const shareValue = shares > 0 ? pool / shares : 0;
+
+            let gain = -100;
+            if (isTier1) {
+              const payout = Math.min(Math.floor(shareValue), 800);
+              gain = payout;
+              tier1PayoutSum += payout * p;
+              tier1Count += p;
+              winProb += p;
+            } else if (isTier2) {
+              const payout = Math.min(Math.floor(shareValue / 2), 600);
+              gain = payout;
+              tier2PayoutSum += payout * p;
+              tier2Count += p;
+            }
+
+            EV += p * gain;
+          }
+
+          const finalTier1Payout = tier1Count > 0 ? Math.round(tier1PayoutSum / tier1Count) : 0;
+          const finalTier2Payout = tier2Count > 0 ? Math.round(tier2PayoutSum / tier2Count) : 0;
+
+          let totalIndividualEV = 0;
+          combo.side.forEach((side, i) => {
+            const game = this.state.games[i];
+            const bestWager = this.findBestWagerForGame(game.id, side);
+            totalIndividualEV += bestWager.ev;
+          });
+
+          const combinedEV = EV + totalIndividualEV;
+
+          return { 
+            ...combo, 
+            poolEV: EV,
+            individualEV: totalIndividualEV,
+            expectedValue: combinedEV,
+            tier1Payout: finalTier1Payout,
+            tier2Payout: finalTier2Payout,
+            winProbability: winProb * 100,
+            pickString
+          };
+        });
+      }
+
+      renderResults() {
+        const container = document.getElementById('results-container');
+        const { combinations } = this.state.results;
+
+        if (!combinations || combinations.length === 0) {
+          container.style.display = 'none';
+          return;
+        }
+
+        const sorted = [...combinations].sort((a, b) => b.expectedValue - a.expectedValue);
+
+        let tableHTML = '';
+        
+        if (this.state.gameCount === 4) {
+          tableHTML = `
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Picks</th>
+                    <th>4/4 Win %</th>
+                    <th>3/4+ Win %</th>
+                    <th># Selections</th>
+                    <th>3/4 Payout</th>
+                    <th>4/4 Payout</th>
+                    <th>Pool EV</th>
+                    <th>Game EV</th>
+                    <th>Total EV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sorted.map(combo => {
+                    const picks = combo.side.map((side, i) => {
+                      const game = this.state.games[i];
+                      const bestWager = this.findBestWagerForGame(game.id, side);
+                      const teamName = game[side].name.replace(/[0-9]/g, '');
+                      return `${teamName}${bestWager.label}`;
+                    }).join('');
+                    const evClass = combo.expectedValue > 0 ? 'ev-positive' : 'ev-negative';
+                    const poolEvClass = combo.poolEV > 0 ? 'ev-positive' : 'ev-negative';
+                    const gameEvClass = combo.individualEV > 0 ? 'ev-positive' : 'ev-negative';
+                    
+                    let prob3Plus = 0;
+                    let prob4 = 0;
+                    
+                    for (let outcome = 0; outcome < 16; outcome++) {
+                      const outcomeArray = [];
+                      for (let i = 0; i < 4; i++) {
+                        outcomeArray.push((outcome >> i) & 1);
+                      }
+                      
+                      let outcomeProb = 1;
+                      for (let i = 0; i < 4; i++) {
+                        const game = this.state.games[i];
+                        if (outcomeArray[i] === 0) {
+                          outcomeProb *= game.team1.noVigProbability;
+                        } else {
+                          outcomeProb *= game.team2.noVigProbability;
+                        }
+                      }
+                      
+                      let matches = 0;
+                      for (let i = 0; i < 4; i++) {
+                        const userPick = combo.side[i] === 'team1' ? 0 : 1;
+                        if (userPick === outcomeArray[i]) {
+                          matches++;
+                        }
+                      }
+                      
+                      if (matches >= 3) prob3Plus += outcomeProb;
+                      if (matches === 4) prob4 += outcomeProb;
+                    }
+                    
+                    return `
+                      <tr>
+                        <td>${picks}</td>
+                        <td>${(prob4 * 100).toFixed(2)}%</td>
+                        <td>${(prob3Plus * 100).toFixed(2)}%</td>
+                        <td>${combo.numberOfSelections}</td>
+                        <td>${combo.tier2Payout > 0 ? Math.round(combo.tier2Payout) : '-'}</td>
+                        <td>${combo.tier1Payout > 0 ? Math.round(combo.tier1Payout) : '-'}</td>
+                        <td class="${poolEvClass}">${combo.poolEV.toFixed(2)}</td>
+                        <td class="${gameEvClass}">${combo.individualEV.toFixed(2)}</td>
+                        <td class="${evClass}"><strong>${combo.expectedValue.toFixed(2)}</strong></td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          tableHTML = `
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Picks</th>
+                    <th>Win %</th>
+                    <th># Selections</th>
+                    <th>Payout</th>
+                    <th>Pool EV</th>
+                    <th>Game EV</th>
+                    <th>Total EV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sorted.map(combo => {
+                    const picks = combo.side.map((side, i) => {
+                      const game = this.state.games[i];
+                      const bestWager = this.findBestWagerForGame(game.id, side);
+                      const teamName = game[side].name.replace(/[0-9]/g, '');
+                      return `${teamName}${bestWager.label}`;
+                    }).join('');
+                    const evClass = combo.expectedValue > 0 ? 'ev-positive' : 'ev-negative';
+                    const poolEvClass = combo.poolEV > 0 ? 'ev-positive' : 'ev-negative';
+                    const gameEvClass = combo.individualEV > 0 ? 'ev-positive' : 'ev-negative';
+                    
+                    return `
+                      <tr>
+                        <td>${picks}</td>
+                        <td>${combo.winProbability.toFixed(2)}%</td>
+                        <td>${combo.numberOfSelections}</td>
+                        <td>${Math.round(combo.payout)}</td>
+                        <td class="${poolEvClass}">${combo.poolEV.toFixed(2)}</td>
+                        <td class="${gameEvClass}">${combo.individualEV.toFixed(2)}</td>
+                        <td class="${evClass}"><strong>${combo.expectedValue.toFixed(2)}</strong></td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        const infoNote = `
+          <div class="info-box">
+            <p><strong>Win Probabilities:</strong> Based on no-vig odds (bookmaker edge removed). For decided games, actual results are used.</p>
+            <p><strong>Entry Fee:</strong> ${this.state.entryFee} karma (affects Pool EV calculation)</p>
+            <p><strong>Individual Game EVs:</strong> Calculated using Real App Odds. Best wager (0 or 100) is automatically selected per game.</p>
+            <p><strong>Total EV:</strong> Pool EV + sum of all individual game EVs for the selected combination.</p>
+            ${this.state.gameCount === 4 ? 
+              '<p><strong>4-Game Mode:</strong> Payouts based on tier system - 4/4 correct gets full share, 3/4 correct gets half share.</p>' :
+              '<p><strong>Payout:</strong> Total pool divided by number of winners, capped at maximum payout.</p>'
+            }
+          </div>
+        `;
+
+        const copyButton = `<button class="btn btn-default copy-btn" id="copy-results-btn">Copy Results</button>`;
+
+        container.innerHTML = `
+          <div class="card">
+            ${infoNote}
+            <h2 class="subheading">All Combinations and Expected Values</h2>
+            ${tableHTML}
+            ${copyButton}
+          </div>
+        `;
+
+        const copyBtn = document.getElementById('copy-results-btn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', () => this.copyResults());
+        }
+
+        container.style.display = 'block';
+      }
+
+      copyResults() {
+        const { combinations } = this.state.results;
+        if (!combinations.length) return alert("No results to copy.");
+        
+        const sorted = [...combinations].sort((a, b) => b.expectedValue - a.expectedValue);
+        
+        let text = '';
+        
+        if (this.state.gameCount === 4) {
+          text = sorted.map(combo => {
+            const picks = combo.side.map((side, i) => {
+              const game = this.state.games[i];
+              const bestWager = this.findBestWagerForGame(game.id, side);
+              const teamName = game[side].name.replace(/[0-9]/g, '');
+              return `${teamName}${bestWager.label}`;
+            }).join('');
+            
+            let prob3Plus = 0;
+            for (let outcome = 0; outcome < 16; outcome++) {
+              const outcomeArray = [];
+              for (let i = 0; i < 4; i++) {
+                outcomeArray.push((outcome >> i) & 1);
+              }
+              
+              let outcomeProb = 1;
+              for (let i = 0; i < 4; i++) {
+                const game = this.state.games[i];
+                if (outcomeArray[i] === 0) {
+                  outcomeProb *= game.team1.noVigProbability;
+                } else {
+                  outcomeProb *= game.team2.noVigProbability;
+                }
+              }
+              
+              let matches = 0;
+              for (let i = 0; i < 4; i++) {
+                const userPick = combo.side[i] === 'team1' ? 0 : 1;
+                if (userPick === outcomeArray[i]) {
+                  matches++;
+                }
+              }
+              
+              if (matches >= 3) prob3Plus += outcomeProb;
+            }
+            
+            return `${picks} - ${(prob3Plus * 100).toFixed(2)}% - (${combo.expectedValue.toFixed(2)})`;
+          }).join('\n');
+        } else {
+          text = sorted.map(combo => {
+            const picks = combo.side.map((side, i) => {
+              const game = this.state.games[i];
+              const bestWager = this.findBestWagerForGame(game.id, side);
+              const teamName = game[side].name.replace(/[0-9]/g, '');
+              return `${teamName}${bestWager.label}`;
+            }).join('');
+            return `${picks} - ${combo.winProbability.toFixed(2)}% - (${combo.expectedValue.toFixed(2)})`;
+          }).join('\n');
+        }
+        
+        navigator.clipboard.writeText(text)
+          .then(() => alert("Results copied to clipboard!"))
+          .catch(err => alert("Copy failed: " + err.message));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing calculator...');
+      try {
+        window.app = new UnifiedPoolCalculator();
+      } catch (error) {
+        console.error('Failed to initialize calculator:', error);
+        document.body.innerHTML = '<div style="color: red; padding: 20px;">Error loading calculator. Please refresh the page.</div>';
+      }
+    });
+  </script>
+</body>
+</html>
