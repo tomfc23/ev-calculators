@@ -247,6 +247,7 @@ a {
             <option value="NFL">NFL</option>
             <option value="CFB">CFB</option>
             <option value="FC">FC</option>
+            <option value="CBB">CBB</option>
         </select>
     </div>
 
@@ -290,7 +291,11 @@ a {
                 { hasRealOdds: false, maxBet: '100-10', title: 'FC O/U', side1: 'Over', side2: 'Under', isCFB: false, is3Way: false },
                 { hasRealOdds: true, maxBet: '100', title: 'FC 3-way ML', side1: 'Team 1', side2: 'Team 2', side3: 'Draw', isCFB: false, is3Way: true },
                 { hasRealOdds: true, maxBet: '100-10', title: 'FC BTTS', side1: 'Yes', side2: 'No', isCFB: false, is3Way: false }
-            ]
+            ],
+            CBB: [
+                { hasRealOdds: false, maxBet: '100-10', title: 'CBB O/U', side1: 'Over', side2: 'Under', isCFB: false },
+                { hasRealOdds: false, maxBet: '100-10', title: 'CBB Spread', side1: 'Team 1', side2: 'Team 2', isCFB: false }
+            ],
         };
 
         function generateCalculators() {
