@@ -410,11 +410,12 @@ a {
         function createCalculatorHTML(calcId, config) {
             let maxBetHTML = '';
             if (config.isCFB) {
+                const cfbMaxBet = config.maxBet.split('-')[0];
                 maxBetHTML = `
-                    <option value="50">50</option>
-                    <option value="100" ${config.maxBet === '100' ? 'selected' : ''}>100</option>
-                    <option value="200">200</option>
-                    <option value="300">300</option>
+                    <option value="50" ${cfbMaxBet === '50' ? 'selected' : ''}>50</option>
+                    <option value="100" ${cfbMaxBet === '100' ? 'selected' : ''}>100</option>
+                    <option value="200" ${cfbMaxBet === '200' ? 'selected' : ''}>200</option>
+                    <option value="300" ${cfbMaxBet === '300' ? 'selected' : ''}>300</option>
                 `;
             } else {
                 const opts = {
