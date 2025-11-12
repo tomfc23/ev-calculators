@@ -186,6 +186,10 @@
     margin-bottom: 1rem;
   }
 
+  .decided-checkbox:last-child {
+    margin-bottom: 0;
+  }
+
   .decided-checkbox input[type="checkbox"] {
     width: 18px;
     height: 18px;
@@ -611,7 +615,8 @@
             },
             decided: false,
             team1Winner: false,
-            team2Winner: false
+            team2Winner: false,
+            is10MinBet: false
           });
         }
 
@@ -650,6 +655,10 @@
             <h3 class="section-title">Game ${game.id}</h3>
             
             <div class="decided-control">
+              <div class="decided-checkbox">
+                <input type="checkbox" id="game-${game.id}-10min" ${game.is10MinBet ? 'checked' : ''}>
+                <label for="game-${game.id}-10min">10 min bet</label>
+              </div>
               <div class="decided-checkbox">
                 <input type="checkbox" id="game-${game.id}-decided" ${game.decided ? 'checked' : ''}>
                 <label for="game-${game.id}-decided">Game Decided</label>
@@ -727,6 +736,11 @@
       }
 
       attachGameEventListeners(gameId) {
+        const minBetCheckbox = document.getElementById(`game-${gameId}-10min`);
+        if (minBetCheckbox) {
+          minBetCheckbox.addEventListener('change', () => this.toggle10MinBet(gameId));
+        }
+
         const decidedCheckbox = document.getElementById(`game-${gameId}-decided`);
         if (decidedCheckbox) {
           decidedCheckbox.addEventListener('change', () => this.toggleGameDecided(gameId));
@@ -737,6 +751,30 @@
         if (team1WinnerCheckbox && team2WinnerCheckbox) {
           team1WinnerCheckbox.addEventListener('change', () => this.updateWinnerSelection(gameId, 'team1'));
           team2WinnerCheckbox.addEventListener('change', () => this.updateWinnerSelection(gameId, 'team2'));
+        }
+      }
+
+      toggle10MinBet(gameId) {
+        const game = this.state.games.find(g => g.id === gameId);
+        const minBetCheckbox = document.getElementById(`game-${gameId}-10min`);
+        
+        game.is10MinBet = minBetCheckbox.checked;
+        this.updateEntryFeeDropdown();
+      }
+
+      updateEntryFeeDropdown() {
+        const count10MinBets = this.state.games.filter(g => g.is10MinBet).length;
+        const newEntryFee = 100 + (count10MinBets * 10);
+        
+        const entryFeeSelect = document.getElementById('entry-fee-select');
+        if (entryFeeSelect) {
+          entryFeeSelect.value = newEntryFee;
+          this.state.entryFee = newEntryFee;
+          
+          // Recalculate if results are visible
+          if (document.getElementById('results-container').style.display !== 'none') {
+            this.calculateAllCombinations();
+          }
         }
       }
 
@@ -850,6 +888,11 @@
           payout = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
+        } else if (wager === 10) {
+          // For 10 wager, calculate with 10 risk
+          payout = realOdds > 0 
+            ? Math.round(10 / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * 10);
         } else {
           // For 100 wager, calculate normally
           payout = realOdds > 0 
@@ -868,9 +911,25 @@
         const realOdds = realOddsInput ? parseInt(realOddsInput.value) : null;
         
         if (!realOdds || realOdds === 0) {
+          if (game.is10MinBet) {
+            return { wager: 10, ev: 0, label: '10' };
+          }
           return { wager: 0, ev: 0, label: '0' };
         }
 
+        // If 10 min bet, compare 10 vs 100
+        if (game.is10MinBet) {
+          const ev10 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 10);
+          const ev100 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 100);
+          
+          if (ev100 > ev10) {
+            return { wager: 100, ev: ev100, label: '100' };
+          } else {
+            return { wager: 10, ev: ev10, label: '10' };
+          }
+        }
+
+        // Otherwise compare 0 vs 100
         const ev0 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 0);
         const ev100 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 100);
         
@@ -1276,7 +1335,7 @@
           <div class="info-box">
             <p><strong>Win Probabilities:</strong> Based on no-vig odds (bookmaker edge removed). For decided games, actual results are used.</p>
             <p><strong>Entry Fee:</strong> ${this.state.entryFee} karma (affects Pool EV calculation)</p>
-            <p><strong>Individual Game EVs:</strong> Calculated using Real App Odds. Best wager (0 or 100) is automatically selected per game.</p>
+            <p><strong>Individual Game EVs:</strong> Calculated using Real App Odds. Best wager (0 or 100) is automatically selected per game. For games marked as "10 min bet", the minimum wager is 10 instead of 0.</p>
             <p><strong>Total EV:</strong> Pool EV + sum of all individual game EVs for the selected combination.</p>
             ${this.state.gameCount === 4 ? 
               '<p><strong>4-Game Mode:</strong> Payouts based on tier system - 4/4 correct gets full share, 3/4 correct gets half share.</p>' :
