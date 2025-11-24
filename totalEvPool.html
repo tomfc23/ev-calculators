@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Sided Pool EV Calculator</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    background-color: black;
+    color: lightgray;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .heading {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .subheading {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .card {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 1.5rem;
+    background-color: #222;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+  }
+
+  .pool-type-selector {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .pool-type-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #444;
+    border: 2px solid #555;
+    color: lightgray;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 25px;
+    font-size: 16px;
+  }
+
+  .pool-type-btn.active {
+    background-color: #6f42c1;
+    color: white;
+    border-color: #6f42c1;
+  }
+
+  .pool-type-btn:hover {
+    border-color: #6f42c1;
+  }
+
+  .pool-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .info-item {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 15px;
+    border: 2px solid #555;
+  }
+
+  .info-label {
+    font-size: 0.8rem;
+    color: #aaa;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .info-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #6f42c1;
+  }
+
+  .game-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .game-inputs.four-games {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    .game-inputs.four-games {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .game-card {
+    border: 2px solid #555;
+    border-radius: 25px;
+    padding: 1rem;
+    background-color: #333;
+  }
+
+  .game-header {
+    margin-bottom: 1rem;
+  }
+
+  .game-header h3 {
+    color: lightgray;
+    font-size: 1.2rem;
+  }
+
+  .team-row {
+    margin-bottom: 1rem;
+  }
+
+  .team-label {
+    display: block;
+    font-weight: bold;
+    color: lightgray;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  input, select {
+    background-color: #222;
+    border: 2px solid #555;
+    border-radius: 25px;
+    color: lightgray;
+    padding: 15px;
+    font-size: 16px;
+    width: 100%;
+    transition: border-color 0.3s;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: #6f42c1;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  button {
+    background-color: #6f42c1;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: none;
+    padding: 15px;
+    margin-top: 1rem;
+    border-radius: 25px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  button:hover {
+    background-color: #5a32a3;
+  }
+
+  .no-vig-odds {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #555;
+    gap: 1rem;
+  }
+
+  .no-vig-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .no-vig-label {
+    font-size: 0.8rem;
+    color: #aaa;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .no-vig-value {
+    font-weight: bold;
+    color: #10b981;
+    font-size: 1rem;
+  }
+
+  .real-odds-input {
+    margin-top: 0.5rem;
+  }
+
+  .real-odds-label {
+    display: block;
+    font-weight: bold;
+    color: lightgray;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  .real-odds-input input {
+    width: 100%;
+  }
+
+  .loading {
+    display: none;
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .spinner {
+    border: 4px solid rgba(111, 66, 193, 0.2);
+    border-left-color: #6f42c1;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .results-section {
+    display: none;
+  }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 15px;
+    text-align: center;
+    border: 2px solid #555;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #10b981;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 0.25rem;
+  }
+
+  .combo-info {
+    color: #6f42c1;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .table-container {
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 25px;
+    max-height: 30rem;
+    overflow-y: auto;
+    border: 2px solid #555;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid #555;
+    background-color: #222;
+    color: lightgray;
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+  }
+
+  th:hover {
+    background-color: #383838;
+  }
+
+  th.active {
+    color: #6f42c1;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #444;
+  }
+
+  tr:nth-child(even) {
+    background-color: #2a2a2a;
+  }
+
+  tr:hover {
+    background-color: #252525;
+  }
+
+  .positive-ev {
+    color: #10b981;
+    font-weight: bold;
+  }
+
+  .negative-ev {
+    color: #ef4444;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #555;
+    margin: 1rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .pool-type-selector {
+      flex-direction: column;
+    }
+
+    .no-vig-odds {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .no-vig-item {
+      text-align: left;
+    }
+  }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="heading">Three-Sided Pool EV Calculator</h1>
+        <p class="subheading">Calculate expected values for all combinations in a pool where each game has 3 possible outcomes. Includes individual game EV calculations.</p>
+        
+        <div class="pool-type-selector">
+            <button class="pool-type-btn active" data-pool-type="2">2-Game Pool</button>
+            <button class="pool-type-btn" data-pool-type="4">4-Game Pool</button>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Pool Settings</h2>
+            <div class="pool-info" id="poolInfo">
+                <!-- Pool settings will be populated based on pool type -->
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Game Inputs</h2>
+            <div class="game-inputs" id="gameInputs">
+                <!-- Game input cards will be generated here -->
+            </div>
+            <button id="calculateButton">Calculate Expected Values</button>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p id="loadingText">Calculating all combinations...</p>
+        </div>
+        
+        <div class="card results-section" id="resultsSection">
+            <h2 class="section-title">Results</h2>
+            <div class="summary-stats" id="summaryStats">
+                <!-- Summary stats will be shown here -->
+            </div>
+            <div class="combo-info" id="comboInfo">
+                <!-- Number of combinations info -->
+            </div>
+            <div class="table-container">
+                <table id="resultsTable">
+                    <thead id="resultsTableHead">
+                        <!-- Table headers will be populated based on pool type -->
+                    </thead>
+                    <tbody id="resultsBody">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// Constants
+const TOTAL_ENTRANTS = 4600;
+const ENTRY_COST = 100;
+const OPTIONS_PER_GAME = 3;
+const MAX_BET = 100;
+
+// Pool type configurations
+const POOL_CONFIGS = {
+    2: {
+        numGames: 2,
+        payoutCap: 400,
+        games: [
+            {
+                name: "Game 1",
+                teams: [
+                    { name: "L1", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M1", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R1", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            },
+            {
+                name: "Game 2",
+                teams: [
+                    { name: "L2", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M2", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R2", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            }
+        ]
+    },
+    4: {
+        numGames: 4,
+        payoutCap4of4: 800,
+        payoutCap3of4: 600,
+        games: [
+            {
+                name: "Game 1",
+                teams: [
+                    { name: "L1", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M1", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R1", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            },
+            {
+                name: "Game 2",
+                teams: [
+                    { name: "L2", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M2", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R2", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            },
+            {
+                name: "Game 3",
+                teams: [
+                    { name: "L3", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M3", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R3", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            },
+            {
+                name: "Game 4",
+                teams: [
+                    { name: "L4", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M4", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R4", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                ]
+            }
+        ]
+    }
+};
+
+// Current state
+let currentPoolType = 2;
+let games = [];
+
+// Element references
+const poolInfoContainer = document.getElementById('poolInfo');
+const gameInputsContainer = document.getElementById('gameInputs');
+const calculateButton = document.getElementById('calculateButton');
+const resultsSection = document.getElementById('resultsSection');
+const resultsTableHead = document.getElementById('resultsTableHead');
+const resultsBody = document.getElementById('resultsBody');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const loadingText = document.getElementById('loadingText');
+const summaryStats = document.getElementById('summaryStats');
+const comboInfo = document.getElementById('comboInfo');
+
+// Initialize the application
+function initApp() {
+    bindPoolTypeButtons();
+    loadPoolType(2);
+}
+
+// Bind pool type selector buttons
+function bindPoolTypeButtons() {
+    document.querySelectorAll('.pool-type-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const poolType = parseInt(e.target.dataset.poolType);
+            
+            // Update active button
+            document.querySelectorAll('.pool-type-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Load pool type
+            loadPoolType(poolType);
+            
+            // Hide results
+            resultsSection.style.display = 'none';
+        });
+    });
+}
+
+// Load pool type configuration
+function loadPoolType(poolType) {
+    currentPoolType = poolType;
+    const config = POOL_CONFIGS[poolType];
+    
+    // Deep copy games to avoid reference issues
+    games = JSON.parse(JSON.stringify(config.games));
+    
+    renderPoolInfo(config);
+    renderGameInputs();
+    renderTableHeaders();
+    bindEvents();
+}
+
+// Render pool info section
+function renderPoolInfo(config) {
+    if (currentPoolType === 2) {
+        poolInfoContainer.innerHTML = `
+            <div class="info-item">
+                <span class="info-label">Entry Cost</span>
+                <span class="info-value">100 karma</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">2/2 Payout Cap</span>
+                <span class="info-value">${config.payoutCap} karma</span>
+            </div>
+        `;
+        loadingText.textContent = 'Calculating all 9 combinations...';
+    } else {
+        poolInfoContainer.innerHTML = `
+            
+            <div class="info-item">
+                <span class="info-label">Entry Cost</span>
+                <span class="info-value">100 karma</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">4/4 Payout Cap</span>
+                <span class="info-value">${config.payoutCap4of4} karma</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">3/4 Payout Cap</span>
+                <span class="info-value">${config.payoutCap3of4} karma</span>
+            </div>
+        `;
+        loadingText.textContent = 'Calculating all 81 combinations...';
+    }
+}
+
+// Render table headers
+function renderTableHeaders() {
+    if (currentPoolType === 2) {
+        resultsTableHead.innerHTML = `
+            <tr>
+                <th data-sort="combo">Combination</th>
+                <th data-sort="winProb">Win Probability</th>
+                <th data-sort="numSelectionsCount">Total Selections</th>
+                <th data-sort="payout2">2/2 Payout</th>
+                <th data-sort="poolEv">Pool EV</th>
+                <th data-sort="gameEv">Game EV</th>
+                <th data-sort="ev" class="active">Total EV</th>
+            </tr>
+        `;
+    } else {
+        resultsTableHead.innerHTML = `
+            <tr>
+                <th data-sort="combo">Combination</th>
+                <th data-sort="winProb">Win Probability</th>
+                <th data-sort="numSelectionsCount">Total Selections</th>
+                <th data-sort="payout4">4/4 Payout</th>
+                <th data-sort="payout3">3/4 Payout</th>
+                <th data-sort="poolEv">Pool EV</th>
+                <th data-sort="gameEv">Game EV</th>
+                <th data-sort="ev" class="active">Total EV</th>
+            </tr>
+        `;
+    }
+}
+
+// Render game input cards
+function renderGameInputs() {
+    gameInputsContainer.innerHTML = '';
+    
+    // Add class based on pool type
+    if (currentPoolType === 4) {
+        gameInputsContainer.className = 'game-inputs four-games';
+    } else {
+        gameInputsContainer.className = 'game-inputs';
+    }
+    
+    games.forEach((game, gameIndex) => {
+        const gameCard = document.createElement('div');
+        gameCard.className = 'game-card';
+        
+        const gameHeader = document.createElement('div');
+        gameHeader.className = 'game-header';
+        
+        const gameTitle = document.createElement('h3');
+        gameTitle.textContent = game.name;
+        
+        gameHeader.appendChild(gameTitle);
+        gameCard.appendChild(gameHeader);
+        
+        // Team inputs
+        game.teams.forEach((team, teamIndex) => {
+            const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+            
+            const teamRow = document.createElement('div');
+            teamRow.className = 'team-row';
+            
+            // Team name
+            const nameLabel = document.createElement('label');
+            nameLabel.textContent = `${position} Side`;
+            nameLabel.className = 'team-label';
+            nameLabel.htmlFor = `name-${gameIndex}-${teamIndex}`;
+            
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = team.name;
+            nameInput.placeholder = `${position} Side`;
+            nameInput.id = `name-${gameIndex}-${teamIndex}`;
+            nameInput.dataset.game = gameIndex;
+            nameInput.dataset.team = teamIndex;
+            nameInput.dataset.field = 'name';
+            
+            teamRow.appendChild(nameLabel);
+            teamRow.appendChild(nameInput);
+            gameCard.appendChild(teamRow);
+            
+            // Pool Odds
+            const oddsRow = document.createElement('div');
+            oddsRow.className = 'team-row';
+            
+            const oddsLabel = document.createElement('label');
+            oddsLabel.textContent = 'Sportsbook Odds (American)';
+            oddsLabel.className = 'team-label';
+            oddsLabel.htmlFor = `odds-${gameIndex}-${teamIndex}`;
+            
+            const oddsInput = document.createElement('input');
+            oddsInput.type = 'number';
+            oddsInput.value = team.odds;
+            oddsInput.placeholder = 'Odds';
+            oddsInput.id = `odds-${gameIndex}-${teamIndex}`;
+            oddsInput.dataset.game = gameIndex;
+            oddsInput.dataset.team = teamIndex;
+            oddsInput.dataset.field = 'odds';
+            
+            oddsRow.appendChild(oddsLabel);
+            oddsRow.appendChild(oddsInput);
+            gameCard.appendChild(oddsRow);
+            
+            // Real odds for game EV
+            const realOddsRow = document.createElement('div');
+            realOddsRow.className = 'real-odds-input';
+            
+            const realOddsLabel = document.createElement('label');
+            realOddsLabel.textContent = 'Real App Odds';
+            realOddsLabel.className = 'real-odds-label';
+            realOddsLabel.htmlFor = `realodds-${gameIndex}-${teamIndex}`;
+            
+            const realOddsInput = document.createElement('input');
+            realOddsInput.type = 'number';
+            realOddsInput.value = team.realOdds;
+            realOddsInput.placeholder = 'Real Odds';
+            realOddsInput.id = `realodds-${gameIndex}-${teamIndex}`;
+            realOddsInput.dataset.game = gameIndex;
+            realOddsInput.dataset.team = teamIndex;
+            realOddsInput.dataset.field = 'realOdds';
+            
+            realOddsRow.appendChild(realOddsLabel);
+            realOddsRow.appendChild(realOddsInput);
+            gameCard.appendChild(realOddsRow);
+            
+            // Selection percentage
+            const pctRow = document.createElement('div');
+            pctRow.className = 'team-row';
+            
+            const pctLabel = document.createElement('label');
+            pctLabel.textContent = 'Selection %';
+            pctLabel.className = 'team-label';
+            pctLabel.htmlFor = `pct-${gameIndex}-${teamIndex}`;
+            
+            const pctInput = document.createElement('input');
+            pctInput.type = 'number';
+            pctInput.step = '0.01';
+            pctInput.value = team.selectionPct;
+            pctInput.placeholder = '%';
+            pctInput.id = `pct-${gameIndex}-${teamIndex}`;
+            pctInput.dataset.game = gameIndex;
+            pctInput.dataset.team = teamIndex;
+            pctInput.dataset.field = 'selectionPct';
+            
+            pctRow.appendChild(pctLabel);
+            pctRow.appendChild(pctInput);
+            gameCard.appendChild(pctRow);
+            
+            if (teamIndex < game.teams.length - 1) {
+                const divider = document.createElement('hr');
+                gameCard.appendChild(divider);
+            }
+        });
+        
+        // No-vig odds section for pool odds
+        const noVigSection = document.createElement('div');
+        noVigSection.className = 'no-vig-odds';
+        noVigSection.id = `no-vig-${gameIndex}`;
+        
+        game.teams.forEach((team, teamIndex) => {
+            const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+            
+            const noVigItem = document.createElement('div');
+            noVigItem.className = 'no-vig-item';
+            
+            const noVigLabel = document.createElement('div');
+            noVigLabel.className = 'no-vig-label';
+            noVigLabel.textContent = `${position} No-Vig`;
+            
+            const noVigValue = document.createElement('div');
+            noVigValue.className = 'no-vig-value';
+            noVigValue.id = `no-vig-value-${gameIndex}-${teamIndex}`;
+            noVigValue.textContent = '-110';
+            
+            noVigItem.appendChild(noVigLabel);
+            noVigItem.appendChild(noVigValue);
+            noVigSection.appendChild(noVigItem);
+        });
+        
+        gameCard.appendChild(noVigSection);
+        
+        // Game EV display section
+        const gameEvDisplaySection = document.createElement('div');
+        gameEvDisplaySection.className = 'game-ev-display';
+        gameEvDisplaySection.id = `game-ev-display-${gameIndex}`;
+        gameEvDisplaySection.style.marginTop = '1rem';
+        gameEvDisplaySection.style.padding = '1rem';
+        gameEvDisplaySection.style.backgroundColor = '#2a2a2a';
+        gameEvDisplaySection.style.borderRadius = '10px';
+        gameEvDisplaySection.style.border = '1px solid #444';
+        
+        const gameEvTitle = document.createElement('div');
+        gameEvTitle.textContent = 'Individual Game EVs';
+        gameEvTitle.style.fontWeight = 'bold';
+        gameEvTitle.style.marginBottom = '0.5rem';
+        gameEvTitle.style.color = '#6f42c1';
+        gameEvTitle.style.fontSize = '0.9rem';
+        
+        gameEvDisplaySection.appendChild(gameEvTitle);
+        
+        const gameEvResults = document.createElement('div');
+        gameEvResults.id = `game-ev-results-${gameIndex}`;
+        gameEvResults.style.fontSize = '0.85rem';
+        gameEvResults.style.lineHeight = '1.8';
+        gameEvDisplaySection.appendChild(gameEvResults);
+        
+        gameCard.appendChild(gameEvDisplaySection);
+        gameInputsContainer.appendChild(gameCard);
+    });
+    
+    // Update initial no-vig odds
+    updateAllNoVigOdds();
+}
+
+// Bind event listeners
+function bindEvents() {
+    // Input change events
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', handleInputChange);
+        input.addEventListener('blur', handleInputChange);
+    });
+    
+    // Calculate button
+    calculateButton.removeEventListener('click', calculateEV);
+    calculateButton.addEventListener('click', calculateEV);
+    
+    // Table sorting
+    document.querySelectorAll('th[data-sort]').forEach(header => {
+        header.addEventListener('click', handleTableSort);
+    });
+}
+
+// Handle input changes
+function handleInputChange(event) {
+    const { game, team, field } = event.target.dataset;
+    const value = event.target.value;
+    
+    // Update the game data
+    if (field === 'name') {
+        games[game].teams[team].name = value;
+    } else if (field === 'odds') {
+        games[game].teams[team].odds = parseFloat(value);
+        updateNoVigOdds(parseInt(game));
+    } else if (field === 'selectionPct') {
+        games[game].teams[team].selectionPct = parseFloat(value);
+        
+        if (currentPoolType === 2) {
+            validateSelectionPercentages(parseInt(game));
+        }
+    } else if (field === 'realOdds') {
+        games[game].teams[team].realOdds = parseFloat(value);
+    }
+}
+
+// Validate that selection percentages sum to 100 for a game (2-game pool only)
+function validateSelectionPercentages(gameIndex) {
+    const teams = games[gameIndex].teams;
+    const totalPct = teams.reduce((sum, team) => sum + team.selectionPct, 0);
+    
+    // Adjust if total is not exactly 100
+    if (Math.abs(totalPct - 100) > 0.01) {
+        // Find the last team that was edited
+        const lastEditedTeamIndex = teams.findIndex((team, idx) => {
+            const input = document.getElementById(`pct-${gameIndex}-${idx}`);
+            return input === document.activeElement;
+        });
+        
+        if (lastEditedTeamIndex >= 0) {
+            // Adjust other teams proportionally
+            let remainingPercent = 100 - teams[lastEditedTeamIndex].selectionPct;
+            let currentTotalOthers = 0;
+            
+            teams.forEach((team, idx) => {
+                if (idx !== lastEditedTeamIndex) {
+                    currentTotalOthers += team.selectionPct;
+                }
+            });
+            
+            if (currentTotalOthers > 0) {
+                teams.forEach((team, idx) => {
+                    if (idx !== lastEditedTeamIndex) {
+                        team.selectionPct = (team.selectionPct / currentTotalOthers) * remainingPercent;
+                        
+                        // Update UI
+                        const input = document.getElementById(`pct-${gameIndex}-${idx}`);
+                        input.value = team.selectionPct.toFixed(2);
+                    }
+                });
+            } else {
+                // If all others are 0, distribute evenly
+                const numOtherTeams = teams.length - 1;
+                if (numOtherTeams > 0) {
+                    const evenShare = remainingPercent / numOtherTeams;
+                    
+                    teams.forEach((team, idx) => {
+                        if (idx !== lastEditedTeamIndex) {
+                            team.selectionPct = evenShare;
+                            
+                            // Update UI
+                            const input = document.getElementById(`pct-${gameIndex}-${idx}`);
+                            input.value = team.selectionPct.toFixed(2);
+                        }
+                    });
+                }
+            }
+        }
+    }
+}
+
+// Update no-vig odds for a specific game
+function updateNoVigOdds(gameIndex) {
+    const teams = games[gameIndex].teams;
+    
+    // Convert American odds to probabilities
+    const probabilities = teams.map(team => oddsToImpliedProbability(team.odds));
+    
+    // Calculate overround (vig)
+    const sumProb = probabilities.reduce((acc, prob) => acc + prob, 0);
+    
+    // Remove vig by normalizing probabilities
+    const noVigProbs = probabilities.map(prob => prob / sumProb);
+    
+    // Convert back to American odds
+    const noVigOdds = noVigProbs.map(prob => impliedProbabilityToOdds(prob));
+    
+    // Update UI
+    teams.forEach((team, i) => {
+        const noVigElement = document.getElementById(`no-vig-value-${gameIndex}-${i}`);
+        noVigElement.textContent = formatOdds(noVigOdds[i]);
+        
+        // Store no-vig probability in team data for later use
+        team.noVigProb = noVigProbs[i];
+    });
+}
+
+// Update no-vig odds for all games
+function updateAllNoVigOdds() {
+    for (let i = 0; i < games.length; i++) {
+        updateNoVigOdds(i);
+    }
+}
+
+// Convert American odds to implied probability
+function oddsToImpliedProbability(odds) {
+    if (odds > 0) {
+        return 100 / (odds + 100);
+    } else {
+        return Math.abs(odds) / (Math.abs(odds) + 100);
+    }
+}
+
+// Convert implied probability to American odds
+function impliedProbabilityToOdds(probability) {
+    if (probability <= 0 || probability >= 1) {
+        return probability <= 0 ? 10000 : -10000;
+    }
+    
+    if (probability < 0.5) {
+        return (100 / probability) - 100;
+    } else {
+        return -1 * (probability * 100 / (1 - probability));
+    }
+}
+
+// Format American odds with + sign for positive values
+function formatOdds(odds) {
+    const roundedOdds = Math.round(odds);
+    return roundedOdds > 0 ? `+${roundedOdds}` : roundedOdds.toString();
+}
+
+// Calculate payout from odds
+function calculatePayout(realOdds, wager) {
+    let winnings;
+    if (wager === 0) {
+        if (realOdds > 0) {
+            winnings = (10 / 100) * realOdds;
+        } else {
+            winnings = (100 / Math.abs(realOdds)) * 10;
+        }
+    } else {
+        if (realOdds > 0) {
+            winnings = (wager / 100) * realOdds;
+        } else {
+            winnings = (100 / Math.abs(realOdds)) * wager;
+        }
+    }
+    return Math.round(winnings);
+}
+
+// Calculate game EV for a specific team in a game
+function calculateGameEV(gameIndex, teamIndex) {
+    const team = games[gameIndex].teams[teamIndex];
+    
+    // If real odds are missing, return 0
+    if (!team.realOdds) {
+        return 0;
+    }
+    
+    const realOdds = parseFloat(team.realOdds);
+    
+    // Use the pool's no-vig probability (already calculated from pool odds)
+    const noVigProb = team.noVigProb;
+    
+    if (!noVigProb || noVigProb <= 0) {
+        return 0;
+    }
+    
+    // Calculate probability of losing (sum of other teams' probabilities)
+    const teams = games[gameIndex].teams;
+    let noVigProbLose = 0;
+    teams.forEach((t, idx) => {
+        if (idx !== teamIndex) {
+            noVigProbLose += t.noVigProb;
+        }
+    });
+    
+    // Calculate winnings for both wager scenarios using REAL odds
+    const winningsWager0 = calculatePayout(realOdds, 0);
+    const winningsWager100 = calculatePayout(realOdds, MAX_BET);
+    
+    // Calculate EVs using the same formula as the 3-way calculator
+    // EV = (winnings * probWin) - (wager * probLose)
+    const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
+    const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
+    
+    // Return the better EV (this is what gets added to total game EV)
+    return Math.max(evWager0, evWager100);
+}
+
+// Calculate and display individual game EVs
+function calculateAndDisplayGameEVs(gameIndex) {
+    const game = games[gameIndex];
+    const resultsContainer = document.getElementById(`game-ev-results-${gameIndex}`);
+    
+    if (!resultsContainer) return;
+    
+    let html = '';
+    let maxEV = -Infinity;
+    let evValues = [];
+    
+    game.teams.forEach((team, teamIndex) => {
+        const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+        
+        if (!team.realOdds) {
+            return;
+        }
+        
+        const realOdds = parseFloat(team.realOdds);
+        const noVigProb = team.noVigProb;
+        
+        if (!noVigProb || noVigProb <= 0) {
+            return;
+        }
+        
+        // Calculate probability of losing
+        let noVigProbLose = 0;
+        game.teams.forEach((t, idx) => {
+            if (idx !== teamIndex) {
+                noVigProbLose += t.noVigProb;
+            }
+        });
+        
+        // Calculate winnings and EVs
+        const winningsWager0 = calculatePayout(realOdds, 0);
+        const winningsWager100 = calculatePayout(realOdds, MAX_BET);
+        
+        const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
+        const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
+        
+        evValues.push({ name: `${position} (Wager 0)`, value: evWager0 });
+        evValues.push({ name: `${position} (Max Bet)`, value: evWager100 });
+        
+        maxEV = Math.max(maxEV, evWager0, evWager100);
+    });
+    
+    // Now generate HTML with highlighting
+    game.teams.forEach((team, teamIndex) => {
+        const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+        
+        if (!team.realOdds) {
+            return;
+        }
+        
+        const realOdds = parseFloat(team.realOdds);
+        const noVigProb = team.noVigProb;
+        
+        if (!noVigProb || noVigProb <= 0) {
+            return;
+        }
+        
+        // Calculate probability of losing
+        let noVigProbLose = 0;
+        game.teams.forEach((t, idx) => {
+            if (idx !== teamIndex) {
+                noVigProbLose += t.noVigProb;
+            }
+        });
+        
+        // Calculate winnings and EVs
+        const winningsWager0 = calculatePayout(realOdds, 0);
+        const winningsWager100 = calculatePayout(realOdds, MAX_BET);
+        
+        const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
+        const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
+        
+        const isWager0Highest = evWager0 === maxEV;
+        const isWagerMaxHighest = evWager100 === maxEV;
+        
+        const wager0Check = isWager0Highest ? ' <span style="color: #4CAF50; font-weight: bold;">✅</span>' : '';
+        const wagerMaxCheck = isWagerMaxHighest ? ' <span style="color: #4CAF50; font-weight: bold;">✅</span>' : '';
+        
+        const evColor0 = isWager0Highest ? '#4CAF50' : (evWager0 >= 0 ? '#10b981' : '#ef4444');
+        const evColorMax = isWagerMaxHighest ? '#4CAF50' : (evWager100 >= 0 ? '#10b981' : '#ef4444');
+        
+        html += `<div><strong>${position} EV (Wager 0):</strong> <span style="color: ${evColor0}; font-weight: bold;">${evWager0}</span>${wager0Check}</div>`;
+        html += `<div><strong>${position} EV (Max Bet):</strong> <span style="color: ${evColorMax}; font-weight: bold;">${evWager100}</span>${wagerMaxCheck}</div>`;
+    });
+    
+    if (html === '') {
+        html = '<div style="color: #aaa; font-style: italic;">Enter Real App Odds to calculate individual game EVs</div>';
+    }
+    
+    resultsContainer.innerHTML = html;
+}
+
+// Helper function to round to two decimals
+function roundToTwoDecimals(value) {
+    return Math.round(value * 100) / 100;
+}
+
+// Calculate total game EV for a combination
+function calculateTotalGameEV(combo) {
+    let totalGameEV = 0;
+    
+    combo.forEach((teamIndex, gameIndex) => {
+        const gameEV = calculateGameEV(gameIndex, teamIndex);
+        totalGameEV += gameEV;
+    });
+    
+    return totalGameEV;
+}
+
+// Calculate expected values
+function calculateEV() {
+    // Show loading indicator
+    loadingIndicator.style.display = 'block';
+    resultsSection.style.display = 'none';
+    
+    // Update all no-vig odds
+    updateAllNoVigOdds();
+    
+    // Calculate and display individual game EVs
+    for (let i = 0; i < games.length; i++) {
+        calculateAndDisplayGameEVs(i);
+    }
+    
+    // Use setTimeout to allow UI to update before calculations
+    setTimeout(() => {
+        // Generate all possible combinations
+        const combinations = generateAllCombinations();
+        
+        // Calculate stats for each combination
+        const combinationsWithStats = calculateCombinationStats(combinations);
+        
+        // Display results
+        displayResults(combinationsWithStats);
+        
+        // Hide loading and show results
+        loadingIndicator.style.display = 'none';
+        resultsSection.style.display = 'block';
+    }, 100);
+}
+
+// Generate all possible combinations
+function generateAllCombinations() {
+    const combinations = [];
+    const numGames = POOL_CONFIGS[currentPoolType].numGames;
+    
+    // Helper function to recursively generate combinations
+    function generateCombosRecursive(gameIndex, currentCombo) {
+        // Base case: we've selected a team for each game
+        if (gameIndex === numGames) {
+            combinations.push([...currentCombo]);
+            return;
+        }
+        
+        // Recursive case: try each team for the current game
+        for (let i = 0; i < OPTIONS_PER_GAME; i++) {
+            currentCombo[gameIndex] = i;
+            generateCombosRecursive(gameIndex + 1, currentCombo);
+        }
+    }
+    
+    // Start recursion with empty combo array
+    generateCombosRecursive(0, Array(numGames).fill(0));
+    
+    return combinations;
+}
+
+// Calculate stats for each combination
+function calculateCombinationStats(combinations) {
+    if (currentPoolType === 2) {
+        return calculateCombinationStats2Game(combinations);
+    } else {
+        return calculateCombinationStats4Game(combinations);
+    }
+}
+
+// Calculate stats for 2-game pool
+function calculateCombinationStats2Game(combinations) {
+    const config = POOL_CONFIGS[2];
+    
+    // Calculate probability of each combination winning
+    const combinationsWithStats = combinations.map(combo => {
+        // Calculate win probability (product of no-vig probabilities)
+        const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
+            return prob * games[gameIndex].teams[teamIndex].noVigProb;
+        }, 1);
+        
+        // Calculate how many people selected this combo
+        const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
+            const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
+            return count * selectionPct;
+        }, TOTAL_ENTRANTS);
+        
+        return {
+            combo,
+            winProbability,
+            numSelections
+        };
+    });
+    
+    // Calculate individual payout for each combination
+    combinationsWithStats.forEach(comboStat => {
+        // Store probability for later use
+        comboStat.prob2of2 = comboStat.winProbability;
+        
+        // Calculate expected number of people with this combination (winners if this combo wins)
+        comboStat.count2of2 = comboStat.numSelections;
+        
+        // Calculate payout using formula: (total entrants * 100)/number of selectors
+        const payout = comboStat.numSelections > 0 ? (TOTAL_ENTRANTS * 100) / comboStat.numSelections : 0;
+        
+        // Apply payout cap
+        const cappedPayout = Math.min(config.payoutCap, payout);
+        
+        // Calculate pool EV
+        const poolEv = (comboStat.prob2of2 * cappedPayout) - ENTRY_COST;
+        
+        // Calculate game EV
+        const gameEv = calculateTotalGameEV(comboStat.combo);
+        
+        // Total EV = Pool EV + Game EV
+        const totalEv = poolEv + gameEv;
+        
+        // Add to combo stat object
+        comboStat.payout2 = cappedPayout;
+        comboStat.poolEv = poolEv;
+        comboStat.gameEv = gameEv;
+        comboStat.ev = totalEv;
+        
+        // Store additional data for display
+        comboStat.winnerCount = comboStat.numSelections;
+        comboStat.loserCount = TOTAL_ENTRANTS - comboStat.numSelections;
+    });
+    
+    return combinationsWithStats;
+}
+
+// Calculate stats for 4-game pool
+function calculateCombinationStats4Game(combinations) {
+    const config = POOL_CONFIGS[4];
+    
+    // Calculate probability of each combination winning
+    const combinationsWithStats = combinations.map(combo => {
+        // Calculate win probability (product of no-vig probabilities)
+        const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
+            return prob * games[gameIndex].teams[teamIndex].noVigProb;
+        }, 1);
+        
+        // Calculate how many people selected this combo
+        const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
+            const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
+            return count * selectionPct;
+        }, TOTAL_ENTRANTS);
+        
+        return {
+            combo,
+            winProbability,
+            numSelections
+        };
+    });
+    
+    // Calculate total winners for 3/4 and 4/4
+    let total4of4Winners = 0;
+    let total3of4Winners = 0;
+    
+    // Calculate binomial probabilities for getting exactly 3 or 4 correct
+    combinationsWithStats.forEach(comboStat => {
+        // Calculate probability of getting exactly 3 correct for this combo
+        let prob3of4 = 0;
+        
+        for (let incorrectGame = 0; incorrectGame < config.numGames; incorrectGame++) {
+            // Probability that this game is wrong
+            const wrongGameProb = 1 - games[incorrectGame].teams[comboStat.combo[incorrectGame]].noVigProb;
+            
+            // Probability that all other games are correct
+            let otherGamesCorrectProb = 1;
+            for (let g = 0; g < config.numGames; g++) {
+                if (g !== incorrectGame) {
+                    otherGamesCorrectProb *= games[g].teams[comboStat.combo[g]].noVigProb;
+                }
+            }
+            
+            // Add to total 3/4 probability
+            prob3of4 += wrongGameProb * otherGamesCorrectProb;
+        }
+        
+        // Store probabilities for later use
+        comboStat.prob4of4 = comboStat.winProbability;
+        comboStat.prob3of4 = prob3of4;
+        
+        // Calculate expected number of people with 3/4 and 4/4 correct
+        comboStat.count4of4 = comboStat.numSelections * comboStat.prob4of4;
+        comboStat.count3of4 = comboStat.numSelections * comboStat.prob3of4;
+        
+        // Add to total winners
+        total4of4Winners += comboStat.count4of4;
+        total3of4Winners += comboStat.count3of4;
+    });
+    
+    // Calculate payouts based on the formula
+    const payouts = calculatePayouts(total4of4Winners, total3of4Winners);
+    
+    // Now calculate EV for each combination
+    combinationsWithStats.forEach(comboStat => {
+        // Apply payout caps
+        const payout4 = Math.min(config.payoutCap4of4, payouts.payout4of4);
+        const payout3 = Math.min(config.payoutCap3of4, payouts.payout3of4);
+        
+        // Calculate pool EV
+        const poolEv = (comboStat.prob4of4 * payout4) + (comboStat.prob3of4 * payout3) - ENTRY_COST;
+        
+        // Calculate game EV
+        const gameEv = calculateTotalGameEV(comboStat.combo);
+        
+        // Total EV = Pool EV + Game EV
+        const totalEv = poolEv + gameEv;
+        
+        // Add to combo stat object
+        comboStat.payout4 = payout4;
+        comboStat.payout3 = payout3;
+        comboStat.poolEv = poolEv;
+        comboStat.gameEv = gameEv;
+        comboStat.ev = totalEv;
+    });
+    
+    return combinationsWithStats;
+}
+
+// Calculate payouts for 4-game pool
+function calculatePayouts(total4of4Winners, total3of4Winners) {
+    // Round to whole numbers for display purposes
+    total4of4Winners = Math.round(total4of4Winners);
+    total3of4Winners = Math.round(total3of4Winners);
+    
+    // Total number of losers (those who got 0/4, 1/4, or 2/4 correct)
+    const totalLosers = TOTAL_ENTRANTS - total4of4Winners - total3of4Winners;
+    
+    // Total karma collected from losers
+    const totalKarmaCollected = totalLosers * ENTRY_COST;
+    
+    // Calculate total units
+    // Tier 1 (4/4 correct): Winners × 2 units
+    // Tier 2 (3/4 correct): Winners × 1 unit
+    const totalUnits = (total4of4Winners * 2) + (total3of4Winners * 1);
+    
+    // Calculate base payout per unit
+    const basePayoutPerUnit = totalKarmaCollected / totalUnits;
+    
+    // Calculate payouts for each tier
+    const payout4of4 = basePayoutPerUnit * 2; // 4/4 winners get 2x base payout
+    const payout3of4 = basePayoutPerUnit;     // 3/4 winners get 1x base payout
+    
+    return {
+        payout4of4,
+        payout3of4,
+        totalUnits,
+        total4of4Winners,
+        total3of4Winners,
+        totalLosers,
+        basePayoutPerUnit
+    };
+}
+
+// Display results in the table
+function displayResults(combinationsWithStats) {
+    // Clear previous results
+    resultsBody.innerHTML = '';
+    
+    // Sort by EV (highest to lowest)
+    combinationsWithStats.sort((a, b) => b.ev - a.ev);
+    
+    // Populate table
+    combinationsWithStats.forEach(comboStat => {
+        const row = document.createElement('tr');
+        
+        // Format combination as team names
+        const comboDisplay = comboStat.combo.map((teamIndex, gameIndex) => {
+            return games[gameIndex].teams[teamIndex].name;
+        }).join(', ');
+        
+        // Create cells
+        const comboCell = document.createElement('td');
+        comboCell.textContent = comboDisplay;
+        
+        const winProbCell = document.createElement('td');
+        winProbCell.textContent = (comboStat.winProbability * 100).toFixed(2) + '%';
+        
+        const selectionsCell = document.createElement('td');
+        selectionsCell.textContent = Math.round(comboStat.numSelections);
+        
+        const poolEvCell = document.createElement('td');
+        poolEvCell.textContent = comboStat.poolEv.toFixed(2);
+        poolEvCell.className = comboStat.poolEv >= 0 ? 'positive-ev' : 'negative-ev';
+        
+        const gameEvCell = document.createElement('td');
+        gameEvCell.textContent = comboStat.gameEv.toFixed(2);
+        gameEvCell.className = comboStat.gameEv >= 0 ? 'positive-ev' : 'negative-ev';
+        
+        const evCell = document.createElement('td');
+        evCell.textContent = comboStat.ev.toFixed(2);
+        evCell.className = comboStat.ev >= 0 ? 'positive-ev' : 'negative-ev';
+        
+        // Add cells to row
+        row.appendChild(comboCell);
+        row.appendChild(winProbCell);
+        row.appendChild(selectionsCell);
+        
+        if (currentPoolType === 2) {
+            const payout2Cell = document.createElement('td');
+            payout2Cell.textContent = comboStat.payout2.toFixed(2);
+            row.appendChild(payout2Cell);
+        } else {
+            const payout4Cell = document.createElement('td');
+            payout4Cell.textContent = comboStat.payout4.toFixed(2);
+            
+            const payout3Cell = document.createElement('td');
+            payout3Cell.textContent = comboStat.payout3.toFixed(2);
+            
+            row.appendChild(payout4Cell);
+            row.appendChild(payout3Cell);
+        }
+        
+        row.appendChild(poolEvCell);
+        row.appendChild(gameEvCell);
+        row.appendChild(evCell);
+        
+        // Add row to table
+        resultsBody.appendChild(row);
+    });
+    
+    // Display summary stats
+    displaySummaryStats(combinationsWithStats);
+}
+
+// Display summary statistics
+function displaySummaryStats(combinationsWithStats) {
+    // Calculate summary stats
+    const positiveEVCount = combinationsWithStats.filter(combo => combo.ev >= 0).length;
+    const maxEV = Math.max(...combinationsWithStats.map(combo => combo.ev));
+    const avgEV = combinationsWithStats.reduce((sum, combo) => sum + combo.ev, 0) / combinationsWithStats.length;
+    const maxGameEV = Math.max(...combinationsWithStats.map(combo => combo.gameEv));
+    
+    if (currentPoolType === 2) {
+        const bestCombo = combinationsWithStats[0];
+        
+        summaryStats.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-value">${positiveEVCount}</div>
+                <div class="stat-label">Positive EV Combinations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${maxEV.toFixed(2)}</div>
+                <div class="stat-label">Highest Total EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${avgEV.toFixed(2)}</div>
+                <div class="stat-label">Average Total EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${maxGameEV.toFixed(2)}</div>
+                <div class="stat-label">Highest Total Game EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${bestCombo.payout2.toFixed(2)}</div>
+                <div class="stat-label">Best Combo Payout</div>
+            </div>
+        `;
+    } else {
+        const total4of4Winners = Math.round(combinationsWithStats.reduce((sum, combo) => sum + combo.count4of4, 0));
+        const total3of4Winners = Math.round(combinationsWithStats.reduce((sum, combo) => sum + combo.count3of4, 0));
+        const payoutInfo = calculatePayouts(total4of4Winners, total3of4Winners);
+        
+        summaryStats.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-value">${positiveEVCount}</div>
+                <div class="stat-label">Positive EV Combinations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${maxEV.toFixed(2)}</div>
+                <div class="stat-label">Highest Total EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${avgEV.toFixed(2)}</div>
+                <div class="stat-label">Average Total EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${maxGameEV.toFixed(2)}</div>
+                <div class="stat-label">Highest Total ame EV</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${payoutInfo.basePayoutPerUnit.toFixed(2)}</div>
+                <div class="stat-label">Base Payout Per Unit</div>
+            </div>
+        `;
+    }
+    
+    // Update combo info
+    comboInfo.textContent = `Showing all ${combinationsWithStats.length} possible combinations`;
+}
+
+// Handle table sorting
+function handleTableSort(event) {
+    const sortField = event.target.dataset.sort;
+    
+    // Get current sort direction
+    const currentDirection = event.target.classList.contains('asc') ? 'asc' : 'desc';
+    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+    
+    // Remove sort indicators from all headers
+    document.querySelectorAll('th').forEach(th => {
+        th.classList.remove('asc', 'desc', 'active');
+    });
+    
+    // Add sort indicator to current header
+    event.target.classList.add(newDirection, 'active');
+    
+    // Get all rows
+    const rows = Array.from(resultsBody.querySelectorAll('tr'));
+    
+    // Sort rows based on the selected field
+    rows.sort((rowA, rowB) => {
+        let valA, valB;
+        
+        // Get values based on column
+        if (sortField === 'combo') {
+            valA = rowA.cells[0].textContent;
+            valB = rowB.cells[0].textContent;
+            return newDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            // Numeric columns
+            let colIndex;
+            if (currentPoolType === 2) {
+                colIndex = {
+                    'winProb': 1,
+                    'numSelectionsCount': 2,
+                    'payout2': 3,
+                    'poolEv': 4,
+                    'gameEv': 5,
+                    'ev': 6
+                }[sortField];
+            } else {
+                colIndex = {
+                    'winProb': 1,
+                    'numSelectionsCount': 2,
+                    'payout4': 3,
+                    'payout3': 4,
+                    'poolEv': 5,
+                    'gameEv': 6,
+                    'ev': 7
+                }[sortField];
+            }
+            
+            valA = parseFloat(rowA.cells[colIndex].textContent);
+            valB = parseFloat(rowB.cells[colIndex].textContent);
+            
+            return newDirection === 'asc' ? valA - valB : valB - valA;
+        }
+    });
+    
+    // Remove all existing rows
+    while (resultsBody.firstChild) {
+        resultsBody.removeChild(resultsBody.firstChild);
+    }
+    
+    // Add sorted rows back to table
+    rows.forEach(row => {
+        resultsBody.appendChild(row);
+    });
+}
+
+// Initialize the application when the page loads
+window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
