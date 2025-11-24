@@ -449,17 +449,17 @@ const POOL_CONFIGS = {
             {
                 name: "Game 1",
                 teams: [
-                    { name: "L1", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M1", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R1", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             },
             {
                 name: "Game 2",
                 teams: [
-                    { name: "L2", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M2", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R2", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             }
         ]
@@ -472,33 +472,33 @@ const POOL_CONFIGS = {
             {
                 name: "Game 1",
                 teams: [
-                    { name: "L1", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M1", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R1", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             },
             {
                 name: "Game 2",
                 teams: [
-                    { name: "L2", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M2", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R2", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             },
             {
                 name: "Game 3",
                 teams: [
-                    { name: "L3", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M3", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R3", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             },
             {
                 name: "Game 4",
                 teams: [
-                    { name: "L4", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "M4", odds: -110, selectionPct: 33.33, realOdds: -110 },
-                    { name: "R4", odds: -110, selectionPct: 33.34, realOdds: -110 }
+                    { name: "L", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "M", odds: -110, selectionPct: 33.33, realOdds: -110 },
+                    { name: "R", odds: -110, selectionPct: 33.34, realOdds: -110 }
                 ]
             }
         ]
@@ -1126,13 +1126,48 @@ function roundToTwoDecimals(value) {
 // Calculate total game EV for a combination
 function calculateTotalGameEV(combo) {
     let totalGameEV = 0;
+    let wagerInfo = [];
     
     combo.forEach((teamIndex, gameIndex) => {
-        const gameEV = calculateGameEV(gameIndex, teamIndex);
-        totalGameEV += gameEV;
+        const team = games[gameIndex].teams[teamIndex];
+        
+        if (!team.realOdds) {
+            wagerInfo.push({ wager: 0, ev: 0 });
+            return;
+        }
+        
+        const realOdds = parseFloat(team.realOdds);
+        const noVigProb = team.noVigProb;
+        
+        if (!noVigProb || noVigProb <= 0) {
+            wagerInfo.push({ wager: 0, ev: 0 });
+            return;
+        }
+        
+        // Calculate probability of losing
+        let noVigProbLose = 0;
+        games[gameIndex].teams.forEach((t, idx) => {
+            if (idx !== teamIndex) {
+                noVigProbLose += t.noVigProb;
+            }
+        });
+        
+        // Calculate EVs for both wagers
+        const winningsWager0 = calculatePayout(realOdds, 0);
+        const winningsWager100 = calculatePayout(realOdds, MAX_BET);
+        
+        const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
+        const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
+        
+        // Determine which wager is better
+        const bestWager = evWager0 >= evWager100 ? 0 : MAX_BET;
+        const bestEV = Math.max(evWager0, evWager100);
+        
+        totalGameEV += bestEV;
+        wagerInfo.push({ wager: bestWager, ev: bestEV });
     });
     
-    return totalGameEV;
+    return { totalGameEV, wagerInfo };
 }
 
 // Calculate expected values
@@ -1243,7 +1278,8 @@ function calculateCombinationStats2Game(combinations) {
         const poolEv = (comboStat.prob2of2 * cappedPayout) - ENTRY_COST;
         
         // Calculate game EV
-        const gameEv = calculateTotalGameEV(comboStat.combo);
+        const gameEvResult = calculateTotalGameEV(comboStat.combo);
+        const gameEv = gameEvResult.totalGameEV;
         
         // Total EV = Pool EV + Game EV
         const totalEv = poolEv + gameEv;
@@ -1252,6 +1288,7 @@ function calculateCombinationStats2Game(combinations) {
         comboStat.payout2 = cappedPayout;
         comboStat.poolEv = poolEv;
         comboStat.gameEv = gameEv;
+        comboStat.wagerInfo = gameEvResult.wagerInfo;
         comboStat.ev = totalEv;
         
         // Store additional data for display
@@ -1337,7 +1374,8 @@ function calculateCombinationStats4Game(combinations) {
         const poolEv = (comboStat.prob4of4 * payout4) + (comboStat.prob3of4 * payout3) - ENTRY_COST;
         
         // Calculate game EV
-        const gameEv = calculateTotalGameEV(comboStat.combo);
+        const gameEvResult = calculateTotalGameEV(comboStat.combo);
+        const gameEv = gameEvResult.totalGameEV;
         
         // Total EV = Pool EV + Game EV
         const totalEv = poolEv + gameEv;
@@ -1347,6 +1385,7 @@ function calculateCombinationStats4Game(combinations) {
         comboStat.payout3 = payout3;
         comboStat.poolEv = poolEv;
         comboStat.gameEv = gameEv;
+        comboStat.wagerInfo = gameEvResult.wagerInfo;
         comboStat.ev = totalEv;
     });
     
@@ -1400,9 +1439,13 @@ function displayResults(combinationsWithStats) {
     combinationsWithStats.forEach(comboStat => {
         const row = document.createElement('tr');
         
-        // Format combination as team names
+        // Format combination as team names with wager amounts
         const comboDisplay = comboStat.combo.map((teamIndex, gameIndex) => {
-            return games[gameIndex].teams[teamIndex].name;
+            const teamName = games[gameIndex].teams[teamIndex].name;
+            const wager = comboStat.wagerInfo && comboStat.wagerInfo[gameIndex] 
+                ? comboStat.wagerInfo[gameIndex].wager 
+                : 0;
+            return `${teamName}${wager}`;
         }).join(', ');
         
         // Create cells
