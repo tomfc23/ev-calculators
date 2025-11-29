@@ -174,10 +174,6 @@
     border-color: #6f42c1;
   }
 
-  input[type="number"] {
-    -moz-appearance: textfield;
-  }
-
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -1011,14 +1007,11 @@ function calculateCombinationStats2Game(combinations) {
 function calculateCombinationStats4Game(combinations) {
     const config = POOL_CONFIGS[4];
     
-    // Calculate probability of each combination winning
     const combinationsWithStats = combinations.map(combo => {
-        // Calculate win probability (product of no-vig probabilities)
         const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
             return prob * games[gameIndex].teams[teamIndex].noVigProb;
         }, 1);
         
-        // Calculate how many people selected this combo
         const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
             const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
             return count * selectionPct;
@@ -1031,20 +1024,13 @@ function calculateCombinationStats4Game(combinations) {
         };
     });
     
-    // Calculate total winners for 3/4 and 4/4
-    let total4of4Winners = 0;
-    let total3of4Winners = 0;
-    
-    // Calculate binomial probabilities for getting exactly 3 or 4 correct
     combinationsWithStats.forEach(comboStat => {
-        // Calculate probability of getting exactly 3 correct for this combo
+        // Calculate 3/4 probability
         let prob3of4 = 0;
         
         for (let incorrectGame = 0; incorrectGame < config.numGames; incorrectGame++) {
-            // Probability that this game is wrong
             const wrongGameProb = 1 - games[incorrectGame].teams[comboStat.combo[incorrectGame]].noVigProb;
             
-            // Probability that all other games are correct
             let otherGamesCorrectProb = 1;
             for (let g = 0; g < config.numGames; g++) {
                 if (g !== incorrectGame) {
@@ -1052,39 +1038,51 @@ function calculateCombinationStats4Game(combinations) {
                 }
             }
             
-            // Add to total 3/4 probability
             prob3of4 += wrongGameProb * otherGamesCorrectProb;
         }
         
-        // Store probabilities for later use
         comboStat.prob4of4 = comboStat.winProbability;
         comboStat.prob3of4 = prob3of4;
         
-        // Calculate expected number of people with 3/4 and 4/4 correct
-        comboStat.count4of4 = comboStat.numSelections * comboStat.prob4of4;
-        comboStat.count3of4 = comboStat.numSelections * comboStat.prob3of4;
+        // Calculate 4/4 winners: people who picked this exact combo
+        const count4of4 = comboStat.numSelections;
         
-        // Add to total winners
-        total4of4Winners += comboStat.count4of4;
-        total3of4Winners += comboStat.count3of4;
-    });
-    
-    // Calculate payouts based on the formula
-    const payouts = calculatePayouts(total4of4Winners, total3of4Winners);
-    
-    // Now calculate EV for each combination
-    combinationsWithStats.forEach(comboStat => {
-        // Apply payout caps
-        const payout4 = Math.min(config.payoutCap4of4, payouts.payout4of4);
-        const payout3 = Math.min(config.payoutCap3of4, payouts.payout3of4);
+        // Calculate 3/4 winners: people who picked 3 out of 4 correct
+        let count3of4 = 0;
+        for (let wrongGame = 0; wrongGame < config.numGames; wrongGame++) {
+            let selectionsWithThisWrong = 0;
+            
+            for (let altTeam = 0; altTeam < OPTIONS_PER_GAME; altTeam++) {
+                if (altTeam === comboStat.combo[wrongGame]) continue;
+                
+                let altSelections = TOTAL_ENTRANTS;
+                for (let g = 0; g < config.numGames; g++) {
+                    if (g === wrongGame) {
+                        altSelections *= games[g].teams[altTeam].selectionPct / 100;
+                    } else {
+                        altSelections *= games[g].teams[comboStat.combo[g]].selectionPct / 100;
+                    }
+                }
+                selectionsWithThisWrong += altSelections;
+            }
+            
+            count3of4 += selectionsWithThisWrong;
+        }
         
-        // Calculate expected value
+        // Calculate payouts for THIS specific combination
+        const totalShares = count4of4 + (0.5 * count3of4);
+        const shareValue = totalShares > 0 ? (TOTAL_ENTRANTS * ENTRY_COST) / totalShares : 0;
+        
+        const payout4 = Math.min(Math.floor(shareValue), config.payoutCap4of4);
+        const payout3 = Math.min(Math.floor(shareValue / 2), config.payoutCap3of4);
+        
         const ev = (comboStat.prob4of4 * payout4) + (comboStat.prob3of4 * payout3) - ENTRY_COST;
         
-        // Add to combo stat object
         comboStat.payout4 = payout4;
         comboStat.payout3 = payout3;
         comboStat.ev = ev;
+        comboStat.count4of4 = count4of4;
+        comboStat.count3of4 = count3of4;
     });
     
     return combinationsWithStats;
@@ -1096,35 +1094,31 @@ function calculatePayouts(total4of4Winners, total3of4Winners) {
     total4of4Winners = Math.round(total4of4Winners);
     total3of4Winners = Math.round(total3of4Winners);
     
-    // Total number of losers (those who got 0/4, 1/4, or 2/4 correct)
-    const totalLosers = TOTAL_ENTRANTS - total4of4Winners - total3of4Winners;
+    // Total Pool = Total Entrants × 100 karma
+    const totalPool = TOTAL_ENTRANTS * ENTRY_COST;
     
-    // Total karma collected from losers
-    const totalKarmaCollected = totalLosers * ENTRY_COST;
+    // Total Shares = (# of 4/4 winners) + 0.5 × (# of 3/4 winners)
+    const totalShares = total4of4Winners + (0.5 * total3of4Winners);
     
-    // Calculate total units
-    // Tier 1 (4/4 correct): Winners × 2 units
-    // Tier 2 (3/4 correct): Winners × 1 unit
-    const totalUnits = (total4of4Winners * 2) + (total3of4Winners * 1);
+    // Share Value = Total Pool ÷ Total Shares
+    const shareValue = totalShares > 0 ? totalPool / totalShares : 0;
     
-    // Calculate base payout per unit
-    const basePayoutPerUnit = totalKarmaCollected / totalUnits;
+    // 4/4 Payout = min(floor(Share Value), 800)
+    const payout4of4 = Math.min(Math.floor(shareValue), 800);
     
-    // Calculate payouts for each tier
-    const payout4of4 = basePayoutPerUnit * 2; // 4/4 winners get 2x base payout
-    const payout3of4 = basePayoutPerUnit;     // 3/4 winners get 1x base payout
+    // 3/4 Payout = min(floor(Share Value ÷ 2), 600)
+    const payout3of4 = Math.min(Math.floor(shareValue / 2), 600);
     
     return {
         payout4of4,
         payout3of4,
-        totalUnits,
+        totalShares,
         total4of4Winners,
         total3of4Winners,
-        totalLosers,
-        basePayoutPerUnit
+        shareValue,
+        totalPool
     };
 }
-
 // Display results in the table
 function displayResults(combinationsWithStats) {
     // Clear previous results
@@ -1239,10 +1233,6 @@ function displaySummaryStats(combinationsWithStats) {
             <div class="stat-card">
                 <div class="stat-value">${avgEV.toFixed(2)}</div>
                 <div class="stat-label">Average EV</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${payoutInfo.basePayoutPerUnit.toFixed(2)}</div>
-                <div class="stat-label">Base Payout Per Unit</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${payoutInfo.total4of4Winners}</div>
