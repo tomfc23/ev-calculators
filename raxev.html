@@ -25,6 +25,7 @@
     #historySection{display:none}
     .rax-label{color:#ff6b35;font-weight:bold}
     .input-section{margin:10px 0}
+    .team2-inputs{display:block}
   </style>
 </head>
 <body>
@@ -33,22 +34,16 @@
   
   <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
   <label><input type="checkbox" id="toggleHistory">Show History</label><br>
-  
-  <label>Name Presets:</label>
-  <select name="namePreset" id="namePresetSelect" onchange="changeName()">
-    <option value="team" selected>Team 1/2</option>
-    <option value="score">Over/Under</option>
-    <option value="nrfi">Yes/No</option>
-  </select><br>
+  <label><input type="checkbox" id="oneSideOnly">One Side Only</label><br>
+
   
   <div class="input-section">
     <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
-    <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
-  </div>
-  
-  <div class="input-section">
     <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
-    <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+    <span class="team2-inputs">
+      <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
+      <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+    </span>
   </div>
   
   <div class="input-section">
@@ -158,7 +153,7 @@
       const label1 = c.label1 || "Side 1";
       const label2 = c.label2 || "Side 2";
       
-      return [
+      let lines = [
         `RAX Manual Payout Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
         `Stake: ${c.stake} RAX`,
@@ -166,22 +161,28 @@
         `No-Vig Probabilities:`,
         `&nbsp;&nbsp;${label1}: ${c.noVigProb1} (${c.fractionalProb1})`,
         `&nbsp;&nbsp;${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
-        ``,
-        `Payouts (Profit):`,
-        `&nbsp;&nbsp;${label1}: ${c.payout1} RAX`,
-        `&nbsp;&nbsp;${label2}: ${c.payout2} RAX`,
-        ``,
-        `Expected Values:`,
-        `&nbsp;&nbsp;${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`,
-        `&nbsp;&nbsp;${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`
-      ].join('<br>');
+        ``
+      ];
+      
+      if (c.payout1 !== null || c.payout2 !== null) {
+        lines.push(`Payouts (Profit):`);
+        if (c.payout1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.payout1} RAX`);
+        if (c.payout2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.payout2} RAX`);
+        lines.push(``);
+      }
+      
+      lines.push(`Expected Values:`);
+      if (c.ev1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
+      
+      return lines.join('<br>');
     }
 
     function formatCalculationForHistory(c) {
       const label1 = c.label1 || "Side 1";
       const label2 = c.label2 || "Side 2";
       
-      return [
+      let lines = [
         `RAX Manual Payout Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
         `Stake: ${c.stake} RAX`,
@@ -189,15 +190,21 @@
         `No-Vig Probabilities:`,
         `  ${label1}: ${c.noVigProb1} (${c.fractionalProb1})`,
         `  ${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
-        ``,
-        `Payouts (Profit):`,
-        `  ${label1}: ${c.payout1} RAX`,
-        `  ${label2}: ${c.payout2} RAX`,
-        ``,
-        `Expected Values:`,
-        `  ${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''} RAX`,
-        `  ${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''} RAX`
-      ].join('\n');
+        ``
+      ];
+      
+      if (c.payout1 !== null || c.payout2 !== null) {
+        lines.push(`Payouts (Profit):`);
+        if (c.payout1 !== null) lines.push(`  ${label1}: ${c.payout1} RAX`);
+        if (c.payout2 !== null) lines.push(`  ${label2}: ${c.payout2} RAX`);
+        lines.push(``);
+      }
+      
+      lines.push(`Expected Values:`);
+      if (c.ev1 !== null) lines.push(`  ${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''} RAX`);
+      if (c.ev2 !== null) lines.push(`  ${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''} RAX`);
+      
+      return lines.join('\n');
     }
 
     function copyToClipboard(i) {
@@ -230,19 +237,43 @@
 
     function calculateEV() {
       const sbo1 = parseOdds('sportsbookOddsInput1');
-      const sbo2 = parseOdds('sportsbookOddsInput2');
       const payout1 = parseFloat($('payoutInput1').value);
-      const payout2 = parseFloat($('payoutInput2').value);
       const stake = parseFloat($('stakeInput').value);
+      const oneSideOnly = $('oneSideOnly').checked;
       
-      if (sbo1 === null || sbo2 === null) {
-        alert('Please enter valid American odds for both sides.');
+      const hasPayout1 = !isNaN(payout1) && payout1 >= 0;
+      
+      if (!hasPayout1) {
+        alert('Please enter a payout amount for Team 1.');
         return;
       }
       
-      if (isNaN(payout1) || isNaN(payout2) || payout1 < 0 || payout2 < 0) {
-        alert('Please enter valid payout amounts for both sides.');
+      if (sbo1 === null) {
+        alert('Please enter valid American odds for Team 1.');
         return;
+      }
+      
+      let sbo2, payout2, hasPayout2;
+      if (!oneSideOnly) {
+        sbo2 = parseOdds('sportsbookOddsInput2');
+        payout2 = parseFloat($('payoutInput2').value);
+        hasPayout2 = !isNaN(payout2) && payout2 >= 0;
+        
+        if (sbo2 === null) {
+          alert('Please enter valid American odds for Team 2.');
+          return;
+        }
+        
+        if (!hasPayout2) {
+          alert('Please enter a payout amount for Team 2.');
+          return;
+        }
+      } else {
+        sbo2 = parseOdds('sportsbookOddsInput2');
+        if (sbo2 === null) {
+          alert('Please enter valid American odds for both sides (Team 2 odds are needed for probability calculation).');
+          return;
+        }
       }
       
       if (isNaN(stake) || stake <= 0) {
@@ -268,11 +299,10 @@
       const fp2 = fracP(nvO2);
       
       // Calculate expected values
-      // EV = (payout * prob_win) - (stake * prob_lose)
       const ev1 = to2(payout1 * nvP1 - stake * nvP2);
-      const ev2 = to2(payout2 * nvP2 - stake * nvP1);
+      const ev2 = (!oneSideOnly && hasPayout2) ? to2(payout2 * nvP2 - stake * nvP1) : null;
       
-      const maxEV = Math.max(ev1, ev2);
+      const maxEV = Math.max(ev1, ev2 ?? -Infinity);
       const showAll = $('toggleOutput').checked;
       
       const calc = {
@@ -284,7 +314,7 @@
         fractionalProb1: fp1,
         fractionalProb2: fp2,
         payout1: payout1,
-        payout2: payout2,
+        payout2: (!oneSideOnly && hasPayout2) ? payout2 : null,
         ev1: ev1,
         ev2: ev2,
         maxEV: maxEV,
@@ -301,13 +331,15 @@
         ${labels[0]} No-Vig Probability: ${nvP1.toFixed(4)}<br>
         ${labels[1]} No-Vig Probability: ${nvP2.toFixed(4)}<br>
         ${labels[0]} Fractional Probability: ${fp1}<br>
-        ${labels[1]} Fractional Probability: ${fp2}<br>
-        ${labels[0]} Payout (Profit): ${payout1} RAX<br>
-        ${labels[1]} Payout (Profit): ${payout2} RAX<br>`;
+        ${labels[1]} Fractional Probability: ${fp2}<br>`;
+        r += `${labels[0]} Payout (Profit): ${payout1} RAX<br>`;
+        if (ev2 !== null) r += `${labels[1]} Payout (Profit): ${payout2} RAX<br>`;
       }
       
-      r += `<strong>${labels[0]} Expected Value: ${ev1} RAX${ev1 === maxEV ? ' ✅' : ''}</strong><br>
-      <strong>${labels[1]} Expected Value: ${ev2} RAX${ev2 === maxEV ? ' ✅' : ''}</strong><br>`;
+      r += `<strong>${labels[0]} Expected Value: ${ev1} RAX${ev1 === maxEV ? ' ✅' : ''}</strong><br>`;
+      if (ev2 !== null) {
+        r += `<strong>${labels[1]} Expected Value: ${ev2} RAX${ev2 === maxEV ? ' ✅' : ''}</strong><br>`;
+      }
       
       $('result').innerHTML = r;
     }
@@ -321,6 +353,12 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       $('toggleHistory').onchange = toggleHistorySection;
+      $('oneSideOnly').onchange = () => {
+        const team2Inputs = document.querySelectorAll('.team2-inputs');
+        team2Inputs.forEach(el => {
+          el.style.display = $('oneSideOnly').checked ? 'none' : 'block';
+        });
+      };
       updateHistoryDisplay();
       $('namePresetSelect').value = "team";
     });
