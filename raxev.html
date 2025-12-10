@@ -29,7 +29,7 @@
 </head>
 <body>
   <h1>RAX Community EV Calc</h1>
-  <p class="rax-label">Community Pick Percentage Based Payouts</p>
+  <p class="rax-label">Manual Payout Entry</p>
   
   <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
   <label><input type="checkbox" id="toggleHistory">Show History</label><br>
@@ -47,8 +47,8 @@
   </div>
   
   <div class="input-section">
-    <input type="text" id="percentInput1" placeholder="Enter Team 1 Pick % (0-100)"><br>
-    <input type="text" id="percentInput2" placeholder="Enter Team 2 Pick % (0-100)"><br>
+    <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
+    <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
   </div>
   
   <div class="input-section">
@@ -81,26 +81,6 @@
       fracP = o => `${round(o>0?100:Math.abs(o))}/${round(o>0?100+o:100-o)}`,
       amToDec = a => a>0 ? a/100+1 : 100/Math.abs(a)+1;
 
-    /**
-     * Calculate payout based on community pick % and stake
-     * @param {number} pickPercent - community pick % (0-100)
-     * @param {number} stake - your risk amount
-     * @returns {number} profit payout
-     */
-    function calculatePayout(pickPercent, stake) {
-      const p = pickPercent / 100;
-      let s;
-      if (p <= 0.38) {
-        s = 0.0234;
-      } else if (p >= 0.62) {
-        s = 0.0142;
-      } else {
-        s = 0.0234 + ((0.0142 - 0.0234) / (0.62 - 0.38)) * (p - 0.38);
-      }
-      const profit = stake * (1 - s) / p;
-      return round(profit);
-    }
-
     function getNameLabels() {
       const preset = $('namePresetSelect').value;
       if (preset === "team") return ["Team 1", "Team 2"];
@@ -116,18 +96,18 @@
       if (preset === "team") {
         $('sportsbookOddsInput1').placeholder = 'Enter Team 1 American Odds (e.g., +150)';
         $('sportsbookOddsInput2').placeholder = 'Enter Team 2 American Odds (e.g., -120)';
-        $('percentInput1').placeholder = 'Enter Team 1 Pick % (0-100)';
-        $('percentInput2').placeholder = 'Enter Team 2 Pick % (0-100)';
+        $('payoutInput1').placeholder = 'Enter Team 1 Payout (RAX)';
+        $('payoutInput2').placeholder = 'Enter Team 2 Payout (RAX)';
       } else if (preset === "score") {
         $('sportsbookOddsInput1').placeholder = 'Enter Over American Odds (e.g., +150)';
         $('sportsbookOddsInput2').placeholder = 'Enter Under American Odds (e.g., -120)';
-        $('percentInput1').placeholder = 'Enter Over Pick % (0-100)';
-        $('percentInput2').placeholder = 'Enter Under Pick % (0-100)';
+        $('payoutInput1').placeholder = 'Enter Over Payout (RAX)';
+        $('payoutInput2').placeholder = 'Enter Under Payout (RAX)';
       } else if (preset === "nrfi") {
         $('sportsbookOddsInput1').placeholder = 'Enter Yes American Odds (e.g., +150)';
         $('sportsbookOddsInput2').placeholder = 'Enter No American Odds (e.g., -120)';
-        $('percentInput1').placeholder = 'Enter Yes Pick % (0-100)';
-        $('percentInput2').placeholder = 'Enter No Pick % (0-100)';
+        $('payoutInput1').placeholder = 'Enter Yes Payout (RAX)';
+        $('payoutInput2').placeholder = 'Enter No Payout (RAX)';
       }
     }
 
@@ -179,9 +159,8 @@
       const label2 = c.label2 || "Side 2";
       
       return [
-        `RAX Community % Calculation`,
+        `RAX Manual Payout Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
-        `Pick Percentages: ${c.percent1}% vs ${c.percent2}%`,
         `Stake: ${c.stake} RAX`,
         ``,
         `No-Vig Probabilities:`,
@@ -203,9 +182,8 @@
       const label2 = c.label2 || "Side 2";
       
       return [
-        `RAX Community % Calculation`,
+        `RAX Manual Payout Calculation`,
         `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
-        `Pick Percentages: ${c.percent1}% vs ${c.percent2}%`,
         `Stake: ${c.stake} RAX`,
         ``,
         `No-Vig Probabilities:`,
@@ -253,8 +231,8 @@
     function calculateEV() {
       const sbo1 = parseOdds('sportsbookOddsInput1');
       const sbo2 = parseOdds('sportsbookOddsInput2');
-      const pct1 = parseFloat($('percentInput1').value);
-      const pct2 = parseFloat($('percentInput2').value);
+      const payout1 = parseFloat($('payoutInput1').value);
+      const payout2 = parseFloat($('payoutInput2').value);
       const stake = parseFloat($('stakeInput').value);
       
       if (sbo1 === null || sbo2 === null) {
@@ -262,8 +240,8 @@
         return;
       }
       
-      if (isNaN(pct1) || isNaN(pct2) || pct1 < 0 || pct1 > 100 || pct2 < 0 || pct2 > 100) {
-        alert('Please enter valid percentages (0-100) for both sides.');
+      if (isNaN(payout1) || isNaN(payout2) || payout1 < 0 || payout2 < 0) {
+        alert('Please enter valid payout amounts for both sides.');
         return;
       }
       
@@ -289,10 +267,6 @@
       const fp1 = fracP(nvO1);
       const fp2 = fracP(nvO2);
       
-      // Calculate payouts based on community pick percentages
-      const payout1 = calculatePayout(pct1, stake);
-      const payout2 = calculatePayout(pct2, stake);
-      
       // Calculate expected values
       // EV = (payout * prob_win) - (stake * prob_lose)
       const ev1 = to2(payout1 * nvP1 - stake * nvP2);
@@ -304,8 +278,6 @@
       const calc = {
         sportsbookOdds1: sbo1,
         sportsbookOdds2: sbo2,
-        percent1: pct1,
-        percent2: pct2,
         stake: stake,
         noVigProb1: nvP1.toFixed(4),
         noVigProb2: nvP2.toFixed(4),
@@ -341,7 +313,7 @@
     }
 
     function clearInputs() {
-      ['sportsbookOddsInput1', 'sportsbookOddsInput2', 'percentInput1', 'percentInput2'].forEach(i => $(i).value = '');
+      ['sportsbookOddsInput1', 'sportsbookOddsInput2', 'payoutInput1', 'payoutInput2'].forEach(i => $(i).value = '');
       $('stakeInput').value = '100';
       $('toggleOutput').checked = false;
       $('result').innerHTML = '';
