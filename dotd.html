@@ -470,14 +470,12 @@ BAL +113
 
     function onSportChange() {
       selectedSport = document.getElementById('sportSelect').value;
-      // Update placeholder text based on sport
       const textarea = document.getElementById('inputData');
       if (selectedSport === 'CFB') {
         textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
       } else {
         textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
       }
-      // Regenerate calculators to show/hide Real odds input based on sport
       generateCalculators();
     }
 
@@ -550,10 +548,8 @@ BAL +113
           const teamLine = lines[i].trim();
           const oddsLine = lines[i + 1].trim();
           
-          // For CFB, team line should just be team name + spread (no odds)
-          let teamMatch, team, odds;
+          let teamMatch, team, odds, spread;
           if (selectedSport === 'CFB') {
-            // Match format like "UTSA +23.5" or "UND +25.5"
             teamMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
             if (!teamMatch) {
               warnings.push(
@@ -562,9 +558,9 @@ BAL +113
               continue;
             }
             team = teamMatch[1];
-            odds = teamMatch[2]; // This is actually the spread, but we'll store it as odds for consistency
+            spread = teamMatch[2];
+            odds = spread;
           } else {
-            // MLB format: "TEAM +/-###"
             teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
             if (!teamMatch) {
               warnings.push(
@@ -574,6 +570,7 @@ BAL +113
             }
             team = teamMatch[1];
             odds = teamMatch[2];
+            spread = null;
             const oddsValue = parseInt(odds);
             if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
               warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
@@ -591,6 +588,7 @@ BAL +113
               teamsData.push({
                 team,
                 odds,
+                spread,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
@@ -607,6 +605,7 @@ BAL +113
                 teamsData.push({
                   team,
                   odds,
+                  spread,
                   percentage: percent,
                   display: numberInParentheses,
                   sortValue: parseNumericValue(numberInParentheses),
@@ -628,6 +627,7 @@ BAL +113
               teamsData.push({
                 team,
                 odds,
+                spread,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
@@ -661,6 +661,7 @@ BAL +113
           teamsData.push({
             team,
             odds,
+            spread,
             percentage,
             display: numberInParentheses,
             sortValue,
@@ -678,7 +679,6 @@ BAL +113
           });
         }
 
-        // Deduplicate: assign displayTeam as "XYZ #1", "XYZ #2", etc. for duplicates
         let abbrevMap = {};
         teamsData.forEach(item => {
           if (!abbrevMap[item.team]) abbrevMap[item.team] = 0;
@@ -724,7 +724,8 @@ BAL +113
         teamsData.forEach((item, index) => {
           const itemDiv = document.createElement("div");
           itemDiv.className = "sorted-item";
-          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${item.odds}) - ${item.percentage}% (${item.display})`;
+          const displayValue = selectedSport === 'CFB' ? item.spread : item.odds;
+          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${displayValue}) - ${item.percentage}% (${item.display})`;
           sortedItemsDiv.appendChild(itemDiv);
         });
         sortedResults.style.display = "block";
@@ -790,7 +791,11 @@ BAL +113
             }
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
-              teamHeader.textContent = teamsData[i].displayTeam;
+              if (selectedSport === 'CFB') {
+                teamHeader.textContent = `${teamsData[i].displayTeam} ${teamsData[i].spread}`;
+              } else {
+                teamHeader.textContent = teamsData[i].displayTeam;
+              }
             }
           }
         }
@@ -869,10 +874,8 @@ BAL +113
       
       let payout;
       if (selectedSport === 'CFB') {
-        // For CFB: payout = 100 + placement * 20
         payout = 100 + (placement * 20);
       } else {
-        // For MLB: use the original formula with Real odds
         const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
         if (realOdds < 0) {
           payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
@@ -975,7 +978,6 @@ BAL +113
         try {
             const pollId = document.getElementById('pollIdInput').value.trim();
             
-
             const response = await axios.get(`https://api.allorigins.win/get?url=https://api.real.vg/polls/${pollId}`);
             const data = JSON.parse(response.data.contents);
 
@@ -1005,13 +1007,11 @@ BAL +113
 
         let textOutput;
         if (selectedSport === 'CFB') {
-            // For CFB: don't include odds, just team and spread
             textOutput = options.map(option => {
                 const percentage = Math.round((option.count / totalVotes) * 100);
                 return `${option.label}\n${percentage}% (${option.count})`;
             }).join('\n');
         } else {
-            // For MLB: include odds as before
             textOutput = options.map(option => {
                 const percentage = Math.round((option.count / totalVotes) * 100);
                 return `${option.label} ${option.odds}\n${percentage}% (${option.count})`;
