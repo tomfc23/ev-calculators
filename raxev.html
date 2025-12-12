@@ -76,33 +76,7 @@
       amToDec = a => a>0 ? a/100+1 : 100/Math.abs(a)+1;
 
     function getNameLabels() {
-      const preset = $('namePresetSelect').value;
-      if (preset === "team") return ["Team 1", "Team 2"];
-      if (preset === "score") return ["Over", "Under"];
-      if (preset === "nrfi") return ["Yes", "No"];
-      return ["Side 1", "Side 2"];
-    }
-
-    function changeName() {
-      const preset = $('namePresetSelect').value;
-      const labels = getNameLabels();
-      
-      if (preset === "team") {
-        $('sportsbookOddsInput1').placeholder = 'Enter Team 1 American Odds (e.g., +150)';
-        $('sportsbookOddsInput2').placeholder = 'Enter Team 2 American Odds (e.g., -120)';
-        $('payoutInput1').placeholder = 'Enter Team 1 Payout (RAX)';
-        $('payoutInput2').placeholder = 'Enter Team 2 Payout (RAX)';
-      } else if (preset === "score") {
-        $('sportsbookOddsInput1').placeholder = 'Enter Over American Odds (e.g., +150)';
-        $('sportsbookOddsInput2').placeholder = 'Enter Under American Odds (e.g., -120)';
-        $('payoutInput1').placeholder = 'Enter Over Payout (RAX)';
-        $('payoutInput2').placeholder = 'Enter Under Payout (RAX)';
-      } else if (preset === "nrfi") {
-        $('sportsbookOddsInput1').placeholder = 'Enter Yes American Odds (e.g., +150)';
-        $('sportsbookOddsInput2').placeholder = 'Enter No American Odds (e.g., -120)';
-        $('payoutInput1').placeholder = 'Enter Yes Payout (RAX)';
-        $('payoutInput2').placeholder = 'Enter No Payout (RAX)';
-      }
+      return ["Team 1", "Team 2"];
     }
 
     function toggleHistorySection() {
@@ -115,7 +89,11 @@
       let h = getHistory();
       h.unshift({...calc, timestamp: new Date().toLocaleString()});
       if (h.length > 50) h = h.slice(0, 50);
-      localStorage.setItem('raxEvCalcHistory', JSON.stringify(h));
+      try {
+        localStorage.setItem('raxEvCalcHistory', JSON.stringify(h));
+      } catch(e) {
+        console.error('Storage failed:', e);
+      }
       updateHistoryDisplay();
     }
 
@@ -164,15 +142,15 @@
       ];
       
       if (c.payout1 !== null || c.payout2 !== null) {
-        lines.push(`Payouts (Profit):`);
+        lines.push(`Payouts:`);
         if (c.payout1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.payout1} RAX`);
         if (c.payout2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.payout2} RAX`);
         lines.push(``);
       }
       
       lines.push(`Expected Values:`);
-      if (c.ev1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
-      if (c.ev2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.ev1} RAX${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.ev2} RAX${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
       
       return lines.join('<br>');
     }
@@ -193,15 +171,15 @@
       ];
       
       if (c.payout1 !== null || c.payout2 !== null) {
-        lines.push(`Payouts (Profit):`);
+        lines.push(`Payouts:`);
         if (c.payout1 !== null) lines.push(`  ${label1}: ${c.payout1} RAX`);
         if (c.payout2 !== null) lines.push(`  ${label2}: ${c.payout2} RAX`);
         lines.push(``);
       }
       
       lines.push(`Expected Values:`);
-      if (c.ev1 !== null) lines.push(`  ${label1}: ${c.ev1}${c.ev1 === c.maxEV ? ' ✅ BEST' : ''} RAX`);
-      if (c.ev2 !== null) lines.push(`  ${label2}: ${c.ev2}${c.ev2 === c.maxEV ? ' ✅ BEST' : ''} RAX`);
+      if (c.ev1 !== null) lines.push(`  ${label1}: ${c.ev1} RAX${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev2 !== null) lines.push(`  ${label2}: ${c.ev2} RAX${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
       
       return lines.join('\n');
     }
@@ -282,7 +260,7 @@
       const fp1 = fracP(nvO1);
       const fp2 = fracP(nvO2);
       
-      // Calculate expected values
+      // Calculate expected values: (payout * win_probability) - (stake * loss_probability)
       const ev1 = to2(payout1 * nvP1 - stake * nvP2);
       const ev2 = (!oneSideOnly && hasPayout2) ? to2(payout2 * nvP2 - stake * nvP1) : null;
       
@@ -316,8 +294,8 @@
         ${labels[1]} No-Vig Probability: ${nvP2.toFixed(4)}<br>
         ${labels[0]} Fractional Probability: ${fp1}<br>
         ${labels[1]} Fractional Probability: ${fp2}<br>`;
-        r += `${labels[0]} Payout (Profit): ${payout1} RAX<br>`;
-        if (ev2 !== null) r += `${labels[1]} Payout (Profit): ${payout2} RAX<br>`;
+        r += `${labels[0]} Payout: ${payout1} RAX<br>`;
+        if (ev2 !== null) r += `${labels[1]} Payout: ${payout2} RAX<br>`;
       }
       
       r += `<strong>${labels[0]} Expected Value: ${ev1} RAX${ev1 === maxEV ? ' ✅' : ''}</strong><br>`;
@@ -344,7 +322,6 @@
         });
       };
       updateHistoryDisplay();
-      $('namePresetSelect').value = "team";
     });
   </script>
 </body>
