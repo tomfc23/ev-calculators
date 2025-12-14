@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>RAX Predictions EV Calc</title>
+  <style>
+    body{font-family:sans-serif;margin:20px;background:#000;color:#ccc;text-align:center}
+    input,button,select{margin:5px;padding:15px;font-size:16px;border-radius:25px;border:2px solid #ccc;transition:.3s}
+    input,select{background:#333;color:#ccc;border:2px solid #555}
+    input:focus,button:focus,select:focus{border-color:#07f;outline:0}
+    button{cursor:pointer;background:#6f42c1;color:#fff;border:0}
+    button:hover{background:#5a32a3}
+    #clearButton{background:red;margin-left:10px}
+    a{color:#858bf0}
+    .highest-ev{color:#4CAF50;font-weight:bold}
+    .history-section{margin:30px auto 0;max-width:800px;text-align:left}
+    .history-item{background:#222;border:1px solid #444;border-radius:10px;padding:15px;margin:10px 0;position:relative}
+    .history-timestamp{color:#888;font-size:12px;margin-bottom:10px}
+    .copy-button{position:absolute;top:10px;right:10px;padding:5px 10px;font-size:12px;background:#28a745;border-radius:15px}
+    .copy-button:hover{background:#218838}
+    .history-content{font-family:monospace;font-size:14px;line-height:1.4}
+    .clear-history-btn{background:#dc3545;margin-top:10px}
+    .clear-history-btn:hover{background:#c82333}
+    #historySection{display:none}
+    .rax-label{color:#ff6b35;font-weight:bold}
+    .input-section{margin:10px 0}
+    .team2-inputs{display:block}
+    .stake-table{width:100%;border-collapse:collapse;margin:20px 0;background:#222}
+    .stake-table th,.stake-table td{padding:10px;border:1px solid #444;text-align:center}
+    .stake-table th{background:#333;color:#fff}
+    .stake-table .best-ev{background:#1a4d2e;font-weight:bold}
+    #stakeTableSection{max-width:1200px}
+  </style>
+</head>
+<body>
+  <h1>RAX Predictions EV Calc</h1>
+  <p class="rax-label">Manual Payout Entry</p>
+  
+  <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
+  <label><input type="checkbox" id="toggleHistory">Show History</label><br>
+  <label><input type="checkbox" id="oneSideOnly">One Side Only</label><br>
+  <label><input type="checkbox" id="toggleStakeTable">Show Stake Optimizer</label><br>
+  
+  <div class="input-section">
+    <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
+    <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
+    <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
+    <span class="team2-inputs">
+      <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+    </span>
+  </div>
+  
+  <div class="input-section">
+    <input type="number" id="stakeInput" placeholder="Enter Stake Amount (RAX)" min="1" step="1"><br>
+  </div>
+  
+  <button onclick="calculateEV()">Calculate</button>
+  <button id="clearButton" onclick="clearInputs()">Clear</button><br><br>
+  
+  <p id="result"></p>
+  
+  <div id="stakeTableSection" class="history-section" style="display:none">
+    <h2>Stake Optimizer</h2>
+    <div style="margin:20px 0">
+      <label>Budget Range:</label>
+      <select id="budgetRange">
+        <option value="100-1000">100 - 1,000 RAX</option>
+        <option value="1000-5000">1,000 - 5,000 RAX</option>
+        <option value="5000-10000">5,000 - 10,000 RAX</option>
+      </select><br>
+      <input type="number" id="communityPercent" placeholder="Community % (e.g., 10 for 10%)" min="0.01" step="0.01"><br>
+      <button onclick="generateStakeTable()">Generate Table</button>
+    </div>
+    <div id="stakeTableContainer"></div>
+  </div>
+  
+  <div id="historySection" class="history-section">
+    <h2>Calculation History</h2>
+    <button class="clear-history-btn" onclick="clearHistory()">Clear History</button>
+    <div id="historyContainer"></div>
+  </div>
+  
+  <button onclick="window.location.href='index.html'">Go Home</button><br><br>
+  <p>designed by @tomfc on Real</p>
+  
+  <script>
+    const $ = id => document.getElementById(id),
+      round = Math.round,
+      to2 = v => round(v*100)/100,
+      parseOdds = i => {
+        const v = parseInt($(i).value);
+        return v && v !== 0 ? v : null;
+      },
+      imP = o => o > 0 ? 100/(100+o) : Math.abs(o)/(Math.abs(o)+100),
+      fracP = o => `${round(o>0?100:Math.abs(o))}/${round(o>0?100+o:100-o)}`,
+      amToDec = a => a>0 ? a/100+1 : 100/Math.abs(a)+1;
+
+    function getNameLabels() {
+      return ["Team 1", "Team 2"];
+    }
+
+    function toggleHistorySection() {
+      const show = $('toggleHistory').checked;
+      $('historySection').style.display = show ? 'block' : 'none';
+      if (show) updateHistoryDisplay();
+    }
+
+    function saveToHistory(calc) {
+      let h = getHistory();
+      h.unshift({...calc, timestamp: new Date().toLocaleString()});
+      if (h.length > 50) h = h.slice(0, 50);
+      try {
+        localStorage.setItem('raxEvCalcHistory', JSON.stringify(h));
+      } catch(e) {
+        console.error('Storage failed:', e);
+      }
+      updateHistoryDisplay();
+    }
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('raxEvCalcHistory') || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('raxEvCalcHistory');
+      updateHistoryDisplay();
+    }
+
+    function updateHistoryDisplay() {
+      const h = getHistory();
+      const c = $('historyContainer');
+      if (!h.length) {
+        c.innerHTML = '<p>No calculations yet.</p>';
+        return;
+      }
+      c.innerHTML = h.map((calc, i) => `
+        <div class="history-item">
+          <button class="copy-button" onclick="copyToClipboard(${i})">Copy</button>
+          <div class="history-timestamp">${calc.timestamp}</div>
+          <div class="history-content">${formatCalculationForDisplay(calc)}</div>
+        </div>
+      `).join('');
+    }
+
+    function formatCalculationForDisplay(c) {
+      const label1 = c.label1 || "Side 1";
+      const label2 = c.label2 || "Side 2";
+      
+      let lines = [
+        `RAX Manual Payout Calculation`,
+        `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
+        `Stake: ${c.stake} RAX`,
+        ``,
+        `No-Vig Probabilities:`,
+        `&nbsp;&nbsp;${label1}: ${c.noVigProb1} (${c.fractionalProb1})`,
+        `&nbsp;&nbsp;${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
+        ``
+      ];
+      
+      if (c.payout1 !== null || c.payout2 !== null) {
+        lines.push(`Payouts:`);
+        if (c.payout1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.payout1} RAX`);
+        if (c.payout2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.payout2} RAX`);
+        lines.push(``);
+      }
+      
+      lines.push(`Expected Values:`);
+      if (c.ev1 !== null) lines.push(`&nbsp;&nbsp;${label1}: ${c.ev1} RAX${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev2 !== null) lines.push(`&nbsp;&nbsp;${label2}: ${c.ev2} RAX${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
+      
+      return lines.join('<br>');
+    }
+
+    function formatCalculationForHistory(c) {
+      const label1 = c.label1 || "Side 1";
+      const label2 = c.label2 || "Side 2";
+      
+      let lines = [
+        `RAX Manual Payout Calculation`,
+        `Sportsbook Odds: ${c.sportsbookOdds1} vs ${c.sportsbookOdds2}`,
+        `Stake: ${c.stake} RAX`,
+        ``,
+        `No-Vig Probabilities:`,
+        `  ${label1}: ${c.noVigProb1} (${c.fractionalProb1})`,
+        `  ${label2}: ${c.noVigProb2} (${c.fractionalProb2})`,
+        ``
+      ];
+      
+      if (c.payout1 !== null || c.payout2 !== null) {
+        lines.push(`Payouts:`);
+        if (c.payout1 !== null) lines.push(`  ${label1}: ${c.payout1} RAX`);
+        if (c.payout2 !== null) lines.push(`  ${label2}: ${c.payout2} RAX`);
+        lines.push(``);
+      }
+      
+      lines.push(`Expected Values:`);
+      if (c.ev1 !== null) lines.push(`  ${label1}: ${c.ev1} RAX${c.ev1 === c.maxEV ? ' ✅ BEST' : ''}`);
+      if (c.ev2 !== null) lines.push(`  ${label2}: ${c.ev2} RAX${c.ev2 === c.maxEV ? ' ✅ BEST' : ''}`);
+      
+      return lines.join('\n');
+    }
+
+    function copyToClipboard(i) {
+      const h = getHistory();
+      const c = h[i];
+      const txt = formatCalculationForHistory(c);
+      const btn = event.target;
+      const old = btn.textContent;
+      
+      navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = 'Copied!';
+        btn.style.background = '#28a745';
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.style.background = '';
+        }, 1000);
+      }).catch(() => {
+        const t = document.createElement('textarea');
+        t.value = txt;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = old;
+        }, 1000);
+      });
+    }
+
+    function calculateEV() {
+      const sbo1 = parseOdds('sportsbookOddsInput1');
+      const sbo2 = parseOdds('sportsbookOddsInput2');
+      const payout1 = parseFloat($('payoutInput1').value);
+      const payout2 = parseFloat($('payoutInput2').value);
+      const stake = parseFloat($('stakeInput').value);
+      const oneSideOnly = $('oneSideOnly').checked;
+      
+      const hasPayout1 = !isNaN(payout1) && payout1 >= 0;
+      const hasPayout2 = !isNaN(payout2) && payout2 >= 0;
+      
+      if (sbo1 === null || sbo2 === null) {
+        alert('Please enter valid American odds for both sides.');
+        return;
+      }
+      
+      if (!hasPayout1) {
+        alert('Please enter a payout amount for Team 1.');
+        return;
+      }
+      
+      if (!oneSideOnly && !hasPayout2) {
+        alert('Please enter a payout amount for Team 2.');
+        return;
+      }
+      
+      if (isNaN(stake) || stake <= 0) {
+        alert('Please enter a valid stake amount.');
+        return;
+      }
+      
+      const labels = getNameLabels();
+      
+      // Calculate no-vig probabilities from sportsbook odds
+      const prob1 = imP(sbo1);
+      const prob2 = imP(sbo2);
+      const tot = prob1 + prob2;
+      const nvP1 = prob1 / tot;
+      const nvP2 = prob2 / tot;
+      
+      // Calculate no-vig American odds
+      const nvO1 = nvP1 < 0.5 ? round(100 * (1 - nvP1) / nvP1) : -round(100 * nvP1 / (1 - nvP1));
+      const nvO2 = nvP2 < 0.5 ? round(100 * (1 - nvP2) / nvP2) : -round(100 * nvP2 / (1 - nvP2));
+      
+      // Get fractional probabilities
+      const fp1 = fracP(nvO1);
+      const fp2 = fracP(nvO2);
+      
+      // Calculate expected values: (payout * win_probability) - (stake * loss_probability)
+      const ev1 = to2(payout1 * nvP1 - stake * nvP2);
+      const ev2 = (!oneSideOnly && hasPayout2) ? to2(payout2 * nvP2 - stake * nvP1) : null;
+      
+      const maxEV = Math.max(ev1, ev2 ?? -Infinity);
+      const showAll = $('toggleOutput').checked;
+      
+      const calc = {
+        sportsbookOdds1: sbo1,
+        sportsbookOdds2: sbo2,
+        stake: stake,
+        noVigProb1: nvP1.toFixed(4),
+        noVigProb2: nvP2.toFixed(4),
+        fractionalProb1: fp1,
+        fractionalProb2: fp2,
+        payout1: payout1,
+        payout2: (!oneSideOnly && hasPayout2) ? payout2 : null,
+        ev1: ev1,
+        ev2: ev2,
+        maxEV: maxEV,
+        label1: labels[0],
+        label2: labels[1]
+      };
+      
+      saveToHistory(calc);
+      
+      let r = '';
+      if (showAll) {
+        r += `${labels[0]} No-Vig American Odds: ${nvO1} (Decimal: ${amToDec(nvO1).toFixed(2)})<br>
+        ${labels[1]} No-Vig American Odds: ${nvO2} (Decimal: ${amToDec(nvO2).toFixed(2)})<br>
+        ${labels[0]} No-Vig Probability: ${nvP1.toFixed(4)}<br>
+        ${labels[1]} No-Vig Probability: ${nvP2.toFixed(4)}<br>
+        ${labels[0]} Fractional Probability: ${fp1}<br>
+        ${labels[1]} Fractional Probability: ${fp2}<br>`;
+        r += `${labels[0]} Payout: ${payout1} RAX<br>`;
+        if (ev2 !== null) r += `${labels[1]} Payout: ${payout2} RAX<br>`;
+      }
+      
+      r += `<strong>${labels[0]} Expected Value: ${ev1} RAX${ev1 === maxEV ? ' ✅' : ''}</strong><br>`;
+      if (ev2 !== null) {
+        r += `<strong>${labels[1]} Expected Value: ${ev2} RAX${ev2 === maxEV ? ' ✅' : ''}</strong><br>`;
+      }
+      
+      $('result').innerHTML = r;
+    }
+
+    function clearInputs() {
+      ['sportsbookOddsInput1', 'sportsbookOddsInput2', 'payoutInput1', 'payoutInput2'].forEach(i => $(i).value = '');
+      $('stakeInput').value = '100';
+      $('toggleOutput').checked = false;
+      $('result').innerHTML = '';
+    }
+
+    function generateStakeTable() {
+      const sbo1 = parseOdds('sportsbookOddsInput1');
+      const sbo2 = parseOdds('sportsbookOddsInput2');
+      const communityPercent = parseFloat($('communityPercent').value);
+      const budgetRange = $('budgetRange').value;
+      const oneSideOnly = $('oneSideOnly').checked;
+      
+      if (sbo1 === null || sbo2 === null) {
+        alert('Please enter valid American odds for both sides first.');
+        return;
+      }
+      
+      if (isNaN(communityPercent) || communityPercent <= 0) {
+        alert('Please enter a valid community percentage.');
+        return;
+      }
+      
+      // Calculate no-vig probabilities
+      const prob1 = imP(sbo1);
+      const prob2 = imP(sbo2);
+      const tot = prob1 + prob2;
+      const nvP1 = prob1 / tot;
+      const nvP2 = prob2 / tot;
+      
+      // Determine stake range and increment
+      let minStake, maxStake, increment;
+      if (budgetRange === '100-1000') {
+        minStake = 100;
+        maxStake = 1000;
+        increment = 50;
+      } else if (budgetRange === '1000-5000') {
+        minStake = 1000;
+        maxStake = 5000;
+        increment = 250;
+      } else {
+        minStake = 5000;
+        maxStake = 10000;
+        increment = 500;
+      }
+      
+      const labels = getNameLabels();
+      const communityDecimal = communityPercent / 100;
+      
+      // Generate table data
+      let tableData = [];
+      let maxEV = -Infinity;
+      let bestRow = -1;
+      
+      for (let stake = minStake; stake <= maxStake; stake += increment) {
+        const payout1 = round(stake / communityDecimal);
+        const payout2 = round(stake / communityDecimal);
+        
+        const ev1 = to2(payout1 * nvP1 - stake * nvP2);
+        const ev2 = oneSideOnly ? null : to2(payout2 * nvP2 - stake * nvP1);
+        
+        const rowMaxEV = Math.max(ev1, ev2 ?? -Infinity);
+        
+        tableData.push({
+          stake,
+          payout1,
+          payout2: oneSideOnly ? null : payout2,
+          ev1,
+          ev2,
+          maxEV: rowMaxEV
+        });
+        
+        if (rowMaxEV > maxEV) {
+          maxEV = rowMaxEV;
+          bestRow = tableData.length - 1;
+        }
+      }
+      
+      // Generate HTML table
+      let html = `<table class="stake-table">
+        <thead>
+          <tr>
+            <th>Stake (RAX)</th>
+            <th>${labels[0]} Payout</th>`;
+      
+      if (!oneSideOnly) {
+        html += `<th>${labels[1]} Payout</th>`;
+      }
+      
+      html += `<th>${labels[0]} EV</th>`;
+      
+      if (!oneSideOnly) {
+        html += `<th>${labels[1]} EV</th>`;
+      }
+      
+      html += `<th>Best EV</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      
+      tableData.forEach((row, i) => {
+        const isBest = i === bestRow;
+        const rowClass = isBest ? ' class="best-ev"' : '';
+        
+        html += `<tr${rowClass}>
+          <td>${row.stake}</td>
+          <td>${row.payout1}</td>`;
+        
+        if (!oneSideOnly) {
+          html += `<td>${row.payout2}</td>`;
+        }
+        
+        html += `<td>${row.ev1}</td>`;
+        
+        if (!oneSideOnly) {
+          html += `<td>${row.ev2}</td>`;
+        }
+        
+        html += `<td><strong>${row.maxEV}${isBest ? ' ✅' : ''}</strong></td>
+        </tr>`;
+      });
+      
+      html += `</tbody></table>`;
+      html += `<p style="color:#4CAF50;text-align:center"><strong>Optimal Stake: ${tableData[bestRow].stake} RAX with EV of ${maxEV} RAX</strong></p>`;
+      
+      $('stakeTableContainer').innerHTML = html;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      $('toggleHistory').onchange = toggleHistorySection;
+      $('toggleStakeTable').onchange = () => {
+        $('stakeTableSection').style.display = $('toggleStakeTable').checked ? 'block' : 'none';
+      };
+      $('oneSideOnly').onchange = () => {
+        const team2Inputs = document.querySelectorAll('.team2-inputs');
+        team2Inputs.forEach(el => {
+          el.style.display = $('oneSideOnly').checked ? 'none' : 'block';
+        });
+      };
+      updateHistoryDisplay();
+    });
+  </script>
+</body>
+</html>
