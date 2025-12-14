@@ -11,7 +11,7 @@
     input:focus,button:focus,select:focus{border-color:#07f;outline:0}
     button{cursor:pointer;background:#6f42c1;color:#fff;border:0}
     button:hover{background:#5a32a3}
-    #clearButton{background:red;margin-left:10px}
+    #clearButton{background:red;margin-left:10px;margin-top:10px}
     a{color:#858bf0}
     .highest-ev{color:#4CAF50;font-weight:bold}
     .history-section{margin:30px auto 0;max-width:800px;text-align:left}
@@ -41,31 +41,15 @@
   <label><input type="checkbox" id="toggleOutput">Show All Outputs</label><br>
   <label><input type="checkbox" id="toggleHistory">Show History</label><br>
   <label><input type="checkbox" id="oneSideOnly">One Side Only</label><br>
-  <label><input type="checkbox" id="toggleStakeTable">Show Stake Optimizer</label><br>
+  <label><input type="checkbox" id="toggleStakeTable">Show Stake Optimizer</label><br><br>
   
-  <div class="input-section">
-    <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
-    <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
-    <span class="payout-stake-inputs">
-      <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
-      <span class="team2-inputs">
-        <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
-      </span>
-    </span>
-  </div>
-  
-  <div class="input-section payout-stake-inputs">
-    <input type="number" id="stakeInput" placeholder="Enter Stake Amount (RAX)" min="1" step="1"><br>
-  </div>
-  
-  <button onclick="calculateEV()" class="payout-stake-inputs">Calculate</button>
-  <button id="clearButton" onclick="clearInputs()">Clear</button><br><br>
-  
-  <p id="result"></p>
-  
-  <div id="stakeTableSection" class="history-section" style="display:none">
-    <h2>Stake Optimizer</h2>
-    <div style="margin:20px 0">
+  <div id="stakeOptimizerInputs" style="display:none">
+    <h2 style="color:#ff6b35">Stake Optimizer</h2>
+    <p style="color:#888">Find the optimal stake within your budget</p>
+    
+    <div class="input-section">
+      <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
+      <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
       <label>Budget Range:</label>
       <select id="budgetRange">
         <option value="100-1000">100 - 1,000 RAX</option>
@@ -73,8 +57,28 @@
         <option value="5000-10000">5,000 - 10,000 RAX</option>
       </select><br>
       <input type="number" id="communityPercent" placeholder="Community % (e.g., 10 for 10%)" min="0.01" step="0.01"><br>
-      <button onclick="generateStakeTable()">Generate Table</button>
+      <button onclick="generateStakeTable()">Generate Optimization Table</button>
     </div>
+  </div>
+  
+  <div id="manualInputs" class="payout-stake-inputs">
+    <div class="input-section">
+      <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
+      <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
+      <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
+      <span class="team2-inputs">
+        <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+      </span>
+      <input type="number" id="stakeInput" placeholder="Enter Stake Amount (RAX)" min="1" step="1"><br>
+    </div>
+    
+    <button onclick="calculateEV()">Calculate</button><br>
+    <button id="clearButton" onclick="clearInputs()">Clear</button>
+  </div>
+  
+  <p id="result"></p>
+  
+  <div id="stakeTableSection" class="history-section" style="display:none">
     <div id="stakeTableContainer"></div>
   </div>
   
@@ -465,11 +469,9 @@
         const show = $('toggleStakeTable').checked;
         $('stakeTableSection').style.display = show ? 'block' : 'none';
         
-        // Hide/show payout and stake inputs
-        const payoutStakeInputs = document.querySelectorAll('.payout-stake-inputs');
-        payoutStakeInputs.forEach(el => {
-          el.style.display = show ? 'none' : 'block';
-        });
+        // Toggle between optimizer and manual inputs
+        $('stakeOptimizerInputs').style.display = show ? 'block' : 'none';
+        $('manualInputs').style.display = show ? 'none' : 'block';
       };
       $('oneSideOnly').onchange = () => {
         const team2Inputs = document.querySelectorAll('.team2-inputs');
