@@ -30,7 +30,8 @@
     .stake-table th,.stake-table td{padding:10px;border:1px solid #444;text-align:center}
     .stake-table th{background:#333;color:#fff}
     .stake-table .best-ev{background:#1a4d2e;font-weight:bold}
-    #stakeTableSection{max-width:1200px}
+    #stakeTableSection{max-width:1200px;text-align:center}
+    .payout-stake-inputs{display:block}
   </style>
 </head>
 <body>
@@ -45,17 +46,19 @@
   <div class="input-section">
     <input type="text" id="sportsbookOddsInput1" placeholder="Enter Team 1 American Odds (e.g., +150)"><br>
     <input type="text" id="sportsbookOddsInput2" placeholder="Enter Team 2 American Odds (e.g., -120)"><br>
-    <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
-    <span class="team2-inputs">
-      <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+    <span class="payout-stake-inputs">
+      <input type="number" id="payoutInput1" placeholder="Enter Team 1 Payout (RAX)" min="0" step="1"><br>
+      <span class="team2-inputs">
+        <input type="number" id="payoutInput2" placeholder="Enter Team 2 Payout (RAX)" min="0" step="1"><br>
+      </span>
     </span>
   </div>
   
-  <div class="input-section">
+  <div class="input-section payout-stake-inputs">
     <input type="number" id="stakeInput" placeholder="Enter Stake Amount (RAX)" min="1" step="1"><br>
   </div>
   
-  <button onclick="calculateEV()">Calculate</button>
+  <button onclick="calculateEV()" class="payout-stake-inputs">Calculate</button>
   <button id="clearButton" onclick="clearInputs()">Clear</button><br><br>
   
   <p id="result"></p>
@@ -459,7 +462,14 @@
     window.addEventListener('DOMContentLoaded', () => {
       $('toggleHistory').onchange = toggleHistorySection;
       $('toggleStakeTable').onchange = () => {
-        $('stakeTableSection').style.display = $('toggleStakeTable').checked ? 'block' : 'none';
+        const show = $('toggleStakeTable').checked;
+        $('stakeTableSection').style.display = show ? 'block' : 'none';
+        
+        // Hide/show payout and stake inputs
+        const payoutStakeInputs = document.querySelectorAll('.payout-stake-inputs');
+        payoutStakeInputs.forEach(el => {
+          el.style.display = show ? 'none' : 'block';
+        });
       };
       $('oneSideOnly').onchange = () => {
         const team2Inputs = document.querySelectorAll('.team2-inputs');
