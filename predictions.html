@@ -431,8 +431,7 @@
         html += `<th>${labels[1]} EV</th>`;
       }
       
-      html += `<th>Best EV</th>
-          </tr>
+      html += `</tr>
         </thead>
         <tbody>`;
       
@@ -448,14 +447,16 @@
           html += `<td>${row.payout2}</td>`;
         }
         
-        html += `<td>${row.ev1}</td>`;
+        const ev1IsBest = row.ev1 === row.maxEV;
+        const ev2IsBest = !oneSideOnly && row.ev2 === row.maxEV;
+        
+        html += `<td>${row.ev1}${ev1IsBest && isBest ? ' ✅' : ''}</td>`;
         
         if (!oneSideOnly) {
-          html += `<td>${row.ev2}</td>`;
+          html += `<td>${row.ev2}${ev2IsBest && isBest ? ' ✅' : ''}</td>`;
         }
         
-        html += `<td><strong>${row.maxEV}${isBest ? ' ✅' : ''}</strong></td>
-        </tr>`;
+        html += `</tr>`;
       });
       
       html += `</tbody></table>`;
