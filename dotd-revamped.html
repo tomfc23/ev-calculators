@@ -1109,10 +1109,40 @@ BAL +113
 
     function displayPollResults(options) {
         const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
+        
+        // Check if this is a mixed market poll
+        const hasSpread = options.some(opt => opt.additionalInfo && opt.additionalInfo.spread !== null);
+        const hasMoneyline = options.some(opt => opt.odds !== null);
+        const isMixed = hasSpread && hasMoneyline;
+        
+        // Auto-select Combined mode if mixed markets detected
+        if (isMixed && selectedSport !== 'COMBINED') {
+            document.getElementById('sportSelect').value = 'COMBINED';
+            onSportChange();
+        }
 
         let textOutput = options.map(option => {
             const percentage = Math.round((option.count / totalVotes) * 100);
-            return `${option.label}\n${percentage}% (${option.count})`;
+            
+            // Determine if this option is spread or moneyline
+            const isSpread = option.additionalInfo && option.additionalInfo.spread !== null;
+            const isMoneyline = option.odds !== null;
+            
+            if (isSpread) {
+                // For spread options, extract team name and spread
+                const spread = option.additionalInfo.spread;
+                const teamName = option.label.split(' ')[0]; // Get team abbreviation
+                const spreadValue = spread >= 0 ? `+${spread}` : `${spread}`;
+                return `${teamName} ${spreadValue}\n${percentage}% (${option.count})`;
+            } else if (isMoneyline) {
+                // For moneyline options, format odds properly
+                const oddsValue = option.odds.replace('+', '');
+                const formattedOdds = oddsValue >= 0 ? `+${oddsValue}` : oddsValue;
+                return `${option.label} ${formattedOdds}\n${percentage}% (${option.count})`;
+            } else {
+                // Fallback for any other format
+                return `${option.label}\n${percentage}% (${option.count})`;
+            }
         }).join('\n');
 
         document.getElementById('inputData').value = textOutput;
