@@ -941,8 +941,10 @@ BAL +113
       const realOddsContainer = document.getElementById(`realOddsContainer${index}`);
       
       if (marketType === 'moneyline') {
+        realOddsContainer.style.display = 'block';
         realOddsContainer.innerHTML = `<input id="realOddsInput${index}" type="number" placeholder="Enter Real's Underdog Odds" value="${savedRealOdds || ''}"><br>`;
       } else {
+        realOddsContainer.style.display = 'none';
         realOddsContainer.innerHTML = '';
       }
     }
