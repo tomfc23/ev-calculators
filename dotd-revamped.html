@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DOTD EV Calc Revamped</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0d1d97bd987249debf81f71d614fedd3"}'></script>
+  <title>DOTD EV Calc w/ Fetcher</title>
   <style>
     body {
       font-family: sans-serif;
@@ -164,6 +166,105 @@
     .team-header {
       font-weight: bold; color: #a5a1ff; margin-bottom: 5px;
     }
+    .market-type-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .badge-moneyline {
+      background-color: #2a4a2a;
+      color: #4ade80;
+    }
+    .badge-spread {
+      background-color: #4a3a2a;
+      color: #fbbf24;
+    }
+    .poll-id-container {
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #1a1a1a;
+      border-radius: 15px;
+      border: 1px solid #444;
+      max-width: 600px;
+    }
+    .poll-id-input {
+      width: 200px;
+      margin-right: 10px;
+    }
+    .sport-selection {
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #1a1a1a;
+      border-radius: 15px;
+      border: 1px solid #444;
+      max-width: 600px;
+    }
+    .sport-select {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #333;
+      color: lightgray;
+      border: 2px solid #555;
+      border-radius: 15px;
+      cursor: pointer;
+    }
+    .info-section {
+      margin: 15px auto;
+      max-width: 600px;
+      text-align: left;
+    }
+    .info-toggle {
+      background-color: #333;
+      color: lightgray;
+      border: 1px solid #555;
+      padding: 10px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s;
+    }
+    .info-toggle:hover {
+      background-color: #444;
+    }
+    .info-content {
+      display: none;
+      background-color: #2a2a3a;
+      padding: 20px;
+      border-radius: 0 0 10px 10px;
+      border: 1px solid #555;
+      border-top: none;
+    }
+    .info-content.active {
+      display: block;
+    }
+    .info-arrow {
+      transition: transform 0.3s;
+    }
+    .info-arrow.rotated {
+      transform: rotate(180deg);
+    }
+    .step-list {
+      list-style: none;
+      padding: 0;
+    }
+    .step-list li {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #333;
+      border-radius: 8px;
+      border-left: 4px solid #6f42c1;
+    }
+    .step-number {
+      font-weight: bold;
+      color: #a5a1ff;
+      display: inline-block;
+      width: 30px;
+    }
     @media (max-width: 600px) {
       .header-container { flex-direction: column; gap: 10px; }
       .home-button { position: static; transform: none; margin-bottom: 10px; }
@@ -176,6 +277,7 @@
       .summary-group { margin-bottom: 15px; padding: 10px; background-color: #222; border-radius: 10px; }
       .summary-group h3 { margin-top: 0; color: #a5a1ff; }
       #clearButton { background-color: red; margin-left: 10px; }
+      .poll-id-input { width: 150px; }
     }
     .rankings-section {
       border: 1px solid #444;
@@ -215,7 +317,7 @@
 </head>
 <body>
   <div class="header-container">
-    <a href="index.html" class="home-button">
+    <a href="https://real-ev-calcs.vercel.app/" class="home-button">
       <svg class="home-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
       </svg>
@@ -228,19 +330,67 @@
     <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
   </div>
   <h4>
-    Copy and paste from <a href="https://real-dotd.vercel.app/" target="_blank">Auto-fetcher</a> made by @barry
+   Uses dotd-fetcher made by @editlt
   </h4>
-  <a href="formatter.html" target="_blank">Formatter</a>
-  <a href="help-dotd.html">How to use</a><br />
+  <a href="https://colab.research.google.com/drive/14JP6gX7c8QMlzYvJoL6Y9UuXfiNk_KgY?usp=sharing." target="_blank">ID scanner (if you don't have pro)</a>
+
+  <!-- Sport Selection -->
+  <div class="sport-selection">
+    <h3>Market Selection</h3>
+    <select id="sportSelect" class="sport-select" onchange="onSportChange()">
+      <option value="MLB">Moneyline</option>
+      <option value="CFB">Spread</option>
+      <option value="COMBINED">Combined (Mixed Markets)</option>
+    </select>
+  </div>
 
   <!-- Odds Sorter Tab -->
   <div id="sorterTab" class="tab-content active">
-    <textarea id="inputData" placeholder="Paste the data below. The format should be like:
+    <!-- Poll ID Input Section -->
+    <div class="poll-id-container">
+      <h3>📊 Poll Data Fetcher</h3>
+      <div>
+        <input type="number" id="pollIdInput" class="poll-id-input" placeholder="Enter Poll ID" value="">
+        <button onclick="fetchPollData()">Fetch Poll Data</button>
+      </div>
+      
+      <!-- Info Section -->
+      <div class="info-section">
+        <div class="info-toggle" onclick="toggleInfo()">
+          <span>ℹ️ How to find Poll ID</span>
+          <span class="info-arrow">▼</span>
+        </div>
+        <div class="info-content" id="infoContent">
+          <h4>📋 Steps to find the Poll ID:</h4>
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1.</span>
+              go to realsports.io and click on inspect + network
+            </li>
+            <li>
+              <span class="step-number">2.</span>
+              click on DOTD and look for a request that has just a number. (Should start with 2 and be 6 digits)
+            </li>
+            <li>
+              <span class="step-number">3.</span>
+              Copy this number and paste it into the "Poll ID" field above
+            </li>
+            <li>
+              <span class="step-number">4.</span>
+              Click "Fetch Poll Data" to automatically load the betting options and odds
+            </li>
+          </ol>
+          <p><strong>💡 Tip:</strong> Make sure the poll is currently active and has betting options available!</p>
+        </div>
+      </div>
+    </div>
+
+    <textarea id="inputData" placeholder="Paste the data below or use the Poll Data Fetcher above. The format should be like:
 PHI +104
 8% (563)
 BAL +113
 3% (241)
-..."></textarea><br />
+..."></textarea><br/>
     <button onclick="processData()">Process and Sort Data</button>
     <button onclick="clearData()" id="clearButton">Clear Data</button>
     <div id="warnings"></div>
@@ -281,17 +431,9 @@ BAL +113
     <br />
     <label>
       <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()" />
-      Using No-Vig Odds for ALL?
+      Using No-Vig Odds for ALL? (calculates favorite odds from underdog odds)
     </label>
     <br /><br />
-    <label>
-      <input type="checkbox" id="shortenedModeToggle" onchange="toggleShortenedMode()">
-      Shortened Mode (must have at least 10 bets)
-    </label>      
-    <div id="shortenedModeMsg" style="color:#ffd166; margin-bottom:10px; display:none;">
-      Only bets with placement 7 or higher are shown.
-    </div>
-    <br>
     <div id="calculatorContainer"></div>
     <div class="calculator-actions">
       <button id="calculateAllButton" onclick="calculateAllEVs()">Calculate All</button>
@@ -336,17 +478,37 @@ BAL +113
 
   <script>
     let teamsData = [];
-    let shortenedMode = false;
+    let selectedSport = 'MLB';
 
     window.addEventListener('DOMContentLoaded', function() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      const msg = document.getElementById("shortenedModeMsg");
-      if (shortenedBox) shortenedBox.checked = false;
-      shortenedMode = false;
-      if (msg) msg.style.display = "none";
-      checkShortenedModeEligibility();
       generateCalculators();
     });
+
+    function onSportChange() {
+      selectedSport = document.getElementById('sportSelect').value;
+      const textarea = document.getElementById('inputData');
+      if (selectedSport === 'CFB') {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
+      } else if (selectedSport === 'COMBINED') {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format can be mixed:\nPHI +104\n8% (563)\nUTSA +23.5\n3% (147)\n...";
+      } else {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
+      }
+      generateCalculators();
+    }
+
+    function toggleInfo() {
+      const infoContent = document.getElementById('infoContent');
+      const arrow = document.querySelector('.info-arrow');
+      
+      if (infoContent.classList.contains('active')) {
+        infoContent.classList.remove('active');
+        arrow.classList.remove('rotated');
+      } else {
+        infoContent.classList.add('active');
+        arrow.classList.add('rotated');
+      }
+    }
 
     function openTab(tabName) {
       const tabContents = document.getElementsByClassName("tab-content");
@@ -369,30 +531,28 @@ BAL +113
       }
     }
 
-    function checkShortenedModeEligibility() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      const count = Number(document.getElementById("calcCountSelect").value);
-      if (shortenedBox) {
-        if (count < 10) {
-          shortenedBox.checked = false;
-          shortenedBox.disabled = true;
-          shortenedMode = false;
-          document.getElementById("shortenedModeMsg").style.display = "none";
-        } else {
-          shortenedBox.disabled = false;
-          document.getElementById("shortenedModeMsg").textContent = "Only bets with placement 7 or higher are shown.";
-        }
-      }
-    }
-    function toggleShortenedMode() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      shortenedMode = shortenedBox && shortenedBox.checked;
-      generateCalculators();
-      document.getElementById("shortenedModeMsg").style.display = shortenedMode ? "block" : "none";
-    }
-
     function clearData() {
       document.getElementById("inputData").value = "";
+    }
+
+    function detectMarketType(teamLine) {
+      const spreadMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+      if (spreadMatch) {
+        const value = parseFloat(spreadMatch[2]);
+        if (value % 0.5 === 0 && Math.abs(value) > 1) {
+          return { type: 'spread', team: spreadMatch[1], value: spreadMatch[2] };
+        }
+      }
+      
+      const moneylineMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
+      if (moneylineMatch) {
+        const value = parseInt(moneylineMatch[2]);
+        if (Number.isInteger(value)) {
+          return { type: 'moneyline', team: moneylineMatch[1], value: moneylineMatch[2] };
+        }
+      }
+      
+      return null;
     }
 
     function processData() {
@@ -418,37 +578,68 @@ BAL +113
         const lines = inputText.split("\n").filter((line) => line.trim() !== "");
         const warnings = [];
         const autoFixes = [];
+        
         for (let i = 0; i < lines.length; i += 2) {
           if (i + 1 >= lines.length) {
             warnings.push(`Incomplete data at line ${i + 1}. Missing odds line.`);
             continue;
           }
+          
           const teamLine = lines[i].trim();
           const oddsLine = lines[i + 1].trim();
-          const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
-          if (!teamMatch) {
-            warnings.push(
-              `Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`
-            );
-            continue;
+          
+          let marketInfo = null;
+          if (selectedSport === 'COMBINED') {
+            marketInfo = detectMarketType(teamLine);
+            if (!marketInfo) {
+              warnings.push(
+                `Cannot detect market type at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-### (moneyline)" or "TEAM +/-##.# (spread)"`
+              );
+              continue;
+            }
+          } else if (selectedSport === 'CFB') {
+            marketInfo = { type: 'spread' };
+            const teamMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+            if (!teamMatch) {
+              warnings.push(
+                `Invalid team/spread format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-##.#"`
+              );
+              continue;
+            }
+            marketInfo.team = teamMatch[1];
+            marketInfo.value = teamMatch[2];
+          } else {
+            marketInfo = { type: 'moneyline' };
+            const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
+            if (!teamMatch) {
+              warnings.push(
+                `Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`
+              );
+              continue;
+            }
+            marketInfo.team = teamMatch[1];
+            marketInfo.value = teamMatch[2];
+            
+            const oddsValue = parseInt(marketInfo.value);
+            if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
+              warnings.push(`Suspicious odds value for ${marketInfo.team}: ${marketInfo.value}. Please verify.`);
+            }
           }
-          const team = teamMatch[1];
-          const odds = teamMatch[2];
-          const oddsValue = parseInt(odds);
-          if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
-            warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
-          }
+
           let percentageMatch = oddsLine.match(/(\d+)%\s*\(([^)]+)\)/);
           if (!percentageMatch) {
             percentageMatch = oddsLine.match(/(\d+)%.*?\((\d+[k]?)\)/);
           }
+          
           if (!percentageMatch) {
             const parensMatch = oddsLine.match(/\(([^)]+)\)/);
             if (parensMatch) {
               const numberInParentheses = parensMatch[1];
               teamsData.push({
-                team,
-                odds,
+                team: marketInfo.team,
+                marketType: marketInfo.type,
+                odds: marketInfo.value,
+                spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
@@ -456,6 +647,7 @@ BAL +113
               });
               continue;
             }
+            
             const percentMatch = oddsLine.match(/(\d+)%/);
             if (percentMatch) {
               const percent = percentMatch[1];
@@ -463,67 +655,78 @@ BAL +113
               if (numericMatch && numericMatch.length > 1) {
                 const numberInParentheses = numericMatch[1];
                 teamsData.push({
-                  team,
-                  odds,
+                  team: marketInfo.team,
+                  marketType: marketInfo.type,
+                  odds: marketInfo.value,
+                  spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                   percentage: percent,
                   display: numberInParentheses,
                   sortValue: parseNumericValue(numberInParentheses),
                 });
                 autoFixes.push(
-                  `Fixed missing parentheses for ${team}: using ${numberInParentheses} as value.`
+                  `Fixed missing parentheses for ${marketInfo.team}: using ${numberInParentheses} as value.`
                 );
                 continue;
               } else {
                 warnings.push(
-                  `Missing number in parentheses for ${team}. Please add it manually.`
+                  `Missing number in parentheses for ${marketInfo.team}. Please add it manually.`
                 );
                 continue;
               }
             }
+            
             const numericMatch = oddsLine.match(/(\d+[k]?)/g);
             if (numericMatch && numericMatch.length > 0) {
               const numberInParentheses = numericMatch[0];
               teamsData.push({
-                team,
-                odds,
+                team: marketInfo.team,
+                marketType: marketInfo.type,
+                odds: marketInfo.value,
+                spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
                 needsPercentage: true,
               });
               autoFixes.push(
-                `Extracted numeric value for ${team}: ${numberInParentheses} and will calculate percentage.`
+                `Extracted numeric value for ${marketInfo.team}: ${numberInParentheses} and will calculate percentage.`
               );
               continue;
             }
+            
             warnings.push(
               `Invalid odds line format at line ${i + 2}: "${oddsLine}". Expected format: "##% (###)"`
             );
             continue;
           }
+          
           const percentage = percentageMatch[1];
           const numberInParentheses = percentageMatch[2];
           const percentValue = parseInt(percentage);
           if (isNaN(percentValue) || percentValue < 0 || percentValue > 100) {
             warnings.push(
-              `Suspicious percentage value for ${team}: ${percentage}%. Please verify.`
+              `Suspicious percentage value for ${marketInfo.team}: ${percentage}%. Please verify.`
             );
           }
           const sortValue = parseNumericValue(numberInParentheses);
           if (isNaN(sortValue)) {
             warnings.push(
-              `Could not parse number value for ${team}: ${numberInParentheses}. Please verify.`
+              `Could not parse number value for ${marketInfo.team}: ${numberInParentheses}. Please verify.`
             );
             continue;
           }
+          
           teamsData.push({
-            team,
-            odds,
+            team: marketInfo.team,
+            marketType: marketInfo.type,
+            odds: marketInfo.value,
+            spread: marketInfo.type === 'spread' ? marketInfo.value : null,
             percentage,
             display: numberInParentheses,
             sortValue,
           });
         }
+        
         const teamsWithMissingPercentage = teamsData.filter(
           (team) => team.needsPercentage
         );
@@ -536,7 +739,6 @@ BAL +113
           });
         }
 
-        // Deduplicate: assign displayTeam as "XYZ #1", "XYZ #2", etc. for duplicates
         let abbrevMap = {};
         teamsData.forEach(item => {
           if (!abbrevMap[item.team]) abbrevMap[item.team] = 0;
@@ -572,17 +774,24 @@ BAL +113
           warningsDiv.innerHTML = warningsHTML;
           warningsDiv.style.display = "block";
         }
+        
         teamsData.sort((a, b) => b.sortValue - a.sortValue);
+        
         if (teamsData.length === 0) {
           warningsDiv.innerHTML =
             '<p class="error">No valid data was found. Please check your input format.</p>';
           warningsDiv.style.display = "block";
           return;
         }
+        
         teamsData.forEach((item, index) => {
           const itemDiv = document.createElement("div");
           itemDiv.className = "sorted-item";
-          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${item.odds}) - ${item.percentage}% (${item.display})`;
+          const displayValue = item.marketType === 'spread' ? item.spread : item.odds;
+          const marketBadge = item.marketType === 'moneyline' 
+            ? '<span class="market-type-badge badge-moneyline">ML</span>'
+            : '<span class="market-type-badge badge-spread">SPREAD</span>';
+          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${displayValue}) ${marketBadge} - ${item.percentage}% (${item.display})`;
           sortedItemsDiv.appendChild(itemDiv);
         });
         sortedResults.style.display = "block";
@@ -601,6 +810,7 @@ BAL +113
         return parseFloat(str) || 0;
       }
     }
+    
     function calculateMissingPercentages(teamsWithMissingPercentage) {
       const teamsWithPercentage = teamsData.filter((team) => !team.needsPercentage);
       if (teamsWithPercentage.length === 0) {
@@ -633,34 +843,44 @@ BAL +113
         alert("No valid data to use. Please process your data first.");
         return;
       }
-      if (teamsData.length < 8) {
-        alert("You need at least 8 teams to use the shortened mode.");
-        return;
-      }
       const count = Math.min(teamsData.length, 20);
       document.getElementById("calcCountSelect").value = count;
       openTab("calculatorTab");
       generateCalculators();
       setTimeout(() => {
         for (let i = 0; i < count; i++) {
-          if (shortenedMode && i < 6) continue;
           if (i < teamsData.length) {
-            const odds = teamsData[i].odds;
-            const oddsValue = parseInt(odds.replace("+", ""));
             document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
-            document.getElementById(`realOddsInput${i}`).value = oddsValue;
+            
+            if (teamsData[i].marketType === 'moneyline') {
+              const odds = teamsData[i].odds;
+              const oddsValue = parseInt(odds.replace("+", ""));
+              document.getElementById(`realOddsInput${i}`).value = oddsValue;
+            }
+            
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
-              teamHeader.textContent = teamsData[i].displayTeam;
+              if (teamsData[i].marketType === 'spread') {
+                teamHeader.textContent = `${teamsData[i].displayTeam} ${teamsData[i].spread}`;
+              } else {
+                teamHeader.textContent = teamsData[i].displayTeam;
+              }
+            }
+            
+            const marketTypeInput = document.getElementById(`marketType${i}`);
+            if (marketTypeInput) {
+              marketTypeInput.value = teamsData[i].marketType;
             }
           }
         }
       }, 100);
     }
+    
     function generateCalculators() {
       const count = Number(document.getElementById("calcCountSelect").value);
       const container = document.getElementById("calculatorContainer");
       let savedValues = {};
+      
       for (let i = 0; i < count; i++) {
         savedValues[i] = {
           placement: document.getElementById(`placementInput${i}`)?.value || "",
@@ -668,21 +888,33 @@ BAL +113
           underdogOdds: document.getElementById(`underdogOddsInput${i}`)?.value || "",
           favoriteOdds: document.getElementById(`favoriteOddsInput${i}`)?.value || "",
           teamHeader: document.getElementById(`teamHeader${i}`)?.textContent || "",
+          marketType: document.getElementById(`marketType${i}`)?.value || (selectedSport === 'CFB' ? 'spread' : 'moneyline'),
         };
       }
+      
       container.innerHTML = "";
+      
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         const section = document.createElement("div");
         section.className = "calculator-section";
+        
+        const marketTypeSelect = selectedSport === 'COMBINED' 
+          ? `<label for="marketType${i}">Market Type:</label>
+             <select id="marketType${i}" onchange="updateCalculatorInputs(${i})">
+               <option value="moneyline">Moneyline</option>
+               <option value="spread">Spread</option>
+             </select><br>`
+          : `<input type="hidden" id="marketType${i}" value="${selectedSport === 'CFB' ? 'spread' : 'moneyline'}">`;
+        
         section.innerHTML = `
           <h3>Bet ${i + 1}</h3>
           <div class="team-header" id="teamHeader${i}"></div>
+          ${marketTypeSelect}
           <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
-          <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
-          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+          <div id="realOddsContainer${i}"></div>
+          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog sportsbook odds"><br>
           <div id="divFavoriteOddsInput${i}">
-            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite sportsbook odds"><br>
           </div>
           <button onclick="calculateEV(${i})">Calculate</button>
           <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
@@ -690,23 +922,39 @@ BAL +113
         `;
         container.appendChild(section);
       }
+      
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         if (savedValues[i]) {
           document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
-          document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
           document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
           document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
           document.getElementById(`teamHeader${i}`).textContent = savedValues[i].teamHeader;
+          document.getElementById(`marketType${i}`).value = savedValues[i].marketType;
+          
+          updateCalculatorInputs(i, savedValues[i].realOdds);
+        } else {
+          updateCalculatorInputs(i);
         }
       }
+      
       toggleFavoriteInputs();
-      checkShortenedModeEligibility();
     }
+    
+    function updateCalculatorInputs(index, savedRealOdds) {
+      const marketType = document.getElementById(`marketType${index}`).value;
+      const realOddsContainer = document.getElementById(`realOddsContainer${index}`);
+      
+      if (marketType === 'moneyline') {
+        realOddsContainer.innerHTML = `<input id="realOddsInput${index}" type="number" placeholder="Enter Real's Underdog Odds" value="${savedRealOdds || ''}"><br>`;
+      } else {
+        realOddsContainer.innerHTML = '';
+      }
+    }
+    
     document.getElementById("calcCountSelect").addEventListener("change", function() {
-      checkShortenedModeEligibility();
       generateCalculators();
     });
+    
     function toggleFavoriteInputs() {
       const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
       const count = Number(document.getElementById("calcCountSelect").value);
@@ -717,12 +965,26 @@ BAL +113
         }
       }
     }
+    
     function calculateEV(index) {
       const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
+      const marketType = document.getElementById(`marketType${index}`).value;
       const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
       let placement = Number(document.getElementById(`placementInput${index}`)?.value);
       placement = placement > 10 ? 10 : placement;
-      const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+      
+      let payout;
+      if (marketType === 'spread') {
+        payout = 100 + (placement * 20);
+      } else {
+        const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+        if (realOdds < 0) {
+          payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
+        } else {
+          payout = Math.round(placement * 20 + realOdds);
+        }
+      }
+
       const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
       let favoriteOdds = useNoVig
         ? -1 * underdogOdds
@@ -741,14 +1003,6 @@ BAL +113
       const ipTotal = favoriteIP + underdogIP;
       const novigUnderdogIP = underdogIP / ipTotal;
 
-     let payout;
-if (realOdds < 0) {
-  payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
-} else {
-  payout = Math.round(placement * 20 + realOdds);
-}
-
-
       const expectedValue = payout * novigUnderdogIP;
       const hitProbPercent = novigUnderdogIP * 100;
 
@@ -762,11 +1016,15 @@ if (realOdds < 0) {
         hitProb: hitProbPercent
       };
     }
+    
     function clearInputs(index) {
       document.getElementById(`underdogOddsInput${index}`).value = "";
       document.getElementById(`favoriteOddsInput${index}`).value = "";
       document.getElementById(`placementInput${index}`).value = "";
-      document.getElementById(`realOddsInput${index}`).value = "";
+      const realOddsInput = document.getElementById(`realOddsInput${index}`);
+      if (realOddsInput) {
+        realOddsInput.value = "";
+      }
       document.getElementById(`resultsOutput${index}`).textContent = "";
     }
 
@@ -774,7 +1032,6 @@ if (realOdds < 0) {
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         results.push(calculateEV(i));
       }
       if (!results.length) return;
@@ -790,11 +1047,11 @@ if (realOdds < 0) {
       document.getElementById("bestProbName").textContent = bestProb.team || "-";
       document.getElementById("bestProbValue").textContent = bestProb.hitProb ? bestProb.hitProb.toFixed(2) : "-";
     }
+    
     function showCompleteRankings() {
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         results.push(calculateEV(i));
       }
       results.sort((a, b) => b.ev - a.ev);
@@ -817,8 +1074,48 @@ if (realOdds < 0) {
       });
       document.getElementById("rankingsSection").style.display = "block";
     }
+    
     function hideRankings() {
       document.getElementById("rankingsSection").style.display = "none";
+    }
+
+    async function fetchPollData() {
+        try {
+            const pollId = document.getElementById('pollIdInput').value.trim();
+            
+            const response = await axios.get(`https://dotd.tomfconreal.workers.dev/?url=https://api.real.vg/polls/${pollId}`);
+            const data = response.data;
+
+            if (!data.poll || !data.poll.options) {
+                throw new Error('Invalid poll data received');
+            }
+
+            displayPollResults(data.poll.options);
+        } catch (error) {
+            let errorMessage = 'Error fetching poll data: ';
+            
+            if (error.response && error.response.status === 404) {
+                errorMessage += 'Poll not found. Please check the Poll ID.';
+            } else if (error.message.includes('Invalid poll data')) {
+                errorMessage += 'Invalid poll data. This poll may not have betting options.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            document.getElementById('inputData').value = errorMessage;
+            console.error('Error:', error);
+        }
+    }
+
+    function displayPollResults(options) {
+        const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
+
+        let textOutput = options.map(option => {
+            const percentage = Math.round((option.count / totalVotes) * 100);
+            return `${option.label}\n${percentage}% (${option.count})`;
+        }).join('\n');
+
+        document.getElementById('inputData').value = textOutput;
     }
   </script>
 </body>
