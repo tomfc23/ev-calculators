@@ -166,6 +166,22 @@
     .team-header {
       font-weight: bold; color: #a5a1ff; margin-bottom: 5px;
     }
+    .market-type-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .badge-moneyline {
+      background-color: #2a4a2a;
+      color: #4ade80;
+    }
+    .badge-spread {
+      background-color: #4a3a2a;
+      color: #fbbf24;
+    }
     .poll-id-container {
       margin: 20px auto;
       padding: 15px;
@@ -324,7 +340,7 @@
     <select id="sportSelect" class="sport-select" onchange="onSportChange()">
       <option value="MLB">Moneyline</option>
       <option value="CFB">Spread</option>
-      
+      <option value="COMBINED">Combined (Mixed Markets)</option>
     </select>
   </div>
 
@@ -473,6 +489,8 @@ BAL +113
       const textarea = document.getElementById('inputData');
       if (selectedSport === 'CFB') {
         textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
+      } else if (selectedSport === 'COMBINED') {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format can be mixed:\nPHI +104\n8% (563)\nUTSA +23.5\n3% (147)\n...";
       } else {
         textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
       }
@@ -517,6 +535,22 @@ BAL +113
       document.getElementById("inputData").value = "";
     }
 
+    function detectMarketType(teamLine) {
+      // Check if the value contains a decimal point - that indicates spread
+      const spreadMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+      if (spreadMatch) {
+        const value = spreadMatch[2];
+        // If it contains a decimal point, it's a spread
+        if (value.includes('.')) {
+          return { type: 'spread', team: spreadMatch[1], value: value };
+        }
+        // Otherwise it's moneyline (whole number)
+        return { type: 'moneyline', team: spreadMatch[1], value: value };
+      }
+      
+      return null;
+    }
+
     function processData() {
       const inputText = document.getElementById("inputData").value.trim();
       const sortedItemsDiv = document.getElementById("sortedItems");
@@ -540,40 +574,51 @@ BAL +113
         const lines = inputText.split("\n").filter((line) => line.trim() !== "");
         const warnings = [];
         const autoFixes = [];
+        
         for (let i = 0; i < lines.length; i += 2) {
           if (i + 1 >= lines.length) {
             warnings.push(`Incomplete data at line ${i + 1}. Missing odds line.`);
             continue;
           }
+          
           const teamLine = lines[i].trim();
           const oddsLine = lines[i + 1].trim();
           
-          let teamMatch, team, odds, spread;
-          if (selectedSport === 'CFB') {
-            teamMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+          let marketInfo = null;
+          if (selectedSport === 'COMBINED') {
+            marketInfo = detectMarketType(teamLine);
+            if (!marketInfo) {
+              warnings.push(
+                `Cannot detect market type at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-### (moneyline)" or "TEAM +/-##.# (spread)"`
+              );
+              continue;
+            }
+          } else if (selectedSport === 'CFB') {
+            marketInfo = { type: 'spread' };
+            const teamMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
             if (!teamMatch) {
               warnings.push(
                 `Invalid team/spread format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-##.#"`
               );
               continue;
             }
-            team = teamMatch[1];
-            spread = teamMatch[2];
-            odds = spread;
+            marketInfo.team = teamMatch[1];
+            marketInfo.value = teamMatch[2];
           } else {
-            teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
+            marketInfo = { type: 'moneyline' };
+            const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
             if (!teamMatch) {
               warnings.push(
                 `Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`
               );
               continue;
             }
-            team = teamMatch[1];
-            odds = teamMatch[2];
-            spread = null;
-            const oddsValue = parseInt(odds);
+            marketInfo.team = teamMatch[1];
+            marketInfo.value = teamMatch[2];
+            
+            const oddsValue = parseInt(marketInfo.value);
             if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
-              warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
+              warnings.push(`Suspicious odds value for ${marketInfo.team}: ${marketInfo.value}. Please verify.`);
             }
           }
 
@@ -581,14 +626,16 @@ BAL +113
           if (!percentageMatch) {
             percentageMatch = oddsLine.match(/(\d+)%.*?\((\d+[k]?)\)/);
           }
+          
           if (!percentageMatch) {
             const parensMatch = oddsLine.match(/\(([^)]+)\)/);
             if (parensMatch) {
               const numberInParentheses = parensMatch[1];
               teamsData.push({
-                team,
-                odds,
-                spread,
+                team: marketInfo.team,
+                marketType: marketInfo.type,
+                odds: marketInfo.value,
+                spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
@@ -596,6 +643,7 @@ BAL +113
               });
               continue;
             }
+            
             const percentMatch = oddsLine.match(/(\d+)%/);
             if (percentMatch) {
               const percent = percentMatch[1];
@@ -603,70 +651,78 @@ BAL +113
               if (numericMatch && numericMatch.length > 1) {
                 const numberInParentheses = numericMatch[1];
                 teamsData.push({
-                  team,
-                  odds,
-                  spread,
+                  team: marketInfo.team,
+                  marketType: marketInfo.type,
+                  odds: marketInfo.value,
+                  spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                   percentage: percent,
                   display: numberInParentheses,
                   sortValue: parseNumericValue(numberInParentheses),
                 });
                 autoFixes.push(
-                  `Fixed missing parentheses for ${team}: using ${numberInParentheses} as value.`
+                  `Fixed missing parentheses for ${marketInfo.team}: using ${numberInParentheses} as value.`
                 );
                 continue;
               } else {
                 warnings.push(
-                  `Missing number in parentheses for ${team}. Please add it manually.`
+                  `Missing number in parentheses for ${marketInfo.team}. Please add it manually.`
                 );
                 continue;
               }
             }
+            
             const numericMatch = oddsLine.match(/(\d+[k]?)/g);
             if (numericMatch && numericMatch.length > 0) {
               const numberInParentheses = numericMatch[0];
               teamsData.push({
-                team,
-                odds,
-                spread,
+                team: marketInfo.team,
+                marketType: marketInfo.type,
+                odds: marketInfo.value,
+                spread: marketInfo.type === 'spread' ? marketInfo.value : null,
                 percentage: null,
                 display: numberInParentheses,
                 sortValue: parseNumericValue(numberInParentheses),
                 needsPercentage: true,
               });
               autoFixes.push(
-                `Extracted numeric value for ${team}: ${numberInParentheses} and will calculate percentage.`
+                `Extracted numeric value for ${marketInfo.team}: ${numberInParentheses} and will calculate percentage.`
               );
               continue;
             }
+            
             warnings.push(
               `Invalid odds line format at line ${i + 2}: "${oddsLine}". Expected format: "##% (###)"`
             );
             continue;
           }
+          
           const percentage = percentageMatch[1];
           const numberInParentheses = percentageMatch[2];
           const percentValue = parseInt(percentage);
           if (isNaN(percentValue) || percentValue < 0 || percentValue > 100) {
             warnings.push(
-              `Suspicious percentage value for ${team}: ${percentage}%. Please verify.`
+              `Suspicious percentage value for ${marketInfo.team}: ${percentage}%. Please verify.`
             );
           }
           const sortValue = parseNumericValue(numberInParentheses);
           if (isNaN(sortValue)) {
             warnings.push(
-              `Could not parse number value for ${team}: ${numberInParentheses}. Please verify.`
+              `Could not parse number value for ${marketInfo.team}: ${numberInParentheses}. Please verify.`
             );
             continue;
           }
+          
           teamsData.push({
-            team,
-            odds,
-            spread,
+            team: marketInfo.team,
+            marketType: marketInfo.type,
+            odds: marketInfo.value,
+            spread: marketInfo.type === 'spread' ? marketInfo.value : null,
             percentage,
             display: numberInParentheses,
             sortValue,
           });
         }
+        
         const teamsWithMissingPercentage = teamsData.filter(
           (team) => team.needsPercentage
         );
@@ -714,18 +770,24 @@ BAL +113
           warningsDiv.innerHTML = warningsHTML;
           warningsDiv.style.display = "block";
         }
+        
         teamsData.sort((a, b) => b.sortValue - a.sortValue);
+        
         if (teamsData.length === 0) {
           warningsDiv.innerHTML =
             '<p class="error">No valid data was found. Please check your input format.</p>';
           warningsDiv.style.display = "block";
           return;
         }
+        
         teamsData.forEach((item, index) => {
           const itemDiv = document.createElement("div");
           itemDiv.className = "sorted-item";
-          const displayValue = selectedSport === 'CFB' ? item.spread : item.odds;
-          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${displayValue}) - ${item.percentage}% (${item.display})`;
+          const displayValue = item.marketType === 'spread' ? item.spread : item.odds;
+          const marketBadge = item.marketType === 'moneyline' 
+            ? '<span class="market-type-badge badge-moneyline">ML</span>'
+            : '<span class="market-type-badge badge-spread">SPREAD</span>';
+          itemDiv.innerHTML = `${index + 1}. ${item.displayTeam} (${displayValue}) ${marketBadge} - ${item.percentage}% (${item.display})`;
           sortedItemsDiv.appendChild(itemDiv);
         });
         sortedResults.style.display = "block";
@@ -744,6 +806,7 @@ BAL +113
         return parseFloat(str) || 0;
       }
     }
+    
     function calculateMissingPercentages(teamsWithMissingPercentage) {
       const teamsWithPercentage = teamsData.filter((team) => !team.needsPercentage);
       if (teamsWithPercentage.length === 0) {
@@ -784,18 +847,25 @@ BAL +113
         for (let i = 0; i < count; i++) {
           if (i < teamsData.length) {
             document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
-            if (selectedSport === 'MLB') {
+            
+            if (teamsData[i].marketType === 'moneyline') {
               const odds = teamsData[i].odds;
               const oddsValue = parseInt(odds.replace("+", ""));
               document.getElementById(`realOddsInput${i}`).value = oddsValue;
             }
+            
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
-              if (selectedSport === 'CFB') {
+              if (teamsData[i].marketType === 'spread') {
                 teamHeader.textContent = `${teamsData[i].displayTeam} ${teamsData[i].spread}`;
               } else {
                 teamHeader.textContent = teamsData[i].displayTeam;
               }
+            }
+            
+            const marketTypeInput = document.getElementById(`marketType${i}`);
+            if (marketTypeInput) {
+              marketTypeInput.value = teamsData[i].marketType;
             }
           }
         }
@@ -806,6 +876,7 @@ BAL +113
       const count = Number(document.getElementById("calcCountSelect").value);
       const container = document.getElementById("calculatorContainer");
       let savedValues = {};
+      
       for (let i = 0; i < count; i++) {
         savedValues[i] = {
           placement: document.getElementById(`placementInput${i}`)?.value || "",
@@ -813,23 +884,30 @@ BAL +113
           underdogOdds: document.getElementById(`underdogOddsInput${i}`)?.value || "",
           favoriteOdds: document.getElementById(`favoriteOddsInput${i}`)?.value || "",
           teamHeader: document.getElementById(`teamHeader${i}`)?.textContent || "",
+          marketType: document.getElementById(`marketType${i}`)?.value || (selectedSport === 'CFB' ? 'spread' : 'moneyline'),
         };
       }
+      
       container.innerHTML = "";
+      
       for (let i = 0; i < count; i++) {
         const section = document.createElement("div");
         section.className = "calculator-section";
         
-        let realOddsInput = '';
-        if (selectedSport === 'MLB') {
-          realOddsInput = '<input id="realOddsInput' + i + '" type="number" placeholder="Enter Real\'s Underdog Odds"><br>';
-        }
+        const marketTypeSelect = selectedSport === 'COMBINED' 
+          ? `<label for="marketType${i}">Market Type:</label>
+             <select id="marketType${i}" onchange="updateCalculatorInputs(${i})">
+               <option value="moneyline">Moneyline</option>
+               <option value="spread">Spread</option>
+             </select><br>`
+          : `<input type="hidden" id="marketType${i}" value="${selectedSport === 'CFB' ? 'spread' : 'moneyline'}">`;
         
         section.innerHTML = `
           <h3>Bet ${i + 1}</h3>
           <div class="team-header" id="teamHeader${i}"></div>
+          ${marketTypeSelect}
           <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
-          ${realOddsInput}
+          <div id="realOddsContainer${i}"></div>
           <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog sportsbook odds"><br>
           <div id="divFavoriteOddsInput${i}">
             <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite sportsbook odds"><br>
@@ -840,22 +918,39 @@ BAL +113
         `;
         container.appendChild(section);
       }
+      
       for (let i = 0; i < count; i++) {
         if (savedValues[i]) {
           document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
-          if (selectedSport === 'MLB') {
-            document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
-          }
           document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
           document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
           document.getElementById(`teamHeader${i}`).textContent = savedValues[i].teamHeader;
+          document.getElementById(`marketType${i}`).value = savedValues[i].marketType;
+          
+          updateCalculatorInputs(i, savedValues[i].realOdds);
+        } else {
+          updateCalculatorInputs(i);
         }
       }
+      
       toggleFavoriteInputs();
     }
+    
+    function updateCalculatorInputs(index, savedRealOdds) {
+      const marketType = document.getElementById(`marketType${index}`).value;
+      const realOddsContainer = document.getElementById(`realOddsContainer${index}`);
+      
+      if (marketType === 'moneyline') {
+        realOddsContainer.innerHTML = `<input id="realOddsInput${index}" type="number" placeholder="Enter Real's Underdog Odds" value="${savedRealOdds || ''}"><br>`;
+      } else {
+        realOddsContainer.innerHTML = '';
+      }
+    }
+    
     document.getElementById("calcCountSelect").addEventListener("change", function() {
       generateCalculators();
     });
+    
     function toggleFavoriteInputs() {
       const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
       const count = Number(document.getElementById("calcCountSelect").value);
@@ -866,14 +961,16 @@ BAL +113
         }
       }
     }
+    
     function calculateEV(index) {
       const team = document.getElementById(`teamHeader${index}`)?.textContent || `Bet ${index+1}`;
+      const marketType = document.getElementById(`marketType${index}`).value;
       const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
       let placement = Number(document.getElementById(`placementInput${index}`)?.value);
       placement = placement > 10 ? 10 : placement;
       
       let payout;
-      if (selectedSport === 'CFB') {
+      if (marketType === 'spread') {
         payout = 100 + (placement * 20);
       } else {
         const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
@@ -915,12 +1012,14 @@ BAL +113
         hitProb: hitProbPercent
       };
     }
+    
     function clearInputs(index) {
       document.getElementById(`underdogOddsInput${index}`).value = "";
       document.getElementById(`favoriteOddsInput${index}`).value = "";
       document.getElementById(`placementInput${index}`).value = "";
-      if (selectedSport === 'MLB') {
-        document.getElementById(`realOddsInput${index}`).value = "";
+      const realOddsInput = document.getElementById(`realOddsInput${index}`);
+      if (realOddsInput) {
+        realOddsInput.value = "";
       }
       document.getElementById(`resultsOutput${index}`).textContent = "";
     }
@@ -944,6 +1043,7 @@ BAL +113
       document.getElementById("bestProbName").textContent = bestProb.team || "-";
       document.getElementById("bestProbValue").textContent = bestProb.hitProb ? bestProb.hitProb.toFixed(2) : "-";
     }
+    
     function showCompleteRankings() {
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
@@ -970,6 +1070,7 @@ BAL +113
       });
       document.getElementById("rankingsSection").style.display = "block";
     }
+    
     function hideRankings() {
       document.getElementById("rankingsSection").style.display = "none";
     }
@@ -1004,19 +1105,41 @@ BAL +113
 
     function displayPollResults(options) {
         const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
-
-        let textOutput;
-        if (selectedSport === 'CFB') {
-            textOutput = options.map(option => {
-                const percentage = Math.round((option.count / totalVotes) * 100);
-                return `${option.label}\n${percentage}% (${option.count})`;
-            }).join('\n');
-        } else {
-            textOutput = options.map(option => {
-                const percentage = Math.round((option.count / totalVotes) * 100);
-                return `${option.label} ${option.odds}\n${percentage}% (${option.count})`;
-            }).join('\n');
+        
+        // Check if this is a mixed market poll
+        const hasSpread = options.some(opt => opt.additionalInfo && opt.additionalInfo.spread !== null);
+        const hasMoneyline = options.some(opt => opt.odds !== null);
+        const isMixed = hasSpread && hasMoneyline;
+        
+        // Auto-select Combined mode if mixed markets detected
+        if (isMixed && selectedSport !== 'COMBINED') {
+            document.getElementById('sportSelect').value = 'COMBINED';
+            onSportChange();
         }
+
+        let textOutput = options.map(option => {
+            const percentage = Math.round((option.count / totalVotes) * 100);
+            
+            // Determine if this option is spread or moneyline
+            const isSpread = option.additionalInfo && option.additionalInfo.spread !== null;
+            const isMoneyline = option.odds !== null;
+            
+            if (isSpread) {
+                // For spread options, extract team name and spread
+                const spread = option.additionalInfo.spread;
+                const teamName = option.label.split(' ')[0]; // Get team abbreviation
+                const spreadValue = spread >= 0 ? `+${spread}` : `${spread}`;
+                return `${teamName} ${spreadValue}\n${percentage}% (${option.count})`;
+            } else if (isMoneyline) {
+                // For moneyline options, format odds properly
+                const oddsValue = option.odds.replace('+', '');
+                const formattedOdds = oddsValue >= 0 ? `+${oddsValue}` : oddsValue;
+                return `${option.label} ${formattedOdds}\n${percentage}% (${option.count})`;
+            } else {
+                // Fallback for any other format
+                return `${option.label}\n${percentage}% (${option.count})`;
+            }
+        }).join('\n');
 
         document.getElementById('inputData').value = textOutput;
     }
