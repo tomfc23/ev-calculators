@@ -536,20 +536,16 @@ BAL +113
     }
 
     function detectMarketType(teamLine) {
+      // Check if the value contains a decimal point - that indicates spread
       const spreadMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
       if (spreadMatch) {
-        const value = parseFloat(spreadMatch[2]);
-        if (value % 0.5 === 0 && Math.abs(value) > 1) {
-          return { type: 'spread', team: spreadMatch[1], value: spreadMatch[2] };
+        const value = spreadMatch[2];
+        // If it contains a decimal point, it's a spread
+        if (value.includes('.')) {
+          return { type: 'spread', team: spreadMatch[1], value: value };
         }
-      }
-      
-      const moneylineMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
-      if (moneylineMatch) {
-        const value = parseInt(moneylineMatch[2]);
-        if (Number.isInteger(value)) {
-          return { type: 'moneyline', team: moneylineMatch[1], value: moneylineMatch[2] };
-        }
+        // Otherwise it's moneyline (whole number)
+        return { type: 'moneyline', team: spreadMatch[1], value: value };
       }
       
       return null;
