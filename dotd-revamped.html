@@ -663,26 +663,33 @@ BAL +113
               const contests = scheduleData.dailyDraftInfo.contests;
               
               for (const contest of contests) {
-                if (contest.items) {
+                if (contest.items && Array.isArray(contest.items)) {
                   for (const item of contest.items) {
-                    if (item.posts) {
+                    if (item.entityType === 'post' && item.posts && Array.isArray(item.posts)) {
                       for (const post of item.posts) {
-                        if (post.display && post.display.toLowerCase().includes('dog of the day')) {
+                        const displayText = post.display ? post.display.toLowerCase().trim() : '';
+                        
+                        if (displayText === 'dog of the day') {
                           const postId = post.postId;
-                          const postUrl = `https://dotd.tomfconreal.workers.dev/?url=https://api.real.vg/posts/${postId}`;
-                          const postResponse = await axios.get(postUrl);
-                          const postData = postResponse.data;
                           
-                          if (postData.content && postData.content.nodes) {
-                            for (const node of postData.content.nodes) {
-                              if (node.type === 'Poll' && node.pollId) {
-                                return {
-                                  sport: sport.toUpperCase(),
-                                  pollId: node.pollId,
-                                  postId: postId
-                                };
+                          try {
+                            const postUrl = `https://dotd.tomfconreal.workers.dev/?url=https://api.real.vg/posts/${postId}`;
+                            const postResponse = await axios.get(postUrl);
+                            const postData = postResponse.data;
+                            
+                            if (postData.content && postData.content.nodes && Array.isArray(postData.content.nodes)) {
+                              for (const node of postData.content.nodes) {
+                                if (node.type === 'Poll' && node.pollId) {
+                                  return {
+                                    sport: sport.toUpperCase(),
+                                    pollId: node.pollId,
+                                    postId: postId
+                                  };
+                                }
                               }
                             }
+                          } catch (postErr) {
+                            console.log(`Error fetching post ${postId} for ${sport}:`, postErr.message);
                           }
                         }
                       }
@@ -692,7 +699,7 @@ BAL +113
               }
             }
           } catch (err) {
-            console.log(`No DOTD found for ${sport}:`, err.message);
+            console.log(`Error fetching schedule for ${sport}:`, err.message);
           }
           return null;
         });
