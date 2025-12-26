@@ -656,30 +656,57 @@ BAL +113
         const pollPromises = sports.map(async (sport) => {
           try {
             const scheduleUrl = `https://schedule.tommyek67.workers.dev/?sport=${sport}&day=${currentDate}`;
+            console.log(`Fetching schedule for ${sport}:`, scheduleUrl);
             const scheduleResponse = await axios.get(scheduleUrl);
             const scheduleData = scheduleResponse.data;
             
+            console.log(`${sport} - Has dailyDraftInfo:`, !!scheduleData?.dailyDraftInfo);
+            
             if (scheduleData && scheduleData.dailyDraftInfo && scheduleData.dailyDraftInfo.contests) {
               const contests = scheduleData.dailyDraftInfo.contests;
+              console.log(`${sport} - Number of contests:`, contests.length);
               
-              for (const contest of contests) {
+              for (let contestIdx = 0; contestIdx < contests.length; contestIdx++) {
+                const contest = contests[contestIdx];
+                console.log(`${sport} - Contest ${contestIdx} - Has items:`, !!contest.items);
+                
                 if (contest.items && Array.isArray(contest.items)) {
-                  for (const item of contest.items) {
-                    if (item.entityType === 'post' && item.posts && Array.isArray(item.posts)) {
-                      for (const post of item.posts) {
+                  console.log(`${sport} - Contest ${contestIdx} - Number of items:`, contest.items.length);
+                  
+                  for (let itemIdx = 0; itemIdx < contest.items.length; itemIdx++) {
+                    const item = contest.items[itemIdx];
+                    console.log(`${sport} - Item ${itemIdx} - entityType:`, item.entityType, '- header:', item.header);
+                    
+                    if (item.posts && Array.isArray(item.posts)) {
+                      console.log(`${sport} - Item ${itemIdx} - Number of posts:`, item.posts.length);
+                      
+                      for (let postIdx = 0; postIdx < item.posts.length; postIdx++) {
+                        const post = item.posts[postIdx];
                         const displayText = post.display ? post.display.toLowerCase().trim() : '';
+                        console.log(`${sport} - Post ${postIdx} - display:`, post.display, '- postId:', post.postId);
                         
                         if (displayText === 'dog of the day') {
+                          console.log(`✅ Found DOTD for ${sport}! Post ID:`, post.postId);
                           const postId = post.postId;
                           
                           try {
                             const postUrl = `https://dotd.tomfconreal.workers.dev/?url=https://api.real.vg/posts/${postId}`;
+                            console.log(`Fetching post data from:`, postUrl);
                             const postResponse = await axios.get(postUrl);
                             const postData = postResponse.data;
                             
+                            console.log(`${sport} - Post data has content:`, !!postData.content);
+                            console.log(`${sport} - Post data has nodes:`, !!postData.content?.nodes);
+                            
                             if (postData.content && postData.content.nodes && Array.isArray(postData.content.nodes)) {
-                              for (const node of postData.content.nodes) {
+                              console.log(`${sport} - Number of nodes:`, postData.content.nodes.length);
+                              
+                              for (let nodeIdx = 0; nodeIdx < postData.content.nodes.length; nodeIdx++) {
+                                const node = postData.content.nodes[nodeIdx];
+                                console.log(`${sport} - Node ${nodeIdx} type:`, node.type, '- has pollId:', !!node.pollId);
+                                
                                 if (node.type === 'Poll' && node.pollId) {
+                                  console.log(`✅ Found poll ID ${node.pollId} for ${sport}!`);
                                   return {
                                     sport: sport.toUpperCase(),
                                     pollId: node.pollId,
@@ -689,7 +716,7 @@ BAL +113
                               }
                             }
                           } catch (postErr) {
-                            console.log(`Error fetching post ${postId} for ${sport}:`, postErr.message);
+                            console.error(`❌ Error fetching post ${postId} for ${sport}:`, postErr.message);
                           }
                         }
                       }
@@ -699,7 +726,7 @@ BAL +113
               }
             }
           } catch (err) {
-            console.log(`Error fetching schedule for ${sport}:`, err.message);
+            console.error(`❌ Error fetching schedule for ${sport}:`, err.message);
           }
           return null;
         });
