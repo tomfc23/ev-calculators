@@ -359,6 +359,18 @@
       cursor: pointer; margin: 10px; transition: background-color 0.3s;
     }
     #showRankingsButton:hover { background-color: #047857; }
+    .debug-log {
+      background-color: #1a1a2e;
+      color: #a0a0a0;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+    }
     @media (max-width: 600px) {
       .header-container { flex-direction: column; gap: 10px; }
       .home-button { position: static; transform: none; margin-bottom: 10px; }
@@ -660,30 +672,15 @@ BAL +113
             const scheduleResponse = await axios.get(scheduleUrl);
             const scheduleData = scheduleResponse.data;
             
-            console.log(`${sport} - Has dailyDraftInfo:`, !!scheduleData?.dailyDraftInfo);
-            
             if (scheduleData && scheduleData.dailyDraftInfo && scheduleData.dailyDraftInfo.contests) {
               const contests = scheduleData.dailyDraftInfo.contests;
-              console.log(`${sport} - Number of contests:`, contests.length);
               
-              for (let contestIdx = 0; contestIdx < contests.length; contestIdx++) {
-                const contest = contests[contestIdx];
-                console.log(`${sport} - Contest ${contestIdx} - Has items:`, !!contest.items);
-                
+              for (let contest of contests) {
                 if (contest.items && Array.isArray(contest.items)) {
-                  console.log(`${sport} - Contest ${contestIdx} - Number of items:`, contest.items.length);
-                  
-                  for (let itemIdx = 0; itemIdx < contest.items.length; itemIdx++) {
-                    const item = contest.items[itemIdx];
-                    console.log(`${sport} - Item ${itemIdx} - entityType:`, item.entityType, '- header:', item.header);
-                    
+                  for (let item of contest.items) {
                     if (item.posts && Array.isArray(item.posts)) {
-                      console.log(`${sport} - Item ${itemIdx} - Number of posts:`, item.posts.length);
-                      
-                      for (let postIdx = 0; postIdx < item.posts.length; postIdx++) {
-                        const post = item.posts[postIdx];
+                      for (let post of item.posts) {
                         const displayText = post.display ? post.display.toLowerCase().trim() : '';
-                        console.log(`${sport} - Post ${postIdx} - display:`, post.display, '- postId:', post.postId);
                         
                         if (displayText === 'dog of the day') {
                           console.log(`✅ Found DOTD for ${sport}! Post ID:`, post.postId);
@@ -695,16 +692,8 @@ BAL +113
                             const postResponse = await axios.get(postUrl);
                             const postData = postResponse.data;
                             
-                            console.log(`${sport} - Post data has content:`, !!postData.content);
-                            console.log(`${sport} - Post data has nodes:`, !!postData.content?.nodes);
-                            
                             if (postData.content && postData.content.nodes && Array.isArray(postData.content.nodes)) {
-                              console.log(`${sport} - Number of nodes:`, postData.content.nodes.length);
-                              
-                              for (let nodeIdx = 0; nodeIdx < postData.content.nodes.length; nodeIdx++) {
-                                const node = postData.content.nodes[nodeIdx];
-                                console.log(`${sport} - Node ${nodeIdx} type:`, node.type, '- has pollId:', !!node.pollId);
-                                
+                              for (let node of postData.content.nodes) {
                                 if (node.type === 'Poll' && node.pollId) {
                                   console.log(`✅ Found poll ID ${node.pollId} for ${sport}!`);
                                   return {
