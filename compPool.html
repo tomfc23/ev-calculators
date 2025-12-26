@@ -179,21 +179,35 @@
     margin-bottom: 1rem;
   }
 
-  .decided-checkbox {
+  .control-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .control-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 1rem;
   }
 
-  .decided-checkbox:last-child {
-    margin-bottom: 0;
-  }
-
-  .decided-checkbox input[type="checkbox"] {
+  .control-item input[type="checkbox"] {
     width: 18px;
     height: 18px;
     accent-color: #ffa500;
+  }
+
+  .control-item label {
+    font-size: 0.9rem;
+    color: lightgray;
+  }
+
+  .control-item select {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    font-size: 0.9rem;
   }
 
   .winner-selection {
@@ -315,6 +329,17 @@
     border: 2px solid #555;
   }
 
+  .entry-fee-display {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    border-radius: 25px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #6f42c1;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffa500;
+  }
+
   .table-container {
     background-color: #333;
     padding: 1rem;
@@ -354,46 +379,6 @@
     font-size: 0.75rem;
     color: #aaa;
     margin-top: 0.5rem;
-  }
-
-  .controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .control-group {
-    background-color: #333;
-    border: 2px solid #555;
-    border-radius: 25px;
-    padding: 1rem;
-  }
-
-  .control-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #ffffff;
-    font-size: 0.9rem;
-  }
-
-  .control-group input[type="number"] {
-    width: 80px;
-    padding: 0.4rem;
-    background-color: #333;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: lightgray;
-    font-size: 0.9rem;
-  }
-
-  .control-group input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #6f42c1;
   }
 
   .copy-btn {
@@ -486,26 +471,21 @@
           <option value="4">4 Games</option>
         </select>
       </div>
-      
-      <div class="game-selector">
-        <label class="form-label">Entry Fee <span class="tooltip">❓<span class="tooltiptext">The cost to enter the pool. This is strictly for CFB pools as you cannot 0 on non-top25 games, adding 10 karma to the entry fee for each of these games</span></span></label>
-        <select class="form-select" id="entry-fee-select">
-          <option value="100">100 karma</option>
-          <option value="110">110 karma</option>
-          <option value="120">120 karma</option>
-          <option value="130">130 karma</option>
-          <option value="140">140 karma</option>
-        </select>
-      </div>
+    </div>
+
+    <div class="entry-fee-display" id="entry-fee-display">
+      Entry Fee: 100 karma
     </div>
 
     <div class="instructions" id="instructions-container">
       <h2 class="section-title">Instructions</h2>
-      <p>1. Select number of games and entry fee.</p>
-      <p>2. Enter odds (American format) and selection percentages for each game.</p>
-      <p>3. Enter "Real App Odds" to calculate individual game EVs (optional).</p>
-      <p>4. Mark games as "Decided" to set actual winners and see updated EVs.</p>
-      <p>5. Click "Calculate" to see combined expected values (Pool EV + Individual Game EVs).</p>
+      <p>1. Select number of games.</p>
+      <p>2. For each game, select max bet (100 or 200) and check "10 min bet" for CFB non-top25 games.</p>
+      <p>3. Entry fee is calculated automatically based on your selections.</p>
+      <p>4. Enter odds (American format) and selection percentages for each game.</p>
+      <p>5. Enter "Real App Odds" to calculate individual game EVs (optional).</p>
+      <p>6. Mark games as "Decided" to set actual winners and see updated EVs.</p>
+      <p>7. Click "Calculate" to see combined expected values (Pool EV + Individual Game EVs).</p>
       <p>🚨Please note that this is still new so there could still be bugs/miscalculations. Please check combinations before entering. dm @tomfc with any bugs/questions🚨</p>
     </div>
 
@@ -553,6 +533,7 @@
           this.bindEvents();
           this.initializeGames();
           this.renderGames();
+          this.updateEntryFeeDisplay();
           console.log('Calculator initialized successfully');
         } catch (error) {
           console.error('Error initializing calculator:', error);
@@ -568,16 +549,6 @@
           });
         }
 
-        const entryFeeSelect = document.getElementById('entry-fee-select');
-        if (entryFeeSelect) {
-          entryFeeSelect.addEventListener('change', (e) => {
-            this.state.entryFee = parseInt(e.target.value);
-            if (document.getElementById('results-container').style.display !== 'none') {
-              this.calculateAllCombinations();
-            }
-          });
-        }
-
         const calculateBtn = document.getElementById('calculate-btn');
         if (calculateBtn) {
           calculateBtn.addEventListener('click', () => {
@@ -589,6 +560,7 @@
       updateCalculator() {
         this.initializeGames();
         this.renderGames();
+        this.updateEntryFeeDisplay();
         document.getElementById('results-container').style.display = 'none';
       }
 
@@ -616,7 +588,8 @@
             decided: false,
             team1Winner: false,
             team2Winner: false,
-            is10MinBet: false
+            is10MinBet: false,
+            maxBet: 100
           });
         }
 
@@ -632,6 +605,25 @@
         }
         
         console.log('Games initialized:', this.state.games);
+      }
+
+      calculateEntryFee() {
+        let baseFee = 100;
+        this.state.games.forEach(game => {
+          if (game.is10MinBet) {
+            baseFee += 10;
+          }
+        });
+        return baseFee;
+      }
+
+      updateEntryFeeDisplay() {
+        const entryFee = this.calculateEntryFee();
+        const display = document.getElementById('entry-fee-display');
+        if (display) {
+          display.textContent = `Entry Fee: ${entryFee} karma`;
+        }
+        this.state.entryFee = entryFee;
       }
 
       renderGames() {
@@ -655,13 +647,24 @@
             <h3 class="section-title">Game ${game.id}</h3>
             
             <div class="decided-control">
-              <div class="decided-checkbox">
-                <input type="checkbox" id="game-${game.id}-10min" ${game.is10MinBet ? 'checked' : ''}>
-                <label for="game-${game.id}-10min">10 min bet</label>
+              <div class="control-row">
+                <div class="control-item">
+                  <input type="checkbox" id="game-${game.id}-10min" ${game.is10MinBet ? 'checked' : ''}>
+                  <label for="game-${game.id}-10min">10 min bet</label>
+                </div>
+                <div class="control-item">
+                  <label for="game-${game.id}-maxbet">Max Bet:</label>
+                  <select id="game-${game.id}-maxbet" class="form-select">
+                    <option value="100" ${game.maxBet === 100 ? 'selected' : ''}>100</option>
+                    <option value="200" ${game.maxBet === 200 ? 'selected' : ''}>200</option>
+                  </select>
+                </div>
               </div>
-              <div class="decided-checkbox">
-                <input type="checkbox" id="game-${game.id}-decided" ${game.decided ? 'checked' : ''}>
-                <label for="game-${game.id}-decided">Game Decided</label>
+              <div class="control-row">
+                <div class="control-item">
+                  <input type="checkbox" id="game-${game.id}-decided" ${game.decided ? 'checked' : ''}>
+                  <label for="game-${game.id}-decided">Game Decided</label>
+                </div>
               </div>
               <div class="winner-selection ${game.decided ? 'show' : ''}" id="game-${game.id}-winner-selection">
                 <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #ccc;">Select Winner(s):</div>
@@ -741,6 +744,11 @@
           minBetCheckbox.addEventListener('change', () => this.toggle10MinBet(gameId));
         }
 
+        const maxBetSelect = document.getElementById(`game-${gameId}-maxbet`);
+        if (maxBetSelect) {
+          maxBetSelect.addEventListener('change', () => this.updateMaxBet(gameId));
+        }
+
         const decidedCheckbox = document.getElementById(`game-${gameId}-decided`);
         if (decidedCheckbox) {
           decidedCheckbox.addEventListener('change', () => this.toggleGameDecided(gameId));
@@ -759,22 +767,21 @@
         const minBetCheckbox = document.getElementById(`game-${gameId}-10min`);
         
         game.is10MinBet = minBetCheckbox.checked;
-        this.updateEntryFeeDropdown();
+        this.updateEntryFeeDisplay();
+        
+        if (document.getElementById('results-container').style.display !== 'none') {
+          this.calculateAllCombinations();
+        }
       }
 
-      updateEntryFeeDropdown() {
-        const count10MinBets = this.state.games.filter(g => g.is10MinBet).length;
-        const newEntryFee = 100 + (count10MinBets * 10);
+      updateMaxBet(gameId) {
+        const game = this.state.games.find(g => g.id === gameId);
+        const maxBetSelect = document.getElementById(`game-${gameId}-maxbet`);
         
-        const entryFeeSelect = document.getElementById('entry-fee-select');
-        if (entryFeeSelect) {
-          entryFeeSelect.value = newEntryFee;
-          this.state.entryFee = newEntryFee;
-          
-          // Recalculate if results are visible
-          if (document.getElementById('results-container').style.display !== 'none') {
-            this.calculateAllCombinations();
-          }
+        game.maxBet = parseInt(maxBetSelect.value);
+        
+        if (document.getElementById('results-container').style.display !== 'none') {
+          this.calculateAllCombinations();
         }
       }
 
@@ -879,22 +886,27 @@
         }
       }
 
-      calculateIndividualEV(realOdds, noVigProb, wager) {
+      calculateIndividualEV(realOdds, noVigProb, wager, maxBet) {
         if (!realOdds || realOdds === 0) return 0;
         
         let payout;
         if (wager === 0) {
-          // For 0 wager, use fixed 10 payout
+          // For 0 wager, always use 10 for payout calculation
           payout = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
         } else if (wager === 10) {
-          // For 10 wager, calculate with 10 risk
+          // For 10 wager, payout is based on 10
           payout = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
+        } else if (wager === 50 && maxBet === 200) {
+          // For 50 wager with maxBet 200, payout is 5
+          payout = realOdds > 0 
+            ? Math.round(50 / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * 50);
         } else {
-          // For 100 wager, calculate normally
+          // For maxBet wager (100 or 200), calculate normally
           payout = realOdds > 0 
             ? Math.round(wager / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * wager);
@@ -917,26 +929,52 @@
           return { wager: 0, ev: 0, label: '0' };
         }
 
-        // If 10 min bet, compare 10 vs 100
-        if (game.is10MinBet) {
-          const ev10 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 10);
-          const ev100 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 100);
-          
-          if (ev100 > ev10) {
-            return { wager: 100, ev: ev100, label: '100' };
-          } else {
-            return { wager: 10, ev: ev10, label: '10' };
-          }
-        }
-
-        // Otherwise compare 0 vs 100
-        const ev0 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 0);
-        const ev100 = this.calculateIndividualEV(realOdds, teamData.noVigProbability, 100);
+        // Calculate all possible EVs
+        const lowWager = game.is10MinBet ? 10 : 0;
+        const evLow = this.calculateIndividualEV(realOdds, teamData.noVigProbability, lowWager, game.maxBet);
+        const evMax = this.calculateIndividualEV(realOdds, teamData.noVigProbability, game.maxBet, game.maxBet);
         
-        if (ev100 > ev0) {
-          return { wager: 100, ev: ev100, label: '100' };
+        // Calculate payouts for logging
+        let payoutLow, payoutMax;
+        if (lowWager === 0) {
+          // 0 wager always pays 10
+          payoutLow = realOdds > 0 
+            ? Math.round(10 / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * 10);
         } else {
-          return { wager: 0, ev: ev0, label: '0' };
+          // 10 wager pays 10
+          payoutLow = realOdds > 0 
+            ? Math.round(10 / 100 * realOdds)
+            : Math.round(100 / Math.abs(realOdds) * 10);
+        }
+        
+        payoutMax = realOdds > 0 
+          ? Math.round(game.maxBet / 100 * realOdds)
+          : Math.round(100 / Math.abs(realOdds) * game.maxBet);
+
+        console.log(`Game ${gameId} ${team.toUpperCase()} (${game[team].name}):`, {
+          realOdds,
+          noVigProb: (teamData.noVigProbability * 100).toFixed(2) + '%',
+          maxBet: game.maxBet,
+          is10MinBet: game.is10MinBet,
+          scenarios: {
+            [`${lowWager} wager`]: {
+              payout: payoutLow,
+              ev: evLow.toFixed(2)
+            },
+            [`${game.maxBet} wager`]: {
+              payout: payoutMax,
+              ev: evMax.toFixed(2)
+            }
+          },
+          bestChoice: evMax > evLow ? `${game.maxBet} wager` : `${lowWager} wager`
+        });
+
+        // Return the best wager
+        if (evMax > evLow) {
+          return { wager: game.maxBet, ev: evMax, label: game.maxBet.toString() };
+        } else {
+          return { wager: lowWager, ev: evLow, label: lowWager.toString() };
         }
       }
 
@@ -952,10 +990,7 @@
       calculateAllCombinations() {
         console.log('Calculating combinations...');
         
-        const entryFeeSelect = document.getElementById('entry-fee-select');
-        if (entryFeeSelect) {
-          this.state.entryFee = parseInt(entryFeeSelect.value);
-        }
+        this.updateEntryFeeDisplay();
         
         this.state.games.forEach(game => {
           const team1OddsInput = document.getElementById(`game-${game.id}-team1-odds`);
@@ -1334,8 +1369,9 @@
         const infoNote = `
           <div class="info-box">
             <p><strong>Win Probabilities:</strong> Based on no-vig odds (bookmaker edge removed). For decided games, actual results are used.</p>
-            <p><strong>Entry Fee:</strong> ${this.state.entryFee} karma (affects Pool EV calculation)</p>
-            <p><strong>Individual Game EVs:</strong> Calculated using Real App Odds. Best wager (0 or 100) is automatically selected per game. For games marked as "10 min bet", the minimum wager is 10 instead of 0.</p>
+            <p><strong>Entry Fee:</strong> ${this.state.entryFee} karma (dynamically calculated based on 10 min bet selections)</p>
+            <p><strong>Max Bet:</strong> Each game can have max bet of 100 or 200. For 0 wager, payout is always 10. For max bet wagers (100 or 200), payout is calculated based on the wager amount.</p>
+            <p><strong>Individual Game EVs:</strong> Calculated using Real App Odds. Best wager (0/maxBet or 10/maxBet) is automatically selected per game.</p>
             <p><strong>Total EV:</strong> Pool EV + sum of all individual game EVs for the selected combination.</p>
             ${this.state.gameCount === 4 ? 
               '<p><strong>4-Game Mode:</strong> Payouts based on tier system - 4/4 correct gets full share, 3/4 correct gets half share.</p>' :
