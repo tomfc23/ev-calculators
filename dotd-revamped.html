@@ -351,7 +351,7 @@
     <div class="poll-id-container" id="availablePollsContainer" style="display: none;">
       <h3>📋 Available Polls</h3>
       <div>
-        <select id="pollIdDropdown" class="sport-select" style="width: 300px; margin-bottom: 10px;">
+        <select id="pollIdDropdown" class="sport-select" style="width: 300px; margin-bottom: 10px;" onchange="onPollSelect()">
           <option value="">Loading polls...</option>
         </select>
         <button onclick="loadSelectedPoll()">Load Selected Poll</button>
@@ -1137,11 +1137,18 @@ BAL +113
         return;
       }
       
-      // Set the poll ID in the manual input field
-      document.getElementById('pollIdInput').value = selectedPollId;
-      
       // Automatically fetch the poll data
       fetchPollData();
+    }
+
+    function onPollSelect() {
+      const dropdown = document.getElementById('pollIdDropdown');
+      const selectedPollId = dropdown.value;
+      
+      if (selectedPollId) {
+        // Set the poll ID in the manual input field
+        document.getElementById('pollIdInput').value = selectedPollId;
+      }
     }
 
     async function fetchPollData() {
