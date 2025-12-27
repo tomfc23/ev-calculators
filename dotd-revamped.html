@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
   <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0d1d97bd987249debf81f71d614fedd3"}'></script>
-  <title>DOTD EV Calc w/ Auto-Fetcher</title>
+  <title>DOTD EV Calc w/ Fetcher</title>
   <style>
     body {
       font-family: sans-serif;
@@ -45,11 +45,6 @@
     }
     button:hover {
       background-color: #5a32a3;
-    }
-    button:disabled {
-      background-color: #444;
-      cursor: not-allowed;
-      opacity: 0.6;
     }
     #clearButton {
       background-color: red;
@@ -106,13 +101,6 @@
     .auto-fix {
       color: #67c3d0;
       background-color: #22303a;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    .success {
-      color: #4ade80;
-      background-color: #1a3a2a;
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 10px;
@@ -206,51 +194,6 @@
       width: 200px;
       margin-right: 10px;
     }
-    .auto-fetch-section {
-      margin: 20px auto;
-      padding: 20px;
-      background-color: #1a1a1a;
-      border-radius: 15px;
-      border: 1px solid #444;
-      max-width: 600px;
-    }
-    .auto-fetch-button {
-      background-color: #059669;
-      color: white;
-      padding: 12px 25px;
-      font-size: 16px;
-      border-radius: 20px;
-      border: none;
-      cursor: pointer;
-      margin: 10px;
-      transition: background-color 0.3s;
-    }
-    .auto-fetch-button:hover {
-      background-color: #047857;
-    }
-    .poll-dropdown {
-      width: 100%;
-      max-width: 400px;
-      padding: 12px;
-      font-size: 16px;
-      background-color: #333;
-      color: lightgray;
-      border: 2px solid #555;
-      border-radius: 15px;
-      margin: 10px auto;
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
     .sport-selection {
       margin: 20px auto;
       padding: 15px;
@@ -325,6 +268,20 @@
     .hidden {
       display: none !important;
     }
+    @media (max-width: 600px) {
+      .header-container { flex-direction: column; gap: 10px; }
+      .home-button { position: static; transform: none; margin-bottom: 10px; }
+      .calculator-actions { margin: 20px auto; text-align: center; }
+      #calculateAllButton {
+        background-color: #6f42c1; color: white; padding: 15px 30px;
+        font-size: 18px; border-radius: 25px; border: none; cursor: pointer; margin: 20px auto; transition: background-color 0.3s;
+      }
+      #calculateAllButton:hover { background-color: #5a32a3; }
+      .summary-group { margin-bottom: 15px; padding: 10px; background-color: #222; border-radius: 10px; }
+      .summary-group h3 { margin-top: 0; color: #a5a1ff; }
+      #clearButton { background-color: red; margin-left: 10px; }
+      .poll-id-input { width: 150px; }
+    }
     .rankings-section {
       border: 1px solid #444;
       padding: 20px;
@@ -359,32 +316,6 @@
       cursor: pointer; margin: 10px; transition: background-color 0.3s;
     }
     #showRankingsButton:hover { background-color: #047857; }
-    .debug-log {
-      background-color: #1a1a2e;
-      color: #a0a0a0;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      font-family: monospace;
-      font-size: 12px;
-      text-align: left;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    @media (max-width: 600px) {
-      .header-container { flex-direction: column; gap: 10px; }
-      .home-button { position: static; transform: none; margin-bottom: 10px; }
-      .calculator-actions { margin: 20px auto; text-align: center; }
-      #calculateAllButton {
-        background-color: #6f42c1; color: white; padding: 15px 30px;
-        font-size: 18px; border-radius: 25px; border: none; cursor: pointer; margin: 20px auto; transition: background-color 0.3s;
-      }
-      #calculateAllButton:hover { background-color: #5a32a3; }
-      .summary-group { margin-bottom: 15px; padding: 10px; background-color: #222; border-radius: 10px; }
-      .summary-group h3 { margin-top: 0; color: #a5a1ff; }
-      #clearButton { background-color: red; margin-left: 10px; }
-      .poll-id-input { width: 150px; }
-    }
   </style>
 </head>
 <body>
@@ -401,8 +332,9 @@
     <button class="tab-button active" onclick="openTab('sorterTab')">Odds Sorter</button>
     <button class="tab-button" onclick="openTab('calculatorTab')">EV Calculator</button>
   </div>
-  <h4>Uses dotd-fetcher made by @editlt</h4>
-
+  <h4>
+   Uses dotd-fetcher made by @editlt
+  </h4>
   <!-- Sport Selection -->
   <div class="sport-selection">
     <h3>Market Selection</h3>
@@ -415,27 +347,21 @@
 
   <!-- Odds Sorter Tab -->
   <div id="sorterTab" class="tab-content active">
-    <!-- Auto Fetch Section -->
-    <div class="auto-fetch-section">
-      <h3>🤖 Auto-Fetch Today's Dog of the Day</h3>
-      <p style="color: #888;">Automatically find and load DOTD polls from all active sports</p>
-      <button class="auto-fetch-button" id="autoFetchButton" onclick="autoFetchPolls()">
-        🔍 Find Today's DOTD Polls
-      </button>
-      <div id="autoFetchStatus"></div>
-      <div id="pollDropdownContainer" style="display: none; margin-top: 15px;">
-        <label for="pollDropdown" style="display: block; margin-bottom: 10px; font-weight: bold;">
-          Select a DOTD Poll:
-        </label>
-        <select id="pollDropdown" class="poll-dropdown">
-          <option value="">-- Select a poll --</option>
+    <!-- Available Polls Dropdown -->
+    <div class="poll-id-container" id="availablePollsContainer" style="display: none;">
+      <h3>📋 Available Polls</h3>
+      <div>
+        <select id="pollIdDropdown" class="sport-select" style="width: 300px; margin-bottom: 10px;">
+          <option value="">Loading polls...</option>
         </select>
-        <br>
-        <button onclick="loadSelectedPoll()" style="margin-top: 10px;">Load Selected Poll</button>
+        <button onclick="loadSelectedPoll()">Load Selected Poll</button>
       </div>
+      <p style="color: #888; font-size: 14px; margin-top: 10px;">
+        Select a poll from the dropdown above or manually enter a Poll ID below
+      </p>
     </div>
 
-    <!-- Manual Poll ID Input Section -->
+    <!-- Poll ID Input Section -->
     <div class="poll-id-container">
       <h3>📊 Manual Poll Data Fetcher</h3>
       <div>
@@ -474,7 +400,7 @@
       </div>
     </div>
 
-    <textarea id="inputData" placeholder="Paste the data below or use the Auto-Fetch/Manual Poll Fetcher above. The format should be like:
+    <textarea id="inputData" placeholder="Paste the data below or use the Poll Data Fetcher above. The format should be like:
 PHI +104
 8% (563)
 BAL +113
@@ -568,21 +494,22 @@ BAL +113
   <script>
     let teamsData = [];
     let selectedSport = 'MLB';
-    let availablePolls = [];
+    let availablePolls = {};
 
     window.addEventListener('DOMContentLoaded', function() {
       generateCalculators();
+      fetchAvailablePolls();
     });
 
     function onSportChange() {
       selectedSport = document.getElementById('sportSelect').value;
       const textarea = document.getElementById('inputData');
       if (selectedSport === 'CFB') {
-        textarea.placeholder = "Paste the data below or use the Auto-Fetch/Manual Poll Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
       } else if (selectedSport === 'COMBINED') {
-        textarea.placeholder = "Paste the data below or use the Auto-Fetch/Manual Poll Fetcher above. The format can be mixed:\nPHI +104\n8% (563)\nUTSA +23.5\n3% (147)\n...";
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format can be mixed:\nPHI +104\n8% (563)\nUTSA +23.5\n3% (147)\n...";
       } else {
-        textarea.placeholder = "Paste the data below or use the Auto-Fetch/Manual Poll Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
       }
       generateCalculators();
     }
@@ -626,145 +553,19 @@ BAL +113
     }
 
     function detectMarketType(teamLine) {
+      // Check if the value contains a decimal point - that indicates spread
       const spreadMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
       if (spreadMatch) {
         const value = spreadMatch[2];
+        // If it contains a decimal point, it's a spread
         if (value.includes('.')) {
           return { type: 'spread', team: spreadMatch[1], value: value };
         }
+        // Otherwise it's moneyline (whole number)
         return { type: 'moneyline', team: spreadMatch[1], value: value };
       }
+      
       return null;
-    }
-
-    function getCurrentDateEST() {
-      const now = new Date();
-      const estOffset = -5 * 60;
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const estDate = new Date(utc + (estOffset * 60000));
-      const year = estDate.getFullYear();
-      const month = String(estDate.getMonth() + 1).padStart(2, '0');
-      const day = String(estDate.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    async function autoFetchPolls() {
-      const button = document.getElementById('autoFetchButton');
-      const statusDiv = document.getElementById('autoFetchStatus');
-      const dropdownContainer = document.getElementById('pollDropdownContainer');
-      
-      button.disabled = true;
-      button.innerHTML = '<span class="loading-spinner"></span> Fetching...';
-      statusDiv.innerHTML = '';
-      dropdownContainer.style.display = 'none';
-      availablePolls = [];
-
-      try {
-        const sports = ['mlb', 'nfl', 'wnba', 'ncaaf', 'nhl', 'nba', 'ncaam'];
-        const currentDate = getCurrentDateEST();
-        
-        statusDiv.innerHTML = `<p style="color: #67c3d0;">Searching ${sports.length} sports for DOTD polls on ${currentDate}...</p>`;
-        
-        const pollPromises = sports.map(async (sport) => {
-          try {
-            const scheduleUrl = `https://schedule.tommyek67.workers.dev/?sport=${sport}&day=${currentDate}`;
-            console.log(`Fetching schedule for ${sport}:`, scheduleUrl);
-            const scheduleResponse = await axios.get(scheduleUrl);
-            const scheduleData = scheduleResponse.data;
-            
-            if (scheduleData && scheduleData.dailyDraftInfo && scheduleData.dailyDraftInfo.contests) {
-              const contests = scheduleData.dailyDraftInfo.contests;
-              
-              for (let contest of contests) {
-                if (contest.items && Array.isArray(contest.items)) {
-                  for (let item of contest.items) {
-                    if (item.posts && Array.isArray(item.posts)) {
-                      for (let post of item.posts) {
-                        const displayText = post.display ? post.display.toLowerCase().trim() : '';
-                        
-                        if (displayText === 'dog of the day') {
-                          console.log(`✅ Found DOTD for ${sport}! Post ID:`, post.postId);
-                          const postId = post.postId;
-                          
-                          try {
-                            const postUrl = `https://dotd.tomfconreal.workers.dev/?url=https://api.real.vg/posts/${postId}`;
-                            console.log(`Fetching post data from:`, postUrl);
-                            const postResponse = await axios.get(postUrl);
-                            const postData = postResponse.data;
-                            
-                            if (postData.content && postData.content.nodes && Array.isArray(postData.content.nodes)) {
-                              for (let node of postData.content.nodes) {
-                                if (node.type === 'Poll' && node.pollId) {
-                                  console.log(`✅ Found poll ID ${node.pollId} for ${sport}!`);
-                                  return {
-                                    sport: sport.toUpperCase(),
-                                    pollId: node.pollId,
-                                    postId: postId
-                                  };
-                                }
-                              }
-                            }
-                          } catch (postErr) {
-                            console.error(`❌ Error fetching post ${postId} for ${sport}:`, postErr.message);
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            console.error(`❌ Error fetching schedule for ${sport}:`, err.message);
-          }
-          return null;
-        });
-
-        const results = await Promise.all(pollPromises);
-        availablePolls = results.filter(r => r !== null);
-
-        if (availablePolls.length === 0) {
-          statusDiv.innerHTML = '<p class="warning">⚠️ No Dog of the Day polls found for today across any sports.</p>';
-          button.disabled = false;
-          button.innerHTML = '🔍 Find Today\'s DOTD Polls';
-          return;
-        }
-
-        const dropdown = document.getElementById('pollDropdown');
-        dropdown.innerHTML = '<option value="">-- Select a poll --</option>';
-        
-        availablePolls.forEach((poll, index) => {
-          const option = document.createElement('option');
-          option.value = index;
-          option.textContent = `${poll.sport} - Poll ID: ${poll.pollId}`;
-          dropdown.appendChild(option);
-        });
-
-        statusDiv.innerHTML = `<p class="success">✅ Found ${availablePolls.length} Dog of the Day poll(s)!</p>`;
-        dropdownContainer.style.display = 'block';
-        
-      } catch (error) {
-        statusDiv.innerHTML = `<p class="error">❌ Error fetching polls: ${error.message}</p>`;
-        console.error('Auto-fetch error:', error);
-      } finally {
-        button.disabled = false;
-        button.innerHTML = '🔍 Find Today\'s DOTD Polls';
-      }
-    }
-
-    async function loadSelectedPoll() {
-      const dropdown = document.getElementById('pollDropdown');
-      const selectedIndex = dropdown.value;
-      
-      if (selectedIndex === '') {
-        alert('Please select a poll from the dropdown');
-        return;
-      }
-
-      const poll = availablePolls[parseInt(selectedIndex)];
-      document.getElementById('pollIdInput').value = poll.pollId;
-      
-      await fetchPollData();
     }
 
     function processData() {
@@ -1294,6 +1095,55 @@ BAL +113
       document.getElementById("rankingsSection").style.display = "none";
     }
 
+    async function fetchAvailablePolls() {
+      try {
+        const response = await axios.get('https://dotd-ids.tomfconreal.workers.dev/');
+        availablePolls = response.data;
+        
+        const dropdown = document.getElementById('pollIdDropdown');
+        const container = document.getElementById('availablePollsContainer');
+        
+        // Clear existing options
+        dropdown.innerHTML = '<option value="">-- Select a Poll --</option>';
+        
+        // Sort sports alphabetically for consistent display
+        const sortedSports = Object.keys(availablePolls).sort();
+        
+        // Add options for each sport
+        sortedSports.forEach(sport => {
+          const pollId = availablePolls[sport];
+          const option = document.createElement('option');
+          option.value = pollId;
+          option.textContent = `${sport.toUpperCase()} - Poll ID: ${pollId}`;
+          dropdown.appendChild(option);
+        });
+        
+        // Show the container
+        container.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error fetching available polls:', error);
+        const dropdown = document.getElementById('pollIdDropdown');
+        dropdown.innerHTML = '<option value="">Error loading polls</option>';
+      }
+    }
+
+    function loadSelectedPoll() {
+      const dropdown = document.getElementById('pollIdDropdown');
+      const selectedPollId = dropdown.value;
+      
+      if (!selectedPollId) {
+        alert('Please select a poll from the dropdown');
+        return;
+      }
+      
+      // Set the poll ID in the manual input field
+      document.getElementById('pollIdInput').value = selectedPollId;
+      
+      // Automatically fetch the poll data
+      fetchPollData();
+    }
+
     async function fetchPollData() {
         try {
             const pollId = document.getElementById('pollIdInput').value.trim();
@@ -1325,10 +1175,12 @@ BAL +113
     function displayPollResults(options) {
         const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
         
+        // Check if this is a mixed market poll
         const hasSpread = options.some(opt => opt.additionalInfo && opt.additionalInfo.spread !== null);
         const hasMoneyline = options.some(opt => opt.odds !== null);
         const isMixed = hasSpread && hasMoneyline;
         
+        // Auto-select Combined mode if mixed markets detected
         if (isMixed && selectedSport !== 'COMBINED') {
             document.getElementById('sportSelect').value = 'COMBINED';
             onSportChange();
@@ -1337,19 +1189,23 @@ BAL +113
         let textOutput = options.map(option => {
             const percentage = Math.round((option.count / totalVotes) * 100);
             
+            // Determine if this option is spread or moneyline
             const isSpread = option.additionalInfo && option.additionalInfo.spread !== null;
             const isMoneyline = option.odds !== null;
             
             if (isSpread) {
+                // For spread options, extract team name and spread
                 const spread = option.additionalInfo.spread;
-                const teamName = option.label.split(' ')[0];
+                const teamName = option.label.split(' ')[0]; // Get team abbreviation
                 const spreadValue = spread >= 0 ? `+${spread}` : `${spread}`;
                 return `${teamName} ${spreadValue}\n${percentage}% (${option.count})`;
             } else if (isMoneyline) {
+                // For moneyline options, format odds properly
                 const oddsValue = option.odds.replace('+', '');
                 const formattedOdds = oddsValue >= 0 ? `+${oddsValue}` : oddsValue;
                 return `${option.label} ${formattedOdds}\n${percentage}% (${option.count})`;
             } else {
+                // Fallback for any other format
                 return `${option.label}\n${percentage}% (${option.count})`;
             }
         }).join('\n');
