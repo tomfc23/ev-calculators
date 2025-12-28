@@ -565,7 +565,12 @@ BAL +113
       const selectElement = document.getElementById('autoFetchSelect');
       
       try {
-        const response = await axios.get('https://dotd-ids.tomfconreal.workers.dev/');
+        const response = await axios.get('https://dotd-ids.tomfconreal.workers.dev/', {
+          headers: {
+            'Accept': 'application/json',
+          },
+          withCredentials: false
+        });
         availablePollIds = response.data;
         
         selectElement.innerHTML = '<option value="">Select a poll...</option>';
