@@ -198,6 +198,27 @@
     background-color: #5a32a3;
   }
 
+  .copy-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+    border: none;
+    padding: 0.6rem 1.5rem;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: auto;
+    margin: 1rem auto 0;
+    display: block;
+  }
+
+  .copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(45deg, #059669, #047857);
+  }
+
   .no-vig-odds {
     display: flex;
     justify-content: space-between;
@@ -426,6 +447,7 @@
                     </tbody>
                 </table>
             </div>
+            <button class="copy-btn" id="copyResultsBtn">Copy Results</button>
         </div>
     </div>
 
@@ -504,6 +526,7 @@ const POOL_CONFIGS = {
 // Current state
 let currentPoolType = 2;
 let games = [];
+let lastCalculatedResults = [];
 
 // Element references
 const poolInfoContainer = document.getElementById('poolInfo');
@@ -516,11 +539,60 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 const loadingText = document.getElementById('loadingText');
 const summaryStats = document.getElementById('summaryStats');
 const comboInfo = document.getElementById('comboInfo');
+const copyResultsBtn = document.getElementById('copyResultsBtn');
 
 // Initialize the application
 function initApp() {
     bindPoolTypeButtons();
     loadPoolType(2);
+    bindCopyButton();
+}
+
+// Bind copy button
+function bindCopyButton() {
+    copyResultsBtn.addEventListener('click', copyResults);
+}
+
+// Copy results to clipboard
+function copyResults() {
+    if (!lastCalculatedResults || lastCalculatedResults.length === 0) {
+        alert("No results to copy.");
+        return;
+    }
+    
+    let text = '';
+    
+    if (currentPoolType === 2) {
+        text = lastCalculatedResults.map(combo => {
+            const comboDisplay = combo.combo.map((teamIndex, gameIndex) => {
+                const teamName = games[gameIndex].teams[teamIndex].name;
+                const wager = combo.wagerInfo && combo.wagerInfo[gameIndex] 
+                    ? combo.wagerInfo[gameIndex].wager 
+                    : 0;
+                return `${teamName}${wager}`;
+            }).join('');
+            return `${comboDisplay} - ${(combo.winProbability * 100).toFixed(2)}% - (${combo.ev.toFixed(2)})`;
+        }).join('\n');
+    } else {
+        text = lastCalculatedResults.map(combo => {
+            const comboDisplay = combo.combo.map((teamIndex, gameIndex) => {
+                const teamName = games[gameIndex].teams[teamIndex].name;
+                const wager = combo.wagerInfo && combo.wagerInfo[gameIndex] 
+                    ? combo.wagerInfo[gameIndex].wager 
+                    : 0;
+                return `${teamName}${wager}`;
+            }).join('');
+            
+            // Calculate 3+ probability
+            let prob3Plus = combo.prob4of4 + combo.prob3of4;
+            
+            return `${comboDisplay} - ${(prob3Plus * 100).toFixed(2)}% - (${combo.ev.toFixed(2)})`;
+        }).join('\n');
+    }
+    
+    navigator.clipboard.writeText(text)
+        .then(() => alert("Results copied to clipboard!"))
+        .catch(err => alert("Copy failed: " + err.message));
 }
 
 // Bind pool type selector buttons
@@ -834,67 +906,8 @@ function handleInputChange(event) {
         updateNoVigOdds(parseInt(game));
     } else if (field === 'selectionPct') {
         games[game].teams[team].selectionPct = parseFloat(value);
-        
-        if (currentPoolType === 2) {
-            validateSelectionPercentages(parseInt(game));
-        }
     } else if (field === 'realOdds') {
         games[game].teams[team].realOdds = parseFloat(value);
-    }
-}
-
-// Validate that selection percentages sum to 100 for a game (2-game pool only)
-function validateSelectionPercentages(gameIndex) {
-    const teams = games[gameIndex].teams;
-    const totalPct = teams.reduce((sum, team) => sum + team.selectionPct, 0);
-    
-    // Adjust if total is not exactly 100
-    if (Math.abs(totalPct - 100) > 0.01) {
-        // Find the last team that was edited
-        const lastEditedTeamIndex = teams.findIndex((team, idx) => {
-            const input = document.getElementById(`pct-${gameIndex}-${idx}`);
-            return input === document.activeElement;
-        });
-        
-        if (lastEditedTeamIndex >= 0) {
-            // Adjust other teams proportionally
-            let remainingPercent = 100 - teams[lastEditedTeamIndex].selectionPct;
-            let currentTotalOthers = 0;
-            
-            teams.forEach((team, idx) => {
-                if (idx !== lastEditedTeamIndex) {
-                    currentTotalOthers += team.selectionPct;
-                }
-            });
-            
-            if (currentTotalOthers > 0) {
-                teams.forEach((team, idx) => {
-                    if (idx !== lastEditedTeamIndex) {
-                        team.selectionPct = (team.selectionPct / currentTotalOthers) * remainingPercent;
-                        
-                        // Update UI
-                        const input = document.getElementById(`pct-${gameIndex}-${idx}`);
-                        input.value = team.selectionPct.toFixed(2);
-                    }
-                });
-            } else {
-                // If all others are 0, distribute evenly
-                const numOtherTeams = teams.length - 1;
-                if (numOtherTeams > 0) {
-                    const evenShare = remainingPercent / numOtherTeams;
-                    
-                    teams.forEach((team, idx) => {
-                        if (idx !== lastEditedTeamIndex) {
-                            team.selectionPct = evenShare;
-                            
-                            // Update UI
-                            const input = document.getElementById(`pct-${gameIndex}-${idx}`);
-                            input.value = team.selectionPct.toFixed(2);
-                        }
-                    });
-                }
-            }
-        }
     }
 }
 
@@ -1188,6 +1201,9 @@ function calculateEV() {
         // Calculate stats for each combination
         const combinationsWithStats = calculateCombinationStats(combinations);
         
+        // Store results for copying
+        lastCalculatedResults = combinationsWithStats;
+        
         // Display results
         displayResults(combinationsWithStats);
         
@@ -1295,7 +1311,6 @@ function calculateCombinationStats2Game(combinations) {
     return combinationsWithStats;
 }
 
-// Calculate stats for 4-game pool
 // Calculate stats for 4-game pool
 function calculateCombinationStats4Game(combinations) {
     const config = POOL_CONFIGS[4];
@@ -1419,7 +1434,6 @@ function calculateCombinationStats4Game(combinations) {
     return combinationsWithStats;
 }
 
-// Calculate payouts for 4-game pool
 // Calculate payouts for 4-game pool
 function calculatePayouts(total4of4Winners, total3of4Winners) {
     // Round to whole numbers for display purposes
@@ -1579,7 +1593,7 @@ function displaySummaryStats(combinationsWithStats) {
             </div>
             <div class="stat-card">
                 <div class="stat-value">${maxGameEV.toFixed(2)}</div>
-                <div class="stat-label">Highest Total ame EV</div>
+                <div class="stat-label">Highest Total Game EV</div>
             </div>
         `;
     }
