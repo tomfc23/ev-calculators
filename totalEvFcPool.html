@@ -134,6 +134,84 @@
     border-radius: 25px;
     padding: 1rem;
     background-color: #333;
+    position: relative;
+  }
+
+  .game-card.decided {
+    background-color: #1a1a1a;
+    border-color: #444;
+  }
+
+  .game-card.decided .game-header h3::after {
+    content: " (DECIDED)";
+    color: #ffa500;
+    font-weight: normal;
+    font-size: 0.9rem;
+  }
+
+  .decided-control {
+    background-color: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .control-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .control-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #ffa500;
+  }
+
+  .control-item label {
+    font-size: 0.9rem;
+    color: lightgray;
+  }
+
+  .winner-selection {
+    display: none;
+    background-color: #333;
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .winner-selection.show {
+    display: block;
+  }
+
+  .winner-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .winner-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: lightgray;
+  }
+
+  /* Radio button styling */
+  .winner-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #10b981;
+    margin: 0; 
   }
 
   .game-header {
@@ -167,6 +245,15 @@
     font-size: 16px;
     width: 100%;
     transition: border-color 0.3s;
+  }
+
+  /* Explicit visual cue for disabled inputs */
+  input:disabled {
+      background-color: #1a1a1a;
+      color: #666;
+      border-color: #333;
+      cursor: not-allowed;
+      opacity: 0.6;
   }
 
   input:focus, select:focus {
@@ -412,15 +499,13 @@
         <div class="card">
             <h2 class="section-title">Pool Settings</h2>
             <div class="pool-info" id="poolInfo">
-                <!-- Pool settings will be populated based on pool type -->
-            </div>
+                </div>
         </div>
         
         <div class="card">
             <h2 class="section-title">Game Inputs</h2>
             <div class="game-inputs" id="gameInputs">
-                <!-- Game input cards will be generated here -->
-            </div>
+                </div>
             <button id="calculateButton">Calculate Expected Values</button>
         </div>
         
@@ -432,19 +517,15 @@
         <div class="card results-section" id="resultsSection">
             <h2 class="section-title">Results</h2>
             <div class="summary-stats" id="summaryStats">
-                <!-- Summary stats will be shown here -->
-            </div>
+                </div>
             <div class="combo-info" id="comboInfo">
-                <!-- Number of combinations info -->
-            </div>
+                </div>
             <div class="table-container">
                 <table id="resultsTable">
                     <thead id="resultsTableHead">
-                        <!-- Table headers will be populated based on pool type -->
-                    </thead>
+                        </thead>
                     <tbody id="resultsBody">
-                        <!-- Results will be populated here -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
             <button class="copy-btn" id="copyResultsBtn">Copy Results</button>
@@ -466,6 +547,8 @@ const POOL_CONFIGS = {
         games: [
             {
                 name: "Game 1",
+                decided: false,
+                winnerIndex: null, // Index of the winner (0, 1, or 2)
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -474,6 +557,8 @@ const POOL_CONFIGS = {
             },
             {
                 name: "Game 2",
+                decided: false,
+                winnerIndex: null,
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -489,6 +574,8 @@ const POOL_CONFIGS = {
         games: [
             {
                 name: "Game 1",
+                decided: false,
+                winnerIndex: null,
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -497,6 +584,8 @@ const POOL_CONFIGS = {
             },
             {
                 name: "Game 2",
+                decided: false,
+                winnerIndex: null,
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -505,6 +594,8 @@ const POOL_CONFIGS = {
             },
             {
                 name: "Game 3",
+                decided: false,
+                winnerIndex: null,
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -513,6 +604,8 @@ const POOL_CONFIGS = {
             },
             {
                 name: "Game 4",
+                decided: false,
+                winnerIndex: null,
                 teams: [
                     { name: "L", odds: "", selectionPct: "", realOdds: "" },
                     { name: "M", odds: "", selectionPct: "", realOdds: "" },
@@ -705,7 +798,7 @@ function renderGameInputs() {
     
     games.forEach((game, gameIndex) => {
         const gameCard = document.createElement('div');
-        gameCard.className = 'game-card';
+        gameCard.className = `game-card ${game.decided ? 'decided' : ''}`;
         
         const gameHeader = document.createElement('div');
         gameHeader.className = 'game-header';
@@ -715,6 +808,70 @@ function renderGameInputs() {
         
         gameHeader.appendChild(gameTitle);
         gameCard.appendChild(gameHeader);
+        
+        // Decided control section
+        const decidedControl = document.createElement('div');
+        decidedControl.className = 'decided-control';
+        
+        const controlRow = document.createElement('div');
+        controlRow.className = 'control-row';
+        
+        const decidedItem = document.createElement('div');
+        decidedItem.className = 'control-item';
+        
+        const decidedCheckbox = document.createElement('input');
+        decidedCheckbox.type = 'checkbox';
+        decidedCheckbox.id = `game-${gameIndex}-decided`;
+        decidedCheckbox.checked = game.decided;
+        
+        const decidedLabel = document.createElement('label');
+        decidedLabel.htmlFor = `game-${gameIndex}-decided`;
+        decidedLabel.textContent = 'Game Decided';
+        
+        decidedItem.appendChild(decidedCheckbox);
+        decidedItem.appendChild(decidedLabel);
+        controlRow.appendChild(decidedItem);
+        decidedControl.appendChild(controlRow);
+        
+        // Winner selection section (Radio Buttons)
+        const winnerSelection = document.createElement('div');
+        winnerSelection.className = `winner-selection ${game.decided ? 'show' : ''}`;
+        winnerSelection.id = `game-${gameIndex}-winner-selection`;
+        
+        const winnerTitle = document.createElement('div');
+        winnerTitle.style.marginBottom = '0.5rem';
+        winnerTitle.style.fontSize = '0.9rem';
+        winnerTitle.style.color = '#ccc';
+        winnerTitle.textContent = 'Select Winner:';
+        winnerSelection.appendChild(winnerTitle);
+        
+        const winnerOptions = document.createElement('div');
+        winnerOptions.className = 'winner-options';
+        
+        game.teams.forEach((team, teamIndex) => {
+            const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
+            
+            const winnerOption = document.createElement('div');
+            winnerOption.className = 'winner-option';
+            
+            const winnerRadio = document.createElement('input');
+            winnerRadio.type = 'radio';
+            winnerRadio.name = `game-${gameIndex}-winner`; // Group radios by game
+            winnerRadio.id = `game-${gameIndex}-team${teamIndex}-winner`;
+            winnerRadio.checked = (game.winnerIndex === teamIndex);
+            
+            const winnerLabel = document.createElement('label');
+            winnerLabel.htmlFor = `game-${gameIndex}-team${teamIndex}-winner`;
+            winnerLabel.textContent = `${position} Wins`;
+            
+            winnerOption.appendChild(winnerRadio);
+            winnerOption.appendChild(winnerLabel);
+            winnerOptions.appendChild(winnerOption);
+        });
+        
+        winnerSelection.appendChild(winnerOptions);
+        decidedControl.appendChild(winnerSelection);
+        gameCard.appendChild(decidedControl);
         
         // Team inputs
         game.teams.forEach((team, teamIndex) => {
@@ -759,6 +916,7 @@ function renderGameInputs() {
             oddsInput.dataset.game = gameIndex;
             oddsInput.dataset.team = teamIndex;
             oddsInput.dataset.field = 'odds';
+            oddsInput.disabled = game.decided; // Disable if decided
             
             oddsRow.appendChild(oddsLabel);
             oddsRow.appendChild(oddsInput);
@@ -781,6 +939,7 @@ function renderGameInputs() {
             realOddsInput.dataset.game = gameIndex;
             realOddsInput.dataset.team = teamIndex;
             realOddsInput.dataset.field = 'realOdds';
+            realOddsInput.disabled = game.decided; // Disable if decided
             
             realOddsRow.appendChild(realOddsLabel);
             realOddsRow.appendChild(realOddsInput);
@@ -804,6 +963,7 @@ function renderGameInputs() {
             pctInput.dataset.game = gameIndex;
             pctInput.dataset.team = teamIndex;
             pctInput.dataset.field = 'selectionPct';
+            // Note: Selection Pct is NOT disabled when game is decided
             
             pctRow.appendChild(pctLabel);
             pctRow.appendChild(pctInput);
@@ -869,10 +1029,123 @@ function renderGameInputs() {
         
         gameCard.appendChild(gameEvDisplaySection);
         gameInputsContainer.appendChild(gameCard);
+        
+        // Attach event listeners for decided checkbox and winner radios
+        attachGameEventListeners(gameIndex);
     });
     
     // Update initial no-vig odds
     updateAllNoVigOdds();
+}
+
+// Attach event listeners for game controls
+function attachGameEventListeners(gameIndex) {
+    const decidedCheckbox = document.getElementById(`game-${gameIndex}-decided`);
+    if (decidedCheckbox) {
+        decidedCheckbox.addEventListener('change', () => toggleGameDecided(gameIndex));
+    }
+    
+    games[gameIndex].teams.forEach((team, teamIndex) => {
+        const winnerRadio = document.getElementById(`game-${gameIndex}-team${teamIndex}-winner`);
+        if (winnerRadio) {
+            winnerRadio.addEventListener('change', () => updateWinnerSelection(gameIndex, teamIndex));
+        }
+    });
+}
+
+// Toggle game decided state
+function toggleGameDecided(gameIndex) {
+    const game = games[gameIndex];
+    const decidedCheckbox = document.getElementById(`game-${gameIndex}-decided`);
+    const winnerSelection = document.getElementById(`game-${gameIndex}-winner-selection`);
+    const gameCard = decidedCheckbox.closest('.game-card');
+    
+    game.decided = decidedCheckbox.checked;
+    
+    if (game.decided) {
+        winnerSelection.classList.add('show');
+        gameCard.classList.add('decided');
+        toggleGameInputs(gameIndex, true); // Disable inputs
+    } else {
+        winnerSelection.classList.remove('show');
+        gameCard.classList.remove('decided');
+        toggleGameInputs(gameIndex, false); // Enable inputs
+        
+        // Reset winner
+        game.winnerIndex = null;
+        game.teams.forEach((team, teamIndex) => {
+            const radio = document.getElementById(`game-${gameIndex}-team${teamIndex}-winner`);
+            if (radio) radio.checked = false;
+        });
+        
+        // Re-calculate normal odds
+        updateNoVigOdds(gameIndex);
+    }
+}
+
+// Toggle game inputs enabled/disabled
+// Disables both Odds and Real Odds
+function toggleGameInputs(gameIndex, disabled) {
+    const oddsInputs = games[gameIndex].teams.map((team, teamIndex) => 
+        document.getElementById(`odds-${gameIndex}-${teamIndex}`)
+    );
+    
+    const realOddsInputs = games[gameIndex].teams.map((team, teamIndex) =>
+        document.getElementById(`realodds-${gameIndex}-${teamIndex}`)
+    );
+    
+    [...oddsInputs, ...realOddsInputs].forEach(input => {
+        if (input) input.disabled = disabled;
+    });
+}
+
+// Update winner selection
+function updateWinnerSelection(gameIndex, teamIndex) {
+    const game = games[gameIndex];
+    const winnerRadio = document.getElementById(`game-${gameIndex}-team${teamIndex}-winner`);
+    
+    if (winnerRadio.checked) {
+        game.winnerIndex = teamIndex;
+        updateGameProbabilities(gameIndex);
+    }
+}
+
+// Update game probabilities based on decided state
+function updateGameProbabilities(gameIndex) {
+    const game = games[gameIndex];
+    
+    if (game.decided) {
+        if (game.winnerIndex !== null) {
+            // Set the winner to 100%, others to 0%
+            game.teams.forEach((team, idx) => {
+                team.noVigProb = (idx === game.winnerIndex) ? 1.0 : 0.0;
+            });
+            
+            // Update UI Text
+            game.teams.forEach((team, idx) => {
+                const noVigElement = document.getElementById(`no-vig-value-${gameIndex}-${idx}`);
+                if (noVigElement) {
+                    if (idx === game.winnerIndex) {
+                        noVigElement.textContent = 'WON';
+                        noVigElement.style.color = '#4CAF50';
+                    } else {
+                        noVigElement.textContent = 'LOST';
+                        noVigElement.style.color = '#ef4444';
+                    }
+                }
+            });
+            
+            // Trigger EV update (to show disabled state)
+            calculateAndDisplayGameEVs(gameIndex);
+        } else {
+            // Decided, but no winner selected yet.
+            // Reset probabilities to avoid stale data, but do NOT call updateNoVigOdds to avoid loop
+            game.teams.forEach(team => team.noVigProb = 0);
+        }
+    } else {
+        // Not decided - calculate normal no-vig odds
+        updateNoVigOdds(gameIndex);
+    }
 }
 
 // Bind event listeners
@@ -903,7 +1176,9 @@ function handleInputChange(event) {
         games[game].teams[team].name = value;
     } else if (field === 'odds') {
         games[game].teams[team].odds = parseFloat(value);
-        updateNoVigOdds(parseInt(game));
+        if (!games[game].decided) {
+             updateNoVigOdds(parseInt(game));
+        }
     } else if (field === 'selectionPct') {
         games[game].teams[team].selectionPct = parseFloat(value);
     } else if (field === 'realOdds') {
@@ -913,7 +1188,16 @@ function handleInputChange(event) {
 
 // Update no-vig odds for a specific game
 function updateNoVigOdds(gameIndex) {
-    const teams = games[gameIndex].teams;
+    const game = games[gameIndex];
+    
+    // If decided, we delegate to updateGameProbabilities to handle the 100% logic
+    // We return immediately to avoid overwriting with odds calculations
+    if(game.decided) {
+        updateGameProbabilities(gameIndex);
+        return;
+    }
+    
+    const teams = game.teams;
     
     // Convert American odds to probabilities
     const probabilities = teams.map(team => oddsToImpliedProbability(team.odds));
@@ -927,14 +1211,18 @@ function updateNoVigOdds(gameIndex) {
     // Convert back to American odds
     const noVigOdds = noVigProbs.map(prob => impliedProbabilityToOdds(prob));
     
-    // Update UI
+    // Update UI and Data
     teams.forEach((team, i) => {
         const noVigElement = document.getElementById(`no-vig-value-${gameIndex}-${i}`);
         noVigElement.textContent = formatOdds(noVigOdds[i]);
+        noVigElement.style.color = '#10b981'; // Reset color just in case
         
         // Store no-vig probability in team data for later use
         team.noVigProb = noVigProbs[i];
     });
+    
+    // Update the visual EV calc
+    calculateAndDisplayGameEVs(gameIndex);
 }
 
 // Update no-vig odds for all games
@@ -946,6 +1234,7 @@ function updateAllNoVigOdds() {
 
 // Convert American odds to implied probability
 function oddsToImpliedProbability(odds) {
+    if (!odds) return 0.33; // default if empty
     if (odds > 0) {
         return 100 / (odds + 100);
     } else {
@@ -991,46 +1280,6 @@ function calculatePayout(realOdds, wager) {
     return Math.round(winnings);
 }
 
-// Calculate game EV for a specific team in a game
-function calculateGameEV(gameIndex, teamIndex) {
-    const team = games[gameIndex].teams[teamIndex];
-    
-    // If real odds are missing, return 0
-    if (!team.realOdds) {
-        return 0;
-    }
-    
-    const realOdds = parseFloat(team.realOdds);
-    
-    // Use the pool's no-vig probability (already calculated from pool odds)
-    const noVigProb = team.noVigProb;
-    
-    if (!noVigProb || noVigProb <= 0) {
-        return 0;
-    }
-    
-    // Calculate probability of losing (sum of other teams' probabilities)
-    const teams = games[gameIndex].teams;
-    let noVigProbLose = 0;
-    teams.forEach((t, idx) => {
-        if (idx !== teamIndex) {
-            noVigProbLose += t.noVigProb;
-        }
-    });
-    
-    // Calculate winnings for both wager scenarios using REAL odds
-    const winningsWager0 = calculatePayout(realOdds, 0);
-    const winningsWager100 = calculatePayout(realOdds, MAX_BET);
-    
-    // Calculate EVs using the same formula as the 3-way calculator
-    // EV = (winnings * probWin) - (wager * probLose)
-    const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
-    const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
-    
-    // Return the better EV (this is what gets added to total game EV)
-    return Math.max(evWager0, evWager100);
-}
-
 // Calculate and display individual game EVs
 function calculateAndDisplayGameEVs(gameIndex) {
     const game = games[gameIndex];
@@ -1038,31 +1287,27 @@ function calculateAndDisplayGameEVs(gameIndex) {
     
     if (!resultsContainer) return;
     
+    // Check if game is decided - if so, show message
+    if (game.decided) {
+        resultsContainer.innerHTML = '<div style="color: #ffa500; font-style: italic;">Game decided - No betting value</div>';
+        return;
+    }
+    
     let html = '';
     let maxEV = -Infinity;
-    let evValues = [];
     
+    // Check if we have probabilities
+    const hasProbabilities = game.teams.some(t => t.noVigProb > 0);
+    
+    // Calculate first pass to find maxEV
     game.teams.forEach((team, teamIndex) => {
-        const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
-        
-        if (!team.realOdds) {
-            return;
-        }
+        if (!team.realOdds || !hasProbabilities) return;
         
         const realOdds = parseFloat(team.realOdds);
-        const noVigProb = team.noVigProb;
+        const noVigProb = team.noVigProb || 0;
         
-        if (!noVigProb || noVigProb <= 0) {
-            return;
-        }
-        
-        // Calculate probability of losing
-        let noVigProbLose = 0;
-        game.teams.forEach((t, idx) => {
-            if (idx !== teamIndex) {
-                noVigProbLose += t.noVigProb;
-            }
-        });
+        // Probability of losing
+        const noVigProbLose = 1 - noVigProb;
         
         // Calculate winnings and EVs
         const winningsWager0 = calculatePayout(realOdds, 0);
@@ -1071,36 +1316,22 @@ function calculateAndDisplayGameEVs(gameIndex) {
         const evWager0 = roundToTwoDecimals((winningsWager0 * noVigProb) - (0 * noVigProbLose));
         const evWager100 = roundToTwoDecimals((winningsWager100 * noVigProb) - (MAX_BET * noVigProbLose));
         
-        evValues.push({ name: `${position} (Wager 0)`, value: evWager0 });
-        evValues.push({ name: `${position} (Max Bet)`, value: evWager100 });
-        
         maxEV = Math.max(maxEV, evWager0, evWager100);
     });
     
-    // Now generate HTML with highlighting
+    // Now generate HTML
     game.teams.forEach((team, teamIndex) => {
         const position = teamIndex === 0 ? 'Left' : teamIndex === 1 ? 'Middle' : 'Right';
         
-        if (!team.realOdds) {
-            return;
-        }
+        if (!team.realOdds) return;
         
         const realOdds = parseFloat(team.realOdds);
-        const noVigProb = team.noVigProb;
+        const noVigProb = team.noVigProb || 0;
         
-        if (!noVigProb || noVigProb <= 0) {
-            return;
-        }
+        if (!hasProbabilities) return;
         
-        // Calculate probability of losing
-        let noVigProbLose = 0;
-        game.teams.forEach((t, idx) => {
-            if (idx !== teamIndex) {
-                noVigProbLose += t.noVigProb;
-            }
-        });
+        const noVigProbLose = 1 - noVigProb;
         
-        // Calculate winnings and EVs
         const winningsWager0 = calculatePayout(realOdds, 0);
         const winningsWager100 = calculatePayout(realOdds, MAX_BET);
         
@@ -1138,6 +1369,12 @@ function calculateTotalGameEV(combo) {
     let wagerInfo = [];
     
     combo.forEach((teamIndex, gameIndex) => {
+        // Skip game EV calculation if game is decided
+        if (games[gameIndex].decided) {
+            wagerInfo.push({ wager: 0, ev: 0 });
+            return;
+        }
+
         const team = games[gameIndex].teams[teamIndex];
         
         if (!team.realOdds) {
@@ -1146,20 +1383,9 @@ function calculateTotalGameEV(combo) {
         }
         
         const realOdds = parseFloat(team.realOdds);
-        const noVigProb = team.noVigProb;
+        const noVigProb = team.noVigProb || 0;
         
-        if (!noVigProb || noVigProb <= 0) {
-            wagerInfo.push({ wager: 0, ev: 0 });
-            return;
-        }
-        
-        // Calculate probability of losing
-        let noVigProbLose = 0;
-        games[gameIndex].teams.forEach((t, idx) => {
-            if (idx !== teamIndex) {
-                noVigProbLose += t.noVigProb;
-            }
-        });
+        const noVigProbLose = 1 - noVigProb;
         
         // Calculate EVs for both wagers
         const winningsWager0 = calculatePayout(realOdds, 0);
@@ -1185,13 +1411,8 @@ function calculateEV() {
     loadingIndicator.style.display = 'block';
     resultsSection.style.display = 'none';
     
-    // Update all no-vig odds
+    // Update all no-vig odds (force check of decided games)
     updateAllNoVigOdds();
-    
-    // Calculate and display individual game EVs
-    for (let i = 0; i < games.length; i++) {
-        calculateAndDisplayGameEVs(i);
-    }
     
     // Use setTimeout to allow UI to update before calculations
     setTimeout(() => {
@@ -1256,12 +1477,13 @@ function calculateCombinationStats2Game(combinations) {
     const combinationsWithStats = combinations.map(combo => {
         // Calculate win probability (product of no-vig probabilities)
         const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
-            return prob * games[gameIndex].teams[teamIndex].noVigProb;
+            const teamProb = games[gameIndex].teams[teamIndex].noVigProb;
+            return prob * (typeof teamProb === 'number' ? teamProb : 0);
         }, 1);
         
         // Calculate how many people selected this combo
         const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
-            const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
+            const selectionPct = (games[gameIndex].teams[teamIndex].selectionPct || 0) / 100;
             return count * selectionPct;
         }, TOTAL_ENTRANTS);
         
@@ -1319,12 +1541,13 @@ function calculateCombinationStats4Game(combinations) {
     const combinationsWithStats = combinations.map(combo => {
         // Calculate win probability (product of no-vig probabilities)
         const winProbability = combo.reduce((prob, teamIndex, gameIndex) => {
-            return prob * games[gameIndex].teams[teamIndex].noVigProb;
+            const teamProb = games[gameIndex].teams[teamIndex].noVigProb;
+            return prob * (typeof teamProb === 'number' ? teamProb : 0);
         }, 1);
         
         // Calculate how many people selected this combo
         const numSelections = combo.reduce((count, teamIndex, gameIndex) => {
-            const selectionPct = games[gameIndex].teams[teamIndex].selectionPct / 100;
+            const selectionPct = (games[gameIndex].teams[teamIndex].selectionPct || 0) / 100;
             return count * selectionPct;
         }, TOTAL_ENTRANTS);
         
@@ -1342,13 +1565,13 @@ function calculateCombinationStats4Game(combinations) {
         
         for (let incorrectGame = 0; incorrectGame < config.numGames; incorrectGame++) {
             // Probability that this game is wrong
-            const wrongGameProb = 1 - games[incorrectGame].teams[comboStat.combo[incorrectGame]].noVigProb;
+            const wrongGameProb = 1 - (games[incorrectGame].teams[comboStat.combo[incorrectGame]].noVigProb || 0);
             
             // Probability that all other games are correct
             let otherGamesCorrectProb = 1;
             for (let g = 0; g < config.numGames; g++) {
                 if (g !== incorrectGame) {
-                    otherGamesCorrectProb *= games[g].teams[comboStat.combo[g]].noVigProb;
+                    otherGamesCorrectProb *= (games[g].teams[comboStat.combo[g]].noVigProb || 0);
                 }
             }
             
@@ -1367,7 +1590,6 @@ function calculateCombinationStats4Game(combinations) {
         let num4of4Winners = comboStat.numSelections;
         
         // Calculate how many people would have 3/4 if this combo wins
-        // This means counting all people who match exactly 3 out of 4 picks (xRRR pattern)
         let num3of4Winners = 0;
         
         // For each game that could be the "wrong" one
@@ -1378,11 +1600,11 @@ function calculateCombinationStats4Game(combinations) {
             for (let g = 0; g < config.numGames; g++) {
                 if (g === wrongGame) {
                     // For the wrong game, they must pick one of the OTHER 2 options
-                    const correctTeamPct = games[g].teams[comboStat.combo[g]].selectionPct / 100;
+                    const correctTeamPct = (games[g].teams[comboStat.combo[g]].selectionPct || 0) / 100;
                     countForThisPattern *= (1 - correctTeamPct);
                 } else {
                     // For the correct games, they must match this combo's pick
-                    const selectionPct = games[g].teams[comboStat.combo[g]].selectionPct / 100;
+                    const selectionPct = (games[g].teams[comboStat.combo[g]].selectionPct || 0) / 100;
                     countForThisPattern *= selectionPct;
                 }
             }
@@ -1654,8 +1876,9 @@ function handleTableSort(event) {
                 }[sortField];
             }
             
-            valA = parseFloat(rowA.cells[colIndex].textContent);
-            valB = parseFloat(rowB.cells[colIndex].textContent);
+            // Handle percentage or non-numeric characters
+            valA = parseFloat(rowA.cells[colIndex].textContent.replace('%', ''));
+            valB = parseFloat(rowB.cells[colIndex].textContent.replace('%', ''));
             
             return newDirection === 'asc' ? valA - valB : valB - valA;
         }
