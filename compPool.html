@@ -509,7 +509,7 @@
     <h1 class="heading">Pool EV Calculator</h1>
     
     <div class="autofill-section">
-      <h2 class="section-title">Auto-fill from Pool</h2>
+      <h2 class="section-title">🎯 Auto-fill from Pool</h2>
       <div class="autofill-grid">
         <div class="form-control">
           <label class="form-label">Select Pool</label>
@@ -707,13 +707,21 @@
           const awayTeam = pollData[0];
           const homeTeam = pollData[1];
 
-          game.team1.odds = awayTeam.odds || -110;
-          game.team1.selectionPercentage = awayTeam.votes_percent || 50;
-          game.team1.realOdds = awayTeam.odds || null;
+          // Parse odds, handling string format like "+130"
+          const parseOdds = (odds) => {
+            if (typeof odds === 'string') {
+              return parseInt(odds.replace('+', ''));
+            }
+            return odds || -110;
+          };
 
-          game.team2.odds = homeTeam.odds || -110;
+          game.team1.odds = parseOdds(awayTeam.odds);
+          game.team1.selectionPercentage = awayTeam.votes_percent || 50;
+          game.team1.realOdds = parseOdds(awayTeam.odds);
+
+          game.team2.odds = parseOdds(homeTeam.odds);
           game.team2.selectionPercentage = homeTeam.votes_percent || 50;
-          game.team2.realOdds = homeTeam.odds || null;
+          game.team2.realOdds = parseOdds(homeTeam.odds);
 
           game.maxBet = awayTeam.max_wager || 100;
         }
@@ -733,13 +741,21 @@
           const team2RealInput = document.getElementById(`game-${i}-team2-real`);
           const maxBetSelect = document.getElementById(`game-${i}-maxbet`);
 
-          if (team1OddsInput) team1OddsInput.value = pollData[0].odds || -110;
+          // Parse odds helper function
+          const parseOdds = (odds) => {
+            if (typeof odds === 'string') {
+              return parseInt(odds.replace('+', ''));
+            }
+            return odds || -110;
+          };
+
+          if (team1OddsInput) team1OddsInput.value = parseOdds(pollData[0].odds);
           if (team1SelectionInput) team1SelectionInput.value = pollData[0].votes_percent || 50;
-          if (team1RealInput) team1RealInput.value = pollData[0].odds || '';
+          if (team1RealInput) team1RealInput.value = parseOdds(pollData[0].odds);
           
-          if (team2OddsInput) team2OddsInput.value = pollData[1].odds || -110;
+          if (team2OddsInput) team2OddsInput.value = parseOdds(pollData[1].odds);
           if (team2SelectionInput) team2SelectionInput.value = pollData[1].votes_percent || 50;
-          if (team2RealInput) team2RealInput.value = pollData[1].odds || '';
+          if (team2RealInput) team2RealInput.value = parseOdds(pollData[1].odds);
           
           if (maxBetSelect) maxBetSelect.value = pollData[0].max_wager || 100;
 
