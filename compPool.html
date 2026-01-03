@@ -707,22 +707,9 @@
           const awayTeam = pollData[0];
           const homeTeam = pollData[1];
 
-          // Parse odds, handling string format like "+130"
-          const parseOdds = (odds) => {
-            if (typeof odds === 'string') {
-              return parseInt(odds.replace('+', ''));
-            }
-            return odds || -110;
-          };
-
-          game.team1.odds = parseOdds(awayTeam.odds);
+          // Only set selection percentages and max bet
           game.team1.selectionPercentage = awayTeam.votes_percent || 50;
-          game.team1.realOdds = parseOdds(awayTeam.odds);
-
-          game.team2.odds = parseOdds(homeTeam.odds);
           game.team2.selectionPercentage = homeTeam.votes_percent || 50;
-          game.team2.realOdds = parseOdds(homeTeam.odds);
-
           game.maxBet = awayTeam.max_wager || 100;
         }
 
@@ -733,10 +720,8 @@
           const pollData = poolData[i - 1];
           if (!pollData || !pollData[0] || !pollData[1]) continue;
 
-          const team1OddsInput = document.getElementById(`game-${i}-team1-odds`);
           const team1SelectionInput = document.getElementById(`game-${i}-team1-selection`);
           const team1RealInput = document.getElementById(`game-${i}-team1-real`);
-          const team2OddsInput = document.getElementById(`game-${i}-team2-odds`);
           const team2SelectionInput = document.getElementById(`game-${i}-team2-selection`);
           const team2RealInput = document.getElementById(`game-${i}-team2-real`);
           const maxBetSelect = document.getElementById(`game-${i}-maxbet`);
@@ -749,11 +734,10 @@
             return odds || -110;
           };
 
-          if (team1OddsInput) team1OddsInput.value = parseOdds(pollData[0].odds);
+          // Only populate selection percentages, real odds, and max bet
           if (team1SelectionInput) team1SelectionInput.value = pollData[0].votes_percent || 50;
           if (team1RealInput) team1RealInput.value = parseOdds(pollData[0].odds);
           
-          if (team2OddsInput) team2OddsInput.value = parseOdds(pollData[1].odds);
           if (team2SelectionInput) team2SelectionInput.value = pollData[1].votes_percent || 50;
           if (team2RealInput) team2RealInput.value = parseOdds(pollData[1].odds);
           
