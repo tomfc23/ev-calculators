@@ -121,6 +121,50 @@
     cursor: not-allowed;
   }
 
+  .autofill-section {
+    background-color: #2a2a2a;
+    padding: 1.5rem;
+    border-radius: 25px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #10b981;
+  }
+
+  .autofill-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .autofill-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .autofill-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  .autofill-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .loading {
+    color: #10b981;
+    font-style: italic;
+  }
+
   .game-selector {
     margin-bottom: 1.5rem;
     max-width: 300px;
@@ -462,6 +506,19 @@
   <div class="container" id="app">
     <h1 class="heading">Pool EV Calculator</h1>
     
+    <div class="autofill-section">
+      <h2 class="section-title">🎯 Auto-fill from Pool</h2>
+      <div class="autofill-grid">
+        <div class="form-control">
+          <label class="form-label">Select Pool</label>
+          <select class="form-select" id="pool-select">
+            <option value="">Loading pools...</option>
+          </select>
+        </div>
+        <button class="autofill-btn" id="autofill-btn" disabled>Auto-fill Data</button>
+      </div>
+    </div>
+
     <div class="settings-grid">
       <div class="game-selector">
         <label class="form-label">Number of Games</label>
@@ -479,10 +536,10 @@
 
     <div class="instructions" id="instructions-container">
       <h2 class="section-title">Instructions</h2>
-      <p>1. Select number of games.</p>
-      <p>2. For each game, select max bet (100 or 200) and check "10 min bet" for CFB non-top25 games.</p>
-      <p>3. Entry fee is calculated automatically based on your selections.</p>
-      <p>4. Enter odds (American format) and selection percentages for each game.</p>
+      <p>1. Select a pool from the dropdown and click "Auto-fill Data" to automatically populate all fields.</p>
+      <p>2. Or manually select number of games and configure each game.</p>
+      <p>3. For each game, select max bet (100 or 200) and check "10 min bet" for CFB non-top25 games.</p>
+      <p>4. Entry fee is calculated automatically based on your selections.</p>
       <p>5. Enter "Real App Odds" to calculate individual game EVs (optional).</p>
       <p>6. Mark games as "Decided" to set actual winners and see updated EVs.</p>
       <p>7. Click "Calculate" to see combined expected values (Pool EV + Individual Game EVs).</p>
@@ -526,7 +583,9 @@
           maxPayout: 400,
           entryFee: 100,
           sortBy: 'expectedValue',
-          sortDirection: 'desc'
+          sortDirection: 'desc',
+          poolsData: null,
+          selectedPoolId: null
         };
 
         try {
@@ -534,9 +593,42 @@
           this.initializeGames();
           this.renderGames();
           this.updateEntryFeeDisplay();
+          this.loadPoolsData();
           console.log('Calculator initialized successfully');
         } catch (error) {
           console.error('Error initializing calculator:', error);
+        }
+      }
+
+      async loadPoolsData() {
+        const poolSelect = document.getElementById('pool-select');
+        const autofillBtn = document.getElementById('autofill-btn');
+        
+        try {
+          poolSelect.innerHTML = '<option value="">Loading pools...</option>';
+          autofillBtn.disabled = true;
+          
+          const response = await fetch('https://pools.tomfconreal.workers.dev/');
+          const data = await response.json();
+          
+          this.state.poolsData = data;
+          
+          poolSelect.innerHTML = '<option value="">-- Select a pool --</option>';
+          
+          Object.keys(data).forEach(poolId => {
+            const poolInfo = data[poolId];
+            const sport = poolInfo.sport ? poolInfo.sport.toUpperCase() : 'Unknown';
+            const games = poolInfo.games || '?';
+            const option = document.createElement('option');
+            option.value = poolId;
+            option.textContent = `${sport} - ${games} games (Pool ${poolId})`;
+            poolSelect.appendChild(option);
+          });
+          
+          console.log('Pools loaded:', data);
+        } catch (error) {
+          console.error('Error loading pools:', error);
+          poolSelect.innerHTML = '<option value="">Error loading pools</option>';
         }
       }
 
@@ -555,6 +647,102 @@
             this.calculateAllCombinations();
           });
         }
+
+        const poolSelect = document.getElementById('pool-select');
+        if (poolSelect) {
+          poolSelect.addEventListener('change', (e) => {
+            const autofillBtn = document.getElementById('autofill-btn');
+            autofillBtn.disabled = !e.target.value;
+            this.state.selectedPoolId = e.target.value;
+          });
+        }
+
+        const autofillBtn = document.getElementById('autofill-btn');
+        if (autofillBtn) {
+          autofillBtn.addEventListener('click', () => {
+            this.autofillFromPool();
+          });
+        }
+      }
+
+      autofillFromPool() {
+        if (!this.state.selectedPoolId || !this.state.poolsData) {
+          alert('Please select a pool first');
+          return;
+        }
+
+        const poolData = this.state.poolsData[this.state.selectedPoolId];
+        if (!poolData) {
+          alert('Pool data not found');
+          return;
+        }
+
+        const gameCount = poolData.games;
+        if (![2, 3, 4].includes(gameCount)) {
+          alert('Invalid game count in pool data');
+          return;
+        }
+
+        this.state.gameCount = gameCount;
+        const gameCountSelect = document.getElementById('game-count-select');
+        if (gameCountSelect) {
+          gameCountSelect.value = gameCount;
+        }
+
+        this.initializeGames();
+
+        for (let i = 0; i < gameCount; i++) {
+          const pollData = poolData[i];
+          if (!pollData || !pollData[0] || !pollData[1]) {
+            console.warn(`Missing data for game ${i + 1}`);
+            continue;
+          }
+
+          const game = this.state.games[i];
+          const awayTeam = pollData[0];
+          const homeTeam = pollData[1];
+
+          game.team1.odds = awayTeam.odds || -110;
+          game.team1.selectionPercentage = awayTeam.votes_percent || 50;
+          game.team1.realOdds = awayTeam.odds || null;
+
+          game.team2.odds = homeTeam.odds || -110;
+          game.team2.selectionPercentage = homeTeam.votes_percent || 50;
+          game.team2.realOdds = homeTeam.odds || null;
+
+          game.maxBet = awayTeam.max_wager || 100;
+        }
+
+        this.renderGames();
+        this.updateEntryFeeDisplay();
+
+        for (let i = 1; i <= gameCount; i++) {
+          const pollData = poolData[i - 1];
+          if (!pollData || !pollData[0] || !pollData[1]) continue;
+
+          const team1OddsInput = document.getElementById(`game-${i}-team1-odds`);
+          const team1SelectionInput = document.getElementById(`game-${i}-team1-selection`);
+          const team1RealInput = document.getElementById(`game-${i}-team1-real`);
+          const team2OddsInput = document.getElementById(`game-${i}-team2-odds`);
+          const team2SelectionInput = document.getElementById(`game-${i}-team2-selection`);
+          const team2RealInput = document.getElementById(`game-${i}-team2-real`);
+          const maxBetSelect = document.getElementById(`game-${i}-maxbet`);
+
+          if (team1OddsInput) team1OddsInput.value = pollData[0].odds || -110;
+          if (team1SelectionInput) team1SelectionInput.value = pollData[0].votes_percent || 50;
+          if (team1RealInput) team1RealInput.value = pollData[0].odds || '';
+          
+          if (team2OddsInput) team2OddsInput.value = pollData[1].odds || -110;
+          if (team2SelectionInput) team2SelectionInput.value = pollData[1].votes_percent || 50;
+          if (team2RealInput) team2RealInput.value = pollData[1].odds || '';
+          
+          if (maxBetSelect) maxBetSelect.value = pollData[0].max_wager || 100;
+
+          this.updateGameProbabilities(i);
+        }
+
+        alert(`Auto-filled data for ${gameCount} games from pool ${this.state.selectedPoolId}`);
+        document.getElementById('results-container').style.display = 'none';
       }
 
       updateCalculator() {
@@ -891,22 +1079,18 @@
         
         let payout;
         if (wager === 0) {
-          // For 0 wager, always use 10 for payout calculation
           payout = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
         } else if (wager === 10) {
-          // For 10 wager, payout is based on 10
           payout = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
         } else if (wager === 50 && maxBet === 200) {
-          // For 50 wager with maxBet 200, payout is 5
           payout = realOdds > 0 
             ? Math.round(50 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 50);
         } else {
-          // For maxBet wager (100 or 200), calculate normally
           payout = realOdds > 0 
             ? Math.round(wager / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * wager);
@@ -929,20 +1113,16 @@
           return { wager: 0, ev: 0, label: '0' };
         }
 
-        // Calculate all possible EVs
         const lowWager = game.is10MinBet ? 10 : 0;
         const evLow = this.calculateIndividualEV(realOdds, teamData.noVigProbability, lowWager, game.maxBet);
         const evMax = this.calculateIndividualEV(realOdds, teamData.noVigProbability, game.maxBet, game.maxBet);
         
-        // Calculate payouts for logging
         let payoutLow, payoutMax;
         if (lowWager === 0) {
-          // 0 wager always pays 10
           payoutLow = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
         } else {
-          // 10 wager pays 10
           payoutLow = realOdds > 0 
             ? Math.round(10 / 100 * realOdds)
             : Math.round(100 / Math.abs(realOdds) * 10);
@@ -970,7 +1150,6 @@
           bestChoice: evMax > evLow ? `${game.maxBet} wager` : `${lowWager} wager`
         });
 
-        // Return the best wager
         if (evMax > evLow) {
           return { wager: game.maxBet, ev: evMax, label: game.maxBet.toString() };
         } else {
