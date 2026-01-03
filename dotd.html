@@ -662,16 +662,28 @@ BAL +113
     }
 
     function detectMarketType(teamLine) {
-      const spreadMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
-      if (spreadMatch) {
-        const value = spreadMatch[2];
-        if (value.includes('.')) {
-          return { type: 'spread', team: spreadMatch[1], value: value };
-        }
-        return { type: 'moneyline', team: spreadMatch[1], value: value };
+      const match = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+      if (!match) {
+        return null;
       }
       
-      return null;
+      const team = match[1];
+      const valueStr = match[2];
+      const numericValue = parseFloat(valueStr);
+      
+      // Check if it has a decimal point - if yes, it's a spread
+      if (valueStr.includes('.')) {
+        return { type: 'spread', team: team, value: valueStr };
+      }
+      
+      // Check the numeric range
+      // Spread: 0 < value < 100 (positive underdogs only for this feature)
+      // Moneyline: value >= 100 OR value <= -100
+      if (numericValue > 0 && numericValue < 100) {
+        return { type: 'spread', team: team, value: valueStr };
+      } else {
+        return { type: 'moneyline', team: team, value: valueStr };
+      }
     }
 
     function processData() {
@@ -1232,7 +1244,28 @@ BAL +113
     function displayPollResults(options) {
         const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
         
-        // Check if this is a mixed market poll
+        let textOutput = options.map(option => {
+            const percentage = Math.round((option.count / totalVotes) * 100);
+            
+            // Determine market type using the improved detection logic
+            if (option.additionalInfo && option.additionalInfo.spread !== null) {
+                // Spread option
+                const spread = option.additionalInfo.spread;
+                const teamName = option.label.split(' ')[0];
+                const spreadValue = spread >= 0 ? `+${spread}` : `${spread}`;
+                return `${teamName} ${spreadValue}\n${percentage}% (${option.count})`;
+            } else if (option.additionalInfo && option.additionalInfo.odds !== null) {
+                // Moneyline option
+                const oddsValue = String(option.additionalInfo.odds);
+                const formattedOdds = oddsValue.startsWith('-') ? oddsValue : `+${oddsValue}`;
+                return `${option.label} ${formattedOdds}\n${percentage}% (${option.count})`;
+            } else {
+                // Fallback
+                return `${option.label}\n${percentage}% (${option.count})`;
+            }
+        }).join('\n');
+
+        // Auto-detect if this is a mixed market poll
         const hasSpread = options.some(opt => opt.additionalInfo && opt.additionalInfo.spread !== null);
         const hasMoneyline = options.some(opt => opt.additionalInfo && opt.additionalInfo.odds !== null);
         const isMixed = hasSpread && hasMoneyline;
@@ -1242,30 +1275,6 @@ BAL +113
             document.getElementById('sportSelect').value = 'COMBINED';
             onSportChange();
         }
-
-        let textOutput = options.map(option => {
-            const percentage = Math.round((option.count / totalVotes) * 100);
-            
-            // Determine if this option is spread or moneyline
-            const isSpread = option.additionalInfo && option.additionalInfo.spread !== null;
-            const hasOdds = option.additionalInfo && option.additionalInfo.odds !== null;
-            
-            if (isSpread) {
-                // For spread options, extract team name and spread
-                const spread = option.additionalInfo.spread;
-                const teamName = option.label.split(' ')[0]; // Get team abbreviation
-                const spreadValue = spread >= 0 ? `+${spread}` : `${spread}`;
-                return `${teamName} ${spreadValue}\n${percentage}% (${option.count})`;
-            } else if (hasOdds) {
-                // For moneyline options, format odds properly
-                const oddsValue = String(option.additionalInfo.odds);
-                const formattedOdds = oddsValue.startsWith('-') ? oddsValue : `+${oddsValue}`;
-                return `${option.label} ${formattedOdds}\n${percentage}% (${option.count})`;
-            } else {
-                // Fallback for any other format
-                return `${option.label}\n${percentage}% (${option.count})`;
-            }
-        }).join('\n');
 
         document.getElementById('inputData').value = textOutput;
     }
